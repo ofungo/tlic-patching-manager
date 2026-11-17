@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Windows Server Patching Schedule Manager (v5.0 Live Team Sync)</title>
+<!-- SheetJS loaded on-demand only when Import/Export is clicked to prevent SharePoint CSP/network lag -->
+<style>
+  :root {
+    --primary: #1B365D;
+    --primary-mid: #274C77;
+    --accent: #0284C7;
+    --banner-bg: #E0E8F5;
+    --banner-border: #94B0DA;
+    --bg: #F1F5F9;
+    --card-bg: #FFFFFF;
+    --border: #CBD5E1;
+    --cell-border: #DCE4EE;
+    --text: #0F172A;
+    --text-muted: #475569;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 64px;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #132A4A 0%, #244B7A 100%);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  header p {
+    margin: 3px 0 0;
+    font-size: 0.79rem;
+    color: #CBD5E1;
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+  }
+  .btn {
+    border: none;
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .btn-primary { background: #10B981; color: #fff; }
+  .btn-primary:hover { background: #059669; transform: translateY(-1px); }
+  .btn-secondary { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.28); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.24); }
+  .btn-secondary.active { background: #38BDF8; color: #0F172A; border-color: #7DD3FC; }
+  .btn-add { background: #0EA5E9; color: #fff; }
+  .btn-add:hover { background: #0284C7; transform: translateY(-1px); }
+  .btn-toggle { background: #FFFFFF; color: var(--primary); border: 1px solid #CBD5E1; }
+  .btn-toggle:hover { background: #F8FAFC; }
+  .btn-toggle.active { background: #EFF6FF; color: #1D4ED8; border-color: #93C5FD; }
+
+  .container {
+    max-width: 100%;
+    margin: 12px auto;
+    padding: 0 12px 24px;
+  }
+
+  /* KPI Summary Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .kpi-card {
+    background: var(--card-bg);
+    border-radius: 9px;
+    padding: 11px 14px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    border-left: 4px solid var(--primary-mid);
+  }
+  .kpi-title {
+    font-size: 0.71rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+  .kpi-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .kpi-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Analytics Dashboard Panel */
+  .analytics-panel {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .analytics-panel.hidden { display: none; }
+  @media (max-width: 1200px) {
+    .analytics-panel { grid-template-columns: 1fr; }
+  }
+  .chart-card {
+    background: var(--card-bg);
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .chart-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 10px;
+    font-size: 0.71rem;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 3px;
+  }
+
+  /* Weekly Stacked Bar Chart */
+  .weekly-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 125px;
+    padding-top: 16px;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .w-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    cursor: pointer;
+    position: relative;
+  }
+  .w-bar-col:hover .w-bar-stack {
+    transform: scaleY(1.03);
+    filter: brightness(0.95);
+  }
+  .w-bar-count {
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 3px;
+  }
+  .w-bar-stack {
+    width: 100%;
+    max-width: 34px;
+    border-radius: 4px 4px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    transition: transform 0.15s;
+    background: #E2E8F0;
+  }
+  .seg-patched { background: #10B981; }
+  .seg-pending { background: #3B82F6; }
+  .seg-failed  { background: #EF4444; }
+  .w-bar-label {
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 5px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Horizontal Progress Bars (OS / Env / Engineers) */
+  .h-bar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .h-bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .h-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #334155;
+  }
+  .h-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #E2E8F0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .h-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
+
+  /* Weekly Summary Chips */
+  .week-pills {
+    background: var(--card-bg);
+    border: 1px solid #E2E8F0;
+    border-radius: 9px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  }
+  .week-pills-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-right: 4px;
+  }
+  .week-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1E293B;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+    transition: all 0.14s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .week-pill:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+  .week-pill.active { outline: 2px solid var(--primary); font-weight: 700; }
+  .week-pill .badge {
+    background: rgba(27, 54, 93, 0.14);
+    color: var(--primary);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.71rem;
+  }
+
+  /* Filter Bar */
+  .filter-bar {
+    background: var(--card-bg);
+    border: 1px solid #E2E8F0;
+    border-radius: 9px;
+    padding: 9px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 6px 10px;
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    font-size: 0.81rem;
+    background: #F8FAFC;
+    color: var(--text);
+  }
+  .filter-bar input:focus, .filter-bar select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .filter-bar input { min-width: 210px; flex: 1; }
+
+  /* Table Card */
+  .table-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 1px solid #CBD5E1;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  }
+  .table-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+  }
+  table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8rem;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #1E3A5F;
+    color: #F8FAFC;
+    font-weight: 600;
+    font-size: 0.76rem;
+    letter-spacing: 0.15px;
+    padding: 8px 5px;
+    text-align: center;
+    border-right: 1px solid #2F527D;
+    border-bottom: 2px solid #132640;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .col-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 40;
+    background: transparent;
+  }
+  .col-resizer:hover, .col-resizer.resizing {
+    background: rgba(56, 189, 248, 0.8);
+  }
+  thead th.sticky-col-1 {
+    position: sticky;
+    left: 0;
+    z-index: 30;
+    background: #172E4D;
+  }
+  thead th.sticky-col-2 {
+    position: sticky;
+    left: 34px;
+    z-index: 30;
+    background: #172E4D;
+  }
+  thead th.sticky-col-3 {
+    position: sticky;
+    left: 70px;
+    z-index: 30;
+    background: #172E4D;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.12);
+  }
+  tbody td {
+    border-right: 1px solid var(--cell-border);
+    border-bottom: 1px solid var(--cell-border);
+    padding: 4px 5px;
+    vertical-align: middle;
+  }
+  tbody td.sticky-col-1 {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: inherit;
+  }
+  tbody td.sticky-col-2 {
+    position: sticky;
+    left: 34px;
+    z-index: 10;
+    background: inherit;
+  }
+  tbody td.sticky-col-3 {
+    position: sticky;
+    left: 70px;
+    z-index: 10;
+    background: inherit;
+    box-shadow: 2px 0 5px rgba(15, 23, 42, 0.06);
+  }
+  tbody tr.data-row:hover td {
+    filter: brightness(0.975);
+  }
+  tbody tr.data-row.selected-row td {
+    background-color: #DBEAFE !important;
+  }
+
+  /* Weekly Group Banner */
+  tr.week-banner td {
+    background: linear-gradient(90deg, #DCE6F7 0%, #EBF1FA 100%) !important;
+    color: #16325C;
+    font-weight: 700;
+    font-size: 0.84rem;
+    padding: 7px 12px;
+    border-top: 2px solid var(--banner-border);
+    border-bottom: 2px solid var(--banner-border);
+  }
+  .banner-inner {
+    position: sticky;
+    left: 12px;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner-count-pill {
+    background: #1E3A5F;
+    color: #fff;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .banner-mini-btn {
+    background: #FFFFFF;
+    color: #1E3A5F;
+    border: 1px solid #94B0DA;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 0.71rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .banner-mini-btn:hover {
+    background: #1E3A5F;
+    color: #FFFFFF;
+  }
+
+  /* Smart Badges inside Hostname / Maint cells */
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+    padding-left: 5px;
+  }
+  .smart-tag {
+    font-size: 0.63rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.2px;
+    display: inline-block;
+  }
+  .tag-seq1 { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+  .tag-seq2 { background: #E0E7FF; color: #3730A3; border: 1px solid #A5B4FC; }
+  .tag-dup  { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
+  .tag-warn { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+  .tag-env-prd { background: #DBEAFE; color: #1E40AF; }
+  .tag-env-uat { background: #CCFBF1; color: #115E59; }
+  .tag-env-dr  { background: #FFEDD5; color: #9A3412; }
+
+  /* Editable Inputs & Compact Scrollable Multi-Line Boxes */
+  .editable-cell {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: #0F172A;
+    padding: 3px 5px;
+    border-radius: 4px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .editable-cell:hover {
+    border-color: rgba(30, 58, 95, 0.35);
+    background: rgba(255, 255, 255, 0.75);
+  }
+  .editable-cell:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+  }
+  textarea.editable-textarea {
+    width: 100%;
+    height: 40px;
+    max-height: 40px;
+    overflow-y: auto;
+    resize: vertical;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: block;
+    scrollbar-width: thin;
+    scrollbar-color: #94A3B8 transparent;
+  }
+  textarea.editable-textarea::-webkit-scrollbar { width: 5px; }
+  textarea.editable-textarea::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
+  textarea.editable-textarea:focus {
+    height: auto;
+    min-height: 62px;
+    max-height: 170px;
+    z-index: 15;
+    position: relative;
+  }
+  body.expanded-rows textarea.editable-textarea {
+    height: auto;
+    max-height: none;
+    overflow-y: hidden;
+  }
+
+  select.editable-cell { cursor: pointer; height: 30px; }
+  select.status-patched {
+    background-color: #DCFCE7 !important;
+    color: #166534 !important;
+    border-color: #86EFAC;
+    font-weight: 700;
+  }
+  select.status-failed {
+    background-color: #FEE2E2 !important;
+    color: #991B1B !important;
+    border-color: #FCA5A5;
+    font-weight: 700;
+  }
+  select.by-andy {
+    background-color: #E0F2FE !important;
+    color: #0369A1 !important;
+    border-color: #7DD3FC;
+    font-weight: 700;
+  }
+  select.by-don {
+    background-color: #FFEDD5 !important;
+    color: #C2410C !important;
+    border-color: #FDBA74;
+    font-weight: 700;
+  }
+  select.by-fung {
+    background-color: #EDE9FE !important;
+    color: #5B21B6 !important;
+    border-color: #C4B5FD;
+    font-weight: 700;
+  }
+  .center { text-align: center; }
+  .mono { font-family: 'Consolas', 'SFMono-Regular', monospace; font-size: 0.78rem; }
+
+  .del-btn {
+    background: transparent;
+    border: none;
+    color: #94A3B8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+  }
+  .del-btn:hover { color: #EF4444; background: rgba(239,68,68,0.12); }
+
+  /* Floating Bulk Action Bar */
+  .bulk-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #0F172A;
+    color: #F8FAFC;
+    padding: 10px 16px;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    z-index: 950;
+    transition: transform 0.22s ease;
+    border: 1px solid #334155;
+  }
+  .bulk-bar.visible {
+    transform: translateX(-50%) translateY(0);
+  }
+  .bulk-bar select, .bulk-bar input {
+    background: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+  .bulk-btn {
+    background: #0284C7;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bulk-btn:hover { background: #0369A1; }
+  .bulk-btn-green { background: #10B981; }
+  .bulk-btn-green:hover { background: #059669; }
+  .bulk-btn-ghost { background: transparent; color: #CBD5E1; border: 1px solid #475569; }
+
+  /* Audit / Handover Side Drawer */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: none;
+    justify-content: flex-end;
+    z-index: 1000;
+  }
+  .drawer-backdrop.open { display: flex; }
+  .drawer {
+    width: 440px;
+    max-width: 95vw;
+    height: 100%;
+    background: #FFFFFF;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.18);
+  }
+  .drawer h3 { margin: 0 0 6px; color: var(--primary); }
+  .log-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 10px;
+    background: #F8FAFC;
+    font-size: 0.79rem;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 10px 0;
+  }
+  .log-item {
+    background: #fff;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .log-time { font-size: 0.7rem; color: #64748B; font-weight: 600; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    background: #0F172A;
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1100;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 540px;
+    max-width: 95vw;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+  }
+  .modal h3 { margin: 0 0 14px; color: var(--primary); }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: span 2; }
+  .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 8px 10px;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-family: inherit;
+  }
+  .modal-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.0 Live Team Sync)</h1>
+    <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
+      <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
+      <span id="syncStatusText">Local Mode (Setup Live Sync)</span>
+    </button>
+    <button class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()">📊 Charts</button>
+    <button class="btn btn-secondary" onclick="openAuditDrawer()">📋 Handover Log (<span id="logCountBadge">0</span>)</button>
+    <button class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
+    <label class="btn btn-secondary" style="cursor:pointer;">
+      📂 Import .xlsx
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
+    </label>
+    <button class="btn btn-primary" onclick="exportExcel()">⬇ Export .xlsx</button>
+    <button class="btn btn-secondary" onclick="resetToDefault()" title="Reset browser cache back to original v3.4 baseline">↺ Reset</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- Visual Charts Dashboard -->
+  <div class="analytics-panel" id="analyticsPanel">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">📈 Weekly Patching Load &amp; Completion (Click bar to filter)</span>
+        <div class="chart-legend">
+          <span><i class="legend-dot seg-patched"></i>Patched</span>
+          <span><i class="legend-dot seg-pending"></i>Pending</span>
+          <span><i class="legend-dot seg-failed"></i>Failed</span>
+        </div>
+      </div>
+      <div class="weekly-bars" id="weeklyChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">🖥️ OS Worksheet &amp; Environment Split</span>
+      </div>
+      <div class="h-bar-list" id="osEnvChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">👷 Engineer Assignment &amp; Readiness</span>
+      </div>
+      <div class="h-bar-list" id="engineerChart"></div>
+    </div>
+  </div>
+
+  <!-- Weekly Interactive Count Bar -->
+  <div class="week-pills" id="weekPills"></div>
+
+  <!-- Filter & Display Controls -->
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+    <select id="filterWeek" onchange="renderTable()">
+      <option value="">All Weeks</option>
+    </select>
+    <select id="filterEnv" onchange="renderTable()">
+      <option value="">All Environments</option>
+      <option value="PRD">Production (PRD)</option>
+      <option value="UAT">UAT</option>
+      <option value="DR">DR / DR Site</option>
+      <option value="DEV">DEV</option>
+    </select>
+    <select id="filterSheet" onchange="renderTable()">
+      <option value="">All OS Sheets</option>
+      <option value="Win SVR 2012R2">Win SVR 2012R2</option>
+      <option value="Win SVR 2016">Win SVR 2016</option>
+      <option value="Win SVR 2019">Win SVR 2019</option>
+      <option value="Win SRV 2022">Win SRV 2022</option>
+      <option value="Ripen Infra SVR">Ripen Infra SVR</option>
+    </select>
+    <select id="filterBy" onchange="renderTable()">
+      <option value="">All Engineers</option>
+      <option value="Andy">Andy</option>
+      <option value="Don">Don</option>
+      <option value="Fung">Fung</option>
+      <option value="__UNASSIGNED__">Unassigned</option>
+    </select>
+    <select id="filterStatus" onchange="renderTable()">
+      <option value="">All Statuses</option>
+      <option value="Patched">Patched</option>
+      <option value="Failed">Failed</option>
+      <option value="__PENDING__">Pending / Blank</option>
+      <option value="__ALERTS__">⚠️ Sequence / Multi-Window Only</option>
+    </select>
+    <button type="button" id="toggleExpandBtn" class="btn btn-toggle" onclick="toggleRowExpansion()">
+      ↕ Expand Full Text
+    </button>
+    <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
+      ↔ Reset Widths
+    </button>
+  </div>
+
+  <!-- Schedule Table -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <colgroup id="scheduleColGroup">
+          <col style="width: 34px;" />   <!-- Select -->
+          <col style="width: 36px;" />   <!-- No -->
+          <col style="width: 128px;" />  <!-- Hostname + Badges -->
+          <col style="width: 108px;" />  <!-- IP Address -->
+          <col style="width: 185px;" />  <!-- Operating System -->
+          <col style="width: 82px;" />   <!-- Application -->
+          <col style="width: 185px;" />  <!-- Maintenance Windows -->
+          <col style="width: 222px;" />  <!-- Time Windows -->
+          <col style="width: 112px;" />  <!-- OS Sheet -->
+          <col style="width: 262px;" />  <!-- Remarks i -->
+          <col style="width: 135px;" />  <!-- Remarks ii -->
+          <col style="width: 70px;" />   <!-- By -->
+          <col style="width: 84px;" />   <!-- Status -->
+          <col style="width: 30px;" />   <!-- Delete -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="sticky-col-1"><input type="checkbox" id="selectAllVisible" onchange="toggleSelectAllVisible(this.checked)" title="Select all visible rows" /></th>
+            <th class="sticky-col-2">No</th>
+            <th class="sticky-col-3">Hostname</th>
+            <th>IP Address</th>
+            <th>Operating System</th>
+            <th>Application</th>
+            <th>Maintenance Windows</th>
+            <th>Time Windows (Auto-Sorts)</th>
+            <th>OS Sheet</th>
+            <th>Remarks i</th>
+            <th>Remarks ii</th>
+            <th>By</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Bulk Action Bar -->
+<div class="bulk-bar" id="bulkBar">
+  <span style="font-weight:700;font-size:0.82rem;color:#38BDF8;"><span id="selectedCount">0</span> selected <span style="font-weight:400;color:#94A3B8;font-size:0.72rem;">(Shift+Click for range)</span></span>
+  <select id="bulkBy">
+    <option value="__KEEP__">Assign Engineer...</option>
+    <option value="Andy">By: Andy</option>
+    <option value="Don">By: Don</option>
+    <option value="Fung">By: Fung</option>
+    <option value="">Clear Engineer</option>
+  </select>
+  <select id="bulkStatus">
+    <option value="__KEEP__">Set Status...</option>
+    <option value="Patched">Status: Patched</option>
+    <option value="Failed">Status: Failed</option>
+    <option value="">Clear Status</option>
+  </select>
+  <button class="bulk-btn bulk-btn-green" onclick="applyBulkUpdate()">✓ Apply By/Status</button>
+  <span style="color:#475569;">|</span>
+  <input type="text" id="bulkTimeWin" placeholder="Target Schedule / Time Window..." list="timeSuggestions" style="width:255px;" />
+  <button class="bulk-btn" onclick="moveSelectedToSchedule()" title="Move selected servers into this new Time Window">📅 Move to Schedule</button>
+  <button class="bulk-btn" style="background:#8B5CF6;" onclick="copySelectedToSchedule()" title="Duplicate selected servers into this new Time Window (keeps original rows)">📑 Copy to New Schedule</button>
+  <button type="button" class="bulk-btn" style="background:#334155;" onclick="copySelectedHosts()">📋 Copy Names</button>
+  <button type="button" class="bulk-btn" style="background:#334155;" onclick="copySelectedIPs()">🌐 Copy IPs</button>
+  <button class="bulk-btn" style="background:#DC2626;" onclick="bulkDeleteSelected()">🗑️ Remove</button>
+  <button class="bulk-btn bulk-btn-ghost" onclick="clearSelection()">✕</button>
+</div>
+
+<!-- Shift Handover & Audit Trail Drawer -->
+<div class="drawer-backdrop" id="auditDrawer" onclick="if(event.target===this) closeAuditDrawer()">
+  <div class="drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>📋 Shift Handover &amp; Change Log</h3>
+      <button class="del-btn" style="font-size:1.1rem;" onclick="closeAuditDrawer()">✕</button>
+    </div>
+    <p style="margin:0;font-size:0.78rem;color:#475569;">Tracks status flips, engineer assignments, and reschedules during your shift.</p>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="copyHandoverSummary()">📋 Copy Shift Handover Summary</button>
+      <button class="btn btn-toggle" onclick="clearAuditLog()">Clear Log</button>
+    </div>
+    <div class="log-list" id="auditLogList"></div>
+  </div>
+</div>
+
+<!-- Add Server Modal -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <h3>Add New Server to Patching Schedule</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Hostname *</label>
+        <input type="text" id="newHost" placeholder="e.g. PRDVNEW01" />
+      </div>
+      <div class="form-group">
+        <label>IP Address</label>
+        <input type="text" id="newIp" placeholder="e.g. 10.19.32.100" />
+      </div>
+      <div class="form-group">
+        <label>Operating System</label>
+        <input type="text" id="newOs" value="Microsoft Windows Server 2019" />
+      </div>
+      <div class="form-group">
+        <label>OS Sheet</label>
+        <select id="newSheet">
+          <option value="Win SVR 2019">Win SVR 2019</option>
+          <option value="Win SRV 2022">Win SRV 2022</option>
+          <option value="Win SVR 2016">Win SVR 2016</option>
+          <option value="Win SVR 2012R2">Win SVR 2012R2</option>
+          <option value="Ripen Infra SVR">Ripen Infra SVR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Application</label>
+        <input type="text" id="newApp" placeholder="e.g. WeChat / IIS" />
+      </div>
+      <div class="form-group">
+        <label>Maintenance Windows</label>
+        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" />
+      </div>
+      <div class="form-group full">
+        <label>Time Windows * (Determines Week &amp; Auto-Sort Position)</label>
+        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" />
+      </div>
+      <div class="form-group">
+        <label>Assigned By</label>
+        <select id="newBy">
+          <option value="">-- Blank --</option>
+          <option value="Andy">Andy</option>
+          <option value="Don">Don</option>
+          <option value="Fung">Fung</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="newStatus">
+          <option value="">-- Blank --</option>
+          <option value="Patched">Patched</option>
+          <option value="Failed">Failed</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Remarks i (Supports multiple lines)</label>
+        <textarea id="newRem1" rows="3" placeholder="Optional multi-line notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-add" onclick="saveNewServer()">Add Server</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="timeSuggestions">
+  <option value="14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30">
+  <option value="28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00">
+  <option value="28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30">
+  <option value="5 DEC 2026 - Saturday 10:00 – 14:00">
+  <option value="13 Dec 2026 - Sunday 00:00 - 03:00">
+  <option value="13 Dec 2026 - Sunday 00:00 - 07:30">
+  <option value="10 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="17 Jan 2027 - Sunday 10:00 -  07:30">
+  <option value="17 Jan 2027 - Sunday 10:00 - 13:30">
+  <option value="24 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="30 Jan 2027 - Sunday 00:00 - 03.00">
+  <option value="31 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="13 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
+  <option value="14 Feb 2027 - Sunday - 00:00 - Sunday 03:00">
+  <option value="21 Feb 2027 - Sunday - 00:00 - 03:00">
+  <option value="21 Feb 2027 - Sunday - 10:00 - 07:00">
+  <option value="27 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
+  <option value="27 Feb 2027 - Sunday - 10:00 - 03:00">
+  <option value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00">
+</datalist>
+
+<!-- Custom SharePoint-Safe Confirm Modal -->
+<div class="modal-backdrop" id="confirmModal" style="z-index:1200;">
+  <div class="modal" style="width:410px;">
+    <h3 id="confirmTitle" style="margin-bottom:8px;">Confirm Action</h3>
+    <p id="confirmMessage" style="margin:0 0 18px;font-size:0.86rem;color:#334155;line-height:1.45;"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeConfirmModal(false)">Cancel</button>
+      <button type="button" class="btn" id="confirmOkBtn" style="background:#EF4444;color:#fff;" onclick="closeConfirmModal(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- SharePoint-Safe Clipboard Fallback Modal -->
+<div class="modal-backdrop" id="copyFallbackModal" style="z-index:1250;">
+  <div class="modal" style="width:460px;">
+    <h3 id="copyModalTitle" style="margin-bottom:6px;">📋 Copy List</h3>
+    <p id="copyModalDesc" style="margin:0 0 10px;font-size:0.8rem;color:#475569;">Press <strong>Ctrl + C</strong> to copy the selected text below:</p>
+    <textarea id="copyModalTextarea" rows="10" readonly style="width:100%;font-family:'Consolas',monospace;font-size:0.82rem;padding:8px;border:1px solid #94A3B8;border-radius:6px;background:#F8FAFC;color:#0F172A;"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" onclick="retryExecCopyFromModal()">📋 Try Copy Again</button>
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="document.getElementById('copyFallbackModal').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Live Sync Setup Modal -->
+<div class="modal-backdrop" id="syncModal" style="z-index:1220;" onclick="if(event.target===this) closeSyncModal()">
+  <div class="modal" style="width:520px;">
+    <h3 style="margin-bottom:6px;">☁️ Real-Time Team Sync (Firebase Realtime Database)</h3>
+    <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
+      Connect a free <strong>Firebase Realtime Database</strong> so Andy, Don, and Fung see every status update, assignment, and schedule change live without refreshing.
+    </p>
+    <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:8px;padding:10px 12px;font-size:0.78rem;color:#334155;margin-bottom:12px;line-height:1.5;">
+      <strong>Quick 2-Minute Setup:</strong><br/>
+      1. Go to <strong>console.firebase.google.com</strong> → Create a free project.<br/>
+      2. Click <strong>Build → Realtime Database → Create Database</strong> (Start in <em>Test Mode</em> or add a secret path).<br/>
+      3. Copy your Database URL (e.g. <code>https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app</code>) and paste it below.
+    </div>
+    <div class="form-group full" style="margin-bottom:10px;">
+      <label>Firebase Realtime Database URL *</label>
+      <input type="text" id="firebaseDbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+    </div>
+    <div class="form-group full" style="margin-bottom:12px;">
+      <label>Room / Secret Path Key (Acts like a team workspace password)</label>
+      <input type="text" id="firebaseRoomInput" value="patching_schedule_main" placeholder="e.g. team_patch_2026_secret99" />
+    </div>
+    <div id="shareLinkBox" style="display:none;background:#EFF6FF;border:1px solid #93C5FD;border-radius:7px;padding:8px 10px;margin-bottom:12px;">
+      <div style="font-size:0.74rem;font-weight:700;color:#1E40AF;margin-bottom:4px;">🔗 One-Click Team Share Link (Auto-connects teammates):</div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="shareTeamUrlOutput" readonly style="flex:1;font-size:0.75rem;padding:5px 8px;border:1px solid #93C5FD;border-radius:5px;background:#fff;" />
+        <button type="button" class="btn btn-add" style="padding:5px 10px;font-size:0.75rem;" onclick="copyTeamShareUrl()">Copy Link</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" class="btn btn-toggle" style="color:#DC2626;" onclick="disconnectFirebase()">Disconnect (Local Only)</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeSyncModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveAndConnectFirebase()">⚡ Connect &amp; Sync Live</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_DATA = {"servers": [{"id": 1, "hostname": "DEVDMCSRV02", "ip": "10.19.247.11", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "Don", "status": "Patched"}, {"id": 2, "hostname": "UATVCWSAPP11", "ip": "10.19.250.17", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata update failed", "by": "Fung", "status": "Patched"}, {"id": 3, "hostname": "UATVCWSAPP12", "ip": "10.19.250.18", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata update failed", "by": "Fung", "status": "Patched"}, {"id": 4, "hostname": "UATVCWSDBS01", "ip": "10.19.253.83", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (1st Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata updated", "by": "Fung", "status": "Patched"}, {"id": 5, "hostname": "UATVIISAPP11", "ip": "10.19.253.77", "os": "Microsoft Windows Server 2019", "app": "IIS-UAT", "maintWin": "Saturday 09:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to UAT System Health Check Procedure (IIS, CS Log).docx\n   Section IIS-1  &  CS LOG-1", "remarks2": "Metadata update failed", "by": "Don", "status": "Patched"}, {"id": 6, "hostname": "UATVIISDBS01", "ip": "10.19.253.78", "os": "Microsoft Windows Server 2019", "app": "IIS-UAT", "maintWin": "Saturday 09:00 - Sunday 23:59 (1st Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to UAT System Health Check Procedure (IIS, CS Log).docx\n   Section IIS-1  &  CS LOG-1", "remarks2": "Metadata update failed", "by": "Don", "status": "Patched"}, {"id": 7, "hostname": "UATVMEGRDS01", "ip": "10.19.253.47", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 8, "hostname": "UATVMEGSTG01", "ip": "10.19.140.250", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 9, "hostname": "UATVMEGSTG02", "ip": "10.19.140.251", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 10, "hostname": "UATVAWSDMC02", "ip": "10.19.248.11", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SRV 2022", "remarks1": "Domain Controller server - Tahoelifeagents UAT", "remarks2": "", "by": "", "status": ""}, {"id": 11, "hostname": "UATVMEGFPS01", "ip": "10.19.253.54", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 12, "hostname": "UATVSVNSRV02", "ip": "10.19.253.69", "os": "Windows 2016", "app": "SVN", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "28-29 Nov 2026 - Saturday 10:00 - Sunday 23:59", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 13, "hostname": "UATVC21APP12", "ip": "10.19.253.94", "os": "Windows 2016", "app": "C21", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 14, "hostname": "UATVL21FPS02", "ip": "10.19.253.56", "os": "Microsoft Windows Server 2019", "app": "Life21-UAT", "maintWin": "Saturday 13:00 to Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 15, "hostname": "UATVL21PRT03", "ip": "10.19.253.53", "os": "Windows 2016", "app": "Life 21", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 16, "hostname": "UATVLGHSRV02", "ip": "10.19.253.45", "os": "Microsoft Windows Server 2022", "app": "LGH", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 17, "hostname": "UATVSCPSRV01", "ip": "10.19.253.43", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 18, "hostname": "UATVSCPSRV02", "ip": "10.19.249.12", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 19, "hostname": "UATVSCPSRV03", "ip": "10.19.249.13", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 20, "hostname": "UATVSGLQAS02", "ip": "10.19.253.73", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows\n** Shutdown sequence: 1-UATVLSGLQAS02, 2-UATVSGLDBS02\n** Startup sequence: 1-UATVSGLDBS02, 2-UATVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 21, "hostname": "UATVSGLSDBS02", "ip": "10.19.253.72", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows\n** Shutdown sequence: 1-UATVLSGLQAS02, 2-UATVSGLDBS02\n** Startup sequence: 1-UATVSGLDBS02, 2-UATVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 22, "hostname": "PRDVCWSAPP11", "ip": "10.19.2.17", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 23, "hostname": "PRDVCWSAPP12", "ip": "10.19.2.18", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 24, "hostname": "PRDVCWSDBS01", "ip": "10.19.32.83", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (1st Sequence)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 25, "hostname": "PRDVCTTBCK01", "ip": "10.19.32.38", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 26, "hostname": "PRDVCTTBCK11", "ip": "10.19.32.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 27, "hostname": "PRDVCTTBCK12", "ip": "10.19.32.40", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 28, "hostname": "PRDVCTTBCK31", "ip": "10.19.1.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 29, "hostname": "PRDVCTTBCK32", "ip": "10.19.1.40", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 30, "hostname": "PRDVCTTBCK91", "ip": "10.19.32.42", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 31, "hostname": "DRSVDMCSRV03", "ip": "10.19.132.28", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 32, "hostname": "DRSVDMCSRV04", "ip": "10.19.132.29", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 33, "hostname": "DRSVMEGBCK11", "ip": "10.19.132.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 34, "hostname": "DRSVMEGBCK31", "ip": "10.19.201.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 35, "hostname": "PRDVCDSMDB01", "ip": "10.19.40.11", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 36, "hostname": "PRDVCTTBCK92", "ip": "10.19.32.41", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 37, "hostname": "PRDVCTTBCK93", "ip": "10.19.32.172", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 38, "hostname": "PRDVCTTBCK94", "ip": "10.19.32.174", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 39, "hostname": "PRDVCTTCER02", "ip": "10.19.32.124", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 40, "hostname": "PRDVCTTDSM01", "ip": "10.19.40.10", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 41, "hostname": "PRDVCTTNES01", "ip": "10.19.40.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 42, "hostname": "PRDVCTTNTP02", "ip": "10.19.1.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 43, "hostname": "PRDVCTTSTM13", "ip": "10.19.32.102", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 44, "hostname": "PRDVMEGSTM13 (DR site)", "ip": "10.19.253.102", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 45, "hostname": "PRDVIISAPP11", "ip": "10.19.32.77", "os": "Microsoft Windows Server 2019", "app": "IIS", "maintWin": "Sunday 10:00 - Monday 07:30 (2st Sequence)", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: IIS-1  &  LOG-1", "remarks2": "", "by": "", "status": ""}, {"id": 46, "hostname": "PRDVIISDBS01", "ip": "10.19.32.78", "os": "Microsoft Windows Server 2019", "app": "IIS", "maintWin": "Sunday 10:00 - Monday 07:30 (1st Sequence)", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: IIS-1  &  LOG-1", "remarks2": "", "by": "", "status": ""}, {"id": 47, "hostname": "PRDVSCPSRV01", "ip": "10.19.32.84", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 48, "hostname": "PRDVSCPSRV02", "ip": "10.19.1.242", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 49, "hostname": "PRDVSCPSRV03", "ip": "10.19.1.243", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 50, "hostname": "PRDVC21APP12", "ip": "10.19.32.122", "os": "Windows 2016", "app": "C21", "maintWin": "Sunday 09:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30", "osSheet": "Win SVR 2016", "remarks1": "- Schedule update with Life21 at the same time\n- Health check refer to Section B. Cheque21 System", "remarks2": "", "by": "", "status": ""}, {"id": 51, "hostname": "PRDVL21DOC03", "ip": "10.19.32.120", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows\n** after deployment and reboot, must perform the system restart log sheet “TAHOE-L21SYSRB.xls” by ATOS operation\n** health check of Life21 application include in the log sheet\n** reboot requirement also stated in the Health Check Procedure", "remarks2": "", "by": "", "status": ""}, {"id": 52, "hostname": "PRDVL21FPS03", "ip": "10.19.32.118", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows", "remarks2": "", "by": "", "status": ""}, {"id": 53, "hostname": "PRDVL21PRT03", "ip": "10.19.32.121", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows\n** after deployment and reboot, must perform the system restart log sheet “TAHOE-L21SYSRB.xls” by ATOS operation\n** health check of Life21 application include in the log sheet\n** reboot requirement also stated in the Health Check Procedure", "remarks2": "", "by": "", "status": ""}, {"id": 54, "hostname": "PRDVCTTCER01", "ip": "10.19.32.123", "os": "Windows 2016", "app": "Cert Server", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 55, "hostname": "PRDVCTTFPS02", "ip": "10.19.32.54", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 56, "hostname": "PRDVCWSAPP11", "ip": "10.19.2.17", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 57, "hostname": "PRDVCWSAPP12", "ip": "10.19.2.18", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 58, "hostname": "PRDVCWSDBS01", "ip": "10.19.32.83", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (1st Sequence)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 59, "hostname": "PRDVDMCSRV07", "ip": "10.19.32.28", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Migrated from PRDVDMCSRV03 to 07", "remarks2": "", "by": "", "status": ""}, {"id": 60, "hostname": "PRDVDMCSRV08", "ip": "10.19.32.29", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Migrated from PRDVDMCSRV04 to 08", "remarks2": "", "by": "", "status": ""}, {"id": 61, "hostname": "PRDVHRSDBS01", "ip": "10.19.32.70", "os": "Microsoft Windows Server 2019", "app": "HR", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Dec 20 (Sun) follow Maintenance Windows\n- Refer to HR_HealthCheck.docx - HR Page", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 62, "hostname": "PRDVMEGNES01 (DR site)", "ip": "10.19.140.2", "os": "Windows 2016", "app": "Nessus", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 63, "hostname": "PRDVMEMSRV01", "ip": "10.19.32.92", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 64, "hostname": "DRSVMEGCCI01", "ip": "192.168.254.22", "os": "Microsoft Windows Server 2019", "app": "Storage", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "30 Jan 2027 - Sunday 00:00 - 03.00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 65, "hostname": "DRSVMEGLOG01", "ip": "10.19.132.39", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "30 Jan 2027 - Sunday 00:00 - 03.00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 66, "hostname": "DRSVCTTFPO11", "ip": "10.19.132.161", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 67, "hostname": "PRDVMEGNTP01 (DR site)", "ip": "10.19.201.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 68, "hostname": "PRDVMEGSEP01 (DR site)", "ip": "10.19.253.44", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 69, "hostname": "PRDVMEGSPC02 (DR site)", "ip": "10.19.204.67", "os": "Windows 2016", "app": "VE", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 70, "hostname": "PRDVMEGSTM03 (DR site)", "ip": "10.19.253.103", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 71, "hostname": "PRDVMEGSTM04 (DR site)", "ip": "10.19.249.14", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 72, "hostname": "PRDVMEGVEM01 (DR site)", "ip": "10.19.132.101", "os": "Windows 2016", "app": "VE", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 73, "hostname": "DRSVDMCAAD01", "ip": "10.19.132.33", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 14:00 - 18:00", "timeWin": "31 Jan 2027 - Sunday 14:00 - 18:00", "osSheet": "Win SRV 2022", "remarks1": "Entra ID Sync", "remarks2": "", "by": "", "status": ""}, {"id": 74, "hostname": "DRSVMEGOPC01", "ip": "10.19.132.192", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 75, "hostname": "DRSVMEGOPM01", "ip": "10.19.132.191", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 76, "hostname": "DRSVMEGPMP01", "ip": "10.19.132.35, 10.254.132.35", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 77, "hostname": "DRSVMEGSTG03", "ip": "10.250.1.193", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 78, "hostname": "PRDVCTTCCI01", "ip": "192.168.255.22", "os": "Microsoft Windows Server 2019", "app": "Storage", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 79, "hostname": "PRDVAWSAAD01", "ip": "10.19.34.21", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 80, "hostname": "PRDVAWSDMC02", "ip": "10.19.34.11", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Domain Controller server - Tahoelifeagents", "remarks2": "", "by": "", "status": ""}, {"id": 81, "hostname": "PRDVCTTBJA02", "ip": "192.168.255.226", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 82, "hostname": "PRDVCTTBJC02", "ip": "10.19.32.164", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 83, "hostname": "PRDVCTTBJR02", "ip": "10.19.32.163", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 84, "hostname": "PRDVCTTEVS01", "ip": "10.19.32.31", "os": "Windows Server 2012 R2 Standard", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will try to upgrade to Win2019", "remarks2": "", "by": "", "status": ""}, {"id": 85, "hostname": "PRDVCTTFPO13", "ip": "10.19.32.107", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 86, "hostname": "PRDVCTTFPO14", "ip": "10.19.32.108", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 87, "hostname": "PRDVCTTFPS12", "ip": "192.168.255.209", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint Database", "remarks2": "", "by": "", "status": ""}, {"id": 88, "hostname": "PRDVCTTFSM11", "ip": "192.168.255.206", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint  Security Management", "remarks2": "", "by": "", "status": ""}, {"id": 89, "hostname": "PRDVCTTKMS01", "ip": "10.19.32.49", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 90, "hostname": "PRDVCTTSPC01", "ip": "10.19.4.66", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 91, "hostname": "PRDVCTTSTG01", "ip": "10.19.40.250", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 92, "hostname": "PRDVCTTSTG02", "ip": "10.19.40.251", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 93, "hostname": "PRDVLGHSRV02", "ip": "10.19.32.129", "os": "Microsoft Windows Server 2022", "app": "LGH", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n- Refer to Investment_HealthCheck.docx - Investment System", "remarks2": "", "by": "", "status": ""}, {"id": 94, "hostname": "PRDVSGLDBS02", "ip": "10.19.32.72", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n** Shutdown sequence: 1-PRDVLSGLQAS02, 2-PRDVSGLDBS02\n** Startup sequence: 1-PRDVSGLDBS02, 2-PRDVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 95, "hostname": "PRDVSGLQAS02", "ip": "10.19.32.73", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n** Shutdown sequence: 1-PRDVLSGLQAS02, 2-PRDVSGLDBS02\n** Startup sequence: 1-PRDVSGLDBS02, 2-PRDVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 96, "hostname": "PRDVCTTLOG01", "ip": "10.19.32.194", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 97, "hostname": "PRDVCTTOPC01", "ip": "10.19.32.192", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 98, "hostname": "PRDVCTTOPM01", "ip": "10.19.32.191", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 99, "hostname": "PRDVCTTPMP01", "ip": "10.254.32.35, 10.19.32.35", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 100, "hostname": "PRDVCTTSEN01", "ip": "10.254.32.33, 10.19.32.33", "os": "Microsoft Windows Server 2019", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "Symantec Endpoint Manager", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 101, "hostname": "PRDVCTTSTG03", "ip": "10.250.1.93", "os": "Microsoft Windows Server 2022", "app": "WinTel", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 102, "hostname": "PRDVCTTSTG04", "ip": "10.250.1.94", "os": "Microsoft Windows Server 2022", "app": "WinTel", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 103, "hostname": "PRDVCTTSTM04", "ip": "10.19.32.103", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 104, "hostname": "PRDVCTTSTM05", "ip": "10.19.1.14", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 105, "hostname": "PRDVCTTSTM06", "ip": "10.19.1.15", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 106, "hostname": "PRDVDMCAAD01", "ip": "10.19.32.127", "os": "Microsoft Windows Server 2022", "app": "DMC", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Upgraded to server2022 from 2016", "remarks2": "Metadata Update", "by": "", "status": ""}], "osSheets": {"Win SVR 2012R2": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "PRDVCTTEVS01"}, {"no": 2, "hostname": "PRDVCWSAPP11"}, {"no": 3, "hostname": "PRDVCWSAPP12"}, {"no": 4, "hostname": "PRDVCWSDBS01"}]}, "Win SVR 2016": {"headers": ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVL21PRT03"}, {"no": 2, "hostname": "UATVC21APP12"}, {"no": 3, "hostname": "UATVSVNSRV02"}, {"no": 4, "hostname": "PRDVMEGNES01 (DR site)"}, {"no": 5, "hostname": "PRDVMEGSPC02 (DR site)"}, {"no": 6, "hostname": "PRDVCTTCER01"}, {"no": 7, "hostname": "PRDVC21APP12"}, {"no": 8, "hostname": "PRDVMEGVEM01 (DR site)"}, {"no": 9, "hostname": "PRDVL21PRT03"}, {"no": 10, "hostname": "PRDVL21FPS03"}, {"no": 11, "hostname": "PRDVL21DOC03"}]}, "Win SVR 2019": {"headers": ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVMEGRDS01"}, {"no": 2, "hostname": "UATVMEGSTG01"}, {"no": 3, "hostname": "UATVMEGSTG02"}, {"no": 4, "hostname": "DRSVMEGBCK11"}, {"no": 5, "hostname": "DRSVMEGBCK31"}, {"no": 6, "hostname": "UATVCWSAPP11"}, {"no": 7, "hostname": "UATVCWSAPP12"}, {"no": 8, "hostname": "UATVCWSDBS01"}, {"no": 9, "hostname": "UATVIISAPP11"}, {"no": 10, "hostname": "UATVIISDBS01"}, {"no": 11, "hostname": "UATVL21FPS02"}, {"no": 12, "hostname": "UATVSCPSRV01"}, {"no": 13, "hostname": "UATVSCPSRV02"}, {"no": 14, "hostname": "UATVSCPSRV03"}, {"no": 15, "hostname": "PRDVCTTBCK01"}, {"no": 16, "hostname": "PRDVCTTBCK11"}, {"no": 17, "hostname": "PRDVCTTBCK12"}, {"no": 18, "hostname": "PRDVCTTBCK31"}, {"no": 19, "hostname": "PRDVCTTBCK32"}, {"no": 20, "hostname": "PRDVCTTBCK91"}, {"no": 21, "hostname": "PRDVCTTBCK92"}, {"no": 22, "hostname": "PRDVCTTNES01"}, {"no": 23, "hostname": "PRDVCTTSPC01"}, {"no": 24, "hostname": "PRDVCTTSTG01"}, {"no": 25, "hostname": "PRDVCTTSTG02"}, {"no": 26, "hostname": "PRDVCTTSTM04"}, {"no": 27, "hostname": "PRDVCTTSTM05"}, {"no": 28, "hostname": "PRDVCTTSTM06"}, {"no": 29, "hostname": "PRDVMEGNTP01 (DR site)"}, {"no": 30, "hostname": "PRDVMEGSTM03 (DR site)"}, {"no": 31, "hostname": "PRDVMEGSTM04 (DR site)"}, {"no": 32, "hostname": "PRDVMEGSEP01 (DR site)"}, {"no": 33, "hostname": "PRDVMEMSRV01"}, {"no": 34, "hostname": "UATVMEGFPS01"}, {"no": 35, "hostname": "DEVDMCSRV02"}, {"no": 36, "hostname": "DRSVDMCSRV03"}, {"no": 37, "hostname": "DRSVDMCSRV04"}, {"no": 38, "hostname": "PRDVCTTFPS02"}, {"no": 39, "hostname": "PRDVDMCSRV07"}, {"no": 40, "hostname": "PRDVDMCSRV08"}, {"no": 41, "hostname": "PRDVHRSDBS01"}, {"no": 42, "hostname": "PRDVMEGSTM13 (DR site)"}, {"no": 43, "hostname": "PRDVCTTNTP02"}, {"no": 44, "hostname": "PRDVCTTSTM13"}, {"no": 45, "hostname": "PRDVCDSMDB01"}, {"no": 46, "hostname": "PRDVCTTDSM01"}, {"no": 47, "hostname": "PRDVIISAPP11"}, {"no": 48, "hostname": "PRDVIISDBS01"}, {"no": 49, "hostname": "PRDVSCPSRV01"}, {"no": 50, "hostname": "PRDVSCPSRV02"}, {"no": 51, "hostname": "PRDVSCPSRV03"}, {"no": 52, "hostname": "PRDVCWSAPP11"}, {"no": 53, "hostname": "PRDVCWSAPP12"}, {"no": 54, "hostname": "PRDVCWSDBS01"}]}, "Win SRV 2022": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVAWSDMC02"}, {"no": 2, "hostname": "UATVLGHSRV02"}, {"no": 3, "hostname": "UATVSGLSDBS02"}, {"no": 4, "hostname": "UATVSGLQAS02"}, {"no": 5, "hostname": "PRDVAWSDMC02"}, {"no": 6, "hostname": "PRDVAWSAAD01"}, {"no": 7, "hostname": "PRDVCTTKMS01"}, {"no": 8, "hostname": "PRDVDMCAAD01"}, {"no": 9, "hostname": "PRDVCTTFPO13"}, {"no": 10, "hostname": "PRDVCTTFPO14"}, {"no": 11, "hostname": "PRDVCTTBJA02"}, {"no": 12, "hostname": "PRDVCTTBJR02"}, {"no": 13, "hostname": "PRDVCTTBJC02"}, {"no": 14, "hostname": "PRDVCTTFSM11"}, {"no": 15, "hostname": "PRDVCTTFPS12"}, {"no": 16, "hostname": "DRSVCTTFPO11"}, {"no": 17, "hostname": "PRDVCTTBCK93"}, {"no": 18, "hostname": "PRDVCTTBCK94"}, {"no": 19, "hostname": "PRDVCTTCER02"}, {"no": 20, "hostname": "PRDVLGHSRV02"}, {"no": 21, "hostname": "PRDVSGLDBS02"}, {"no": 22, "hostname": "PRDVSGLQAS02"}, {"no": 23, "hostname": "DRSVDMCAAD01"}]}, "Ripen Infra SVR": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "DRSVMEGCCI01"}, {"no": 2, "hostname": "PRDVCTTCCI01"}, {"no": 3, "hostname": "DRSVMEGPMP01"}, {"no": 4, "hostname": "PRDVCTTPMP01"}, {"no": 5, "hostname": "PRDVCTTSEN01"}, {"no": 6, "hostname": "PRDVCTTSTG03"}, {"no": 7, "hostname": "PRDVCTTSTG04"}, {"no": 8, "hostname": "PRDVCTTLOG01"}, {"no": 9, "hostname": "PRDVCTTOPC01"}, {"no": 10, "hostname": "PRDVCTTOPM01"}, {"no": 11, "hostname": "DRSVMEGSTG03"}, {"no": 12, "hostname": "DRSVMEGLOG01"}, {"no": 13, "hostname": "DRSVMEGOPC01"}, {"no": 14, "hostname": "DRSVMEGOPM01"}]}}};
+// ============================================================================
+// FIREBASE REALTIME DATABASE CONFIG (Optional: hardcode URL here so everyone
+// connects automatically without pasting anything!)
+// Example: 'https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+// ============================================================================
+const HARDCODED_FIREBASE_URL = '';
+const HARDCODED_FIREBASE_ROOM = 'patching_schedule_main';
+
+const STORAGE_KEY = 'patching_schedule_v40_state';
+const AUDIT_KEY = 'patching_schedule_v40_audit';
+const FB_CFG_KEY = 'patching_schedule_firebase_cfg';
+
+let appState = loadState();
+let auditLogs = loadAuditLogs();
+let selectedIds = new Set();
+let isExpandedMode = false;
+let chartsVisible = true;
+
+let fbConfig = loadFirebaseConfig();
+let fbEventSource = null;
+let isApplyingRemoteUpdate = false;
+let clientSessionId = 'client_' + Math.random().toString(36).slice(2, 10);
+
+function loadFirebaseConfig() {
+  // 1. Check URL hash (#fb=BASE64_JSON) so shared links auto-configure teammates
+  try {
+    if (window.location.hash && window.location.hash.includes('fb=')) {
+      const m = window.location.hash.match(/fb=([^&]+)/);
+      if (m && m[1]) {
+        const decoded = JSON.parse(atob(decodeURIComponent(m[1])));
+        if (decoded && decoded.url) {
+          localStorage.setItem(FB_CFG_KEY, JSON.stringify(decoded));
+          return decoded;
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 2. Check hardcoded URL in file
+  if (HARDCODED_FIREBASE_URL && HARDCODED_FIREBASE_URL.trim()) {
+    return {
+      url: HARDCODED_FIREBASE_URL.trim().replace(/\/$/, ''),
+      room: (HARDCODED_FIREBASE_ROOM || 'patching_schedule_main').trim()
+    };
+  }
+
+  // 3. Check localStorage
+  try {
+    const raw = localStorage.getItem(FB_CFG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.url) return parsed;
+    }
+  } catch (e) {}
+  return { url: '', room: 'patching_schedule_main' };
+}
+
+function setSyncIndicator(state, text) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncStatusText');
+  if (!dot || !label) return;
+  const colors = {
+    live: '#10B981',
+    syncing: '#38BDF8',
+    error: '#EF4444',
+    local: '#F59E0B'
+  };
+  dot.style.background = colors[state] || '#F59E0B';
+  label.textContent = text;
+}
+
+function getFirebaseEndpoint() {
+  if (!fbConfig || !fbConfig.url) return '';
+  const base = fbConfig.url.replace(/\/$/, '');
+  const room = (fbConfig.room || 'patching_schedule_main').replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${base}/${room}.json`;
+}
+
+async function pushStateToFirebase() {
+  const endpoint = getFirebaseEndpoint();
+  if (!endpoint || isApplyingRemoteUpdate) return;
+  setSyncIndicator('syncing', 'Syncing...');
+  try {
+    const payload = {
+      servers: appState.servers,
+      osSheets: appState.osSheets || DEFAULT_DATA.osSheets,
+      auditLogs: auditLogs.slice(0, 80),
+      updatedBy: clientSessionId,
+      updatedAt: Date.now()
+    };
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    setSyncIndicator('live', 'Live Sync ON');
+  } catch (err) {
+    console.error('Firebase sync error:', err);
+    setSyncIndicator('error', 'Sync Error (Check Rules)');
+    showToast('⚠️ Firebase sync failed: ' + err.message);
+  }
+}
+
+function startFirebaseRealtimeStream() {
+  if (fbEventSource) {
+    fbEventSource.close();
+    fbEventSource = null;
+  }
+  const endpoint = getFirebaseEndpoint();
+  if (!endpoint) {
+    setSyncIndicator('local', 'Local Mode (Setup Live Sync)');
+    return;
+  }
+
+  setSyncIndicator('syncing', 'Connecting...');
+  try {
+    fbEventSource = new EventSource(endpoint);
+
+    const handleStreamPayload = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (!msg || msg.data === undefined) return;
+        // Root snapshot on initial connect or full PUT
+        if (msg.path === '/') {
+          if (msg.data === null) {
+            // Database room is empty -> seed it with our current schedule!
+            pushStateToFirebase();
+            return;
+          }
+          if (msg.data.updatedBy === clientSessionId) {
+            setSyncIndicator('live', 'Live Sync ON');
+            return;
+          }
+          if (Array.isArray(msg.data.servers)) {
+            isApplyingRemoteUpdate = true;
+            appState.servers = msg.data.servers;
+            if (Array.isArray(msg.data.auditLogs)) {
+              auditLogs = msg.data.auditLogs;
+              localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
+              updateAuditUI();
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            renderTable();
+            isApplyingRemoteUpdate = false;
+            showToast('🔄 Live update received from teammate');
+          }
+          setSyncIndicator('live', 'Live Sync ON');
+        } else {
+          // Partial patch event -> re-fetch full state cleanly
+          fetch(endpoint).then(r => r.json()).then(remoteData => {
+            if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
+              isApplyingRemoteUpdate = true;
+              appState.servers = remoteData.servers;
+              if (Array.isArray(remoteData.auditLogs)) {
+                auditLogs = remoteData.auditLogs;
+                updateAuditUI();
+              }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+              renderTable();
+              isApplyingRemoteUpdate = false;
+              showToast('🔄 Live update received from teammate');
+            }
+            setSyncIndicator('live', 'Live Sync ON');
+          }).catch(() => {});
+        }
+      } catch (parseErr) {}
+    };
+
+    fbEventSource.addEventListener('put', handleStreamPayload);
+    fbEventSource.addEventListener('patch', handleStreamPayload);
+    fbEventSource.onopen = () => setSyncIndicator('live', 'Live Sync ON');
+    fbEventSource.onerror = () => {
+      setSyncIndicator('error', 'Reconnecting...');
+    };
+  } catch (e) {
+    setSyncIndicator('error', 'Stream Error');
+  }
+}
+
+function openSyncModal() {
+  document.getElementById('firebaseDbUrlInput').value = fbConfig.url || '';
+  document.getElementById('firebaseRoomInput').value = fbConfig.room || 'patching_schedule_main';
+  updateShareLinkPreview();
+  document.getElementById('syncModal').classList.add('open');
+}
+
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('open');
+}
+
+function updateShareLinkPreview() {
+  const url = document.getElementById('firebaseDbUrlInput').value.trim();
+  const room = document.getElementById('firebaseRoomInput').value.trim() || 'patching_schedule_main';
+  const box = document.getElementById('shareLinkBox');
+  if (!url) {
+    box.style.display = 'none';
+    return;
+  }
+  const encoded = encodeURIComponent(btoa(JSON.stringify({ url: url.replace(/\/$/, ''), room })));
+  const baseHref = window.location.href.split('#')[0];
+  document.getElementById('shareTeamUrlOutput').value = `${baseHref}#fb=${encoded}`;
+  box.style.display = 'block';
+}
+
+function copyTeamShareUrl() {
+  const val = document.getElementById('shareTeamUrlOutput').value;
+  sharePointSafeCopy(val, '🔗 Team live-sync URL copied! Share this link with Andy & Don.', '🔗 Team Share Link');
+}
+
+function saveAndConnectFirebase() {
+  const url = document.getElementById('firebaseDbUrlInput').value.trim().replace(/\/$/, '');
+  const room = (document.getElementById('firebaseRoomInput').value.trim() || 'patching_schedule_main').replace(/[^a-zA-Z0-9_-]/g, '_');
+  if (!url || !url.startsWith('https://')) {
+    showToast('⚠️ Please enter a valid https:// Firebase Realtime Database URL');
+    return;
+  }
+  fbConfig = { url, room };
+  localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+  updateShareLinkPreview();
+  startFirebaseRealtimeStream();
+  showToast('⚡ Connected to Firebase Live Sync!');
+}
+
+function disconnectFirebase() {
+  if (fbEventSource) {
+    fbEventSource.close();
+    fbEventSource = null;
+  }
+  fbConfig = { url: '', room: 'patching_schedule_main' };
+  localStorage.removeItem(FB_CFG_KEY);
+  if (window.location.hash.includes('fb=')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+  setSyncIndicator('local', 'Local Mode (Setup Live Sync)');
+  closeSyncModal();
+  showToast('Disconnected — switched back to Local Browser storage');
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('patching_schedule_v34_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.servers) && parsed.servers.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
+  if (!isApplyingRemoteUpdate && getFirebaseEndpoint()) {
+    pushStateToFirebase();
+  }
+}
+
+function loadAuditLogs() {
+  try {
+    const raw = localStorage.getItem(AUDIT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function addAuditEntry(msg) {
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' +
+             now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  auditLogs.unshift({ ts, msg });
+  if (auditLogs.length > 120) auditLogs.pop();
+  try { localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs)); } catch (e) {}
+  updateAuditUI();
+}
+
+function updateAuditUI() {
+  document.getElementById('logCountBadge').textContent = auditLogs.length;
+  const list = document.getElementById('auditLogList');
+  if (!list) return;
+  if (auditLogs.length === 0) {
+    list.innerHTML = '<div style="color:#64748B;text-align:center;padding:24px;">No edits recorded yet in this session.</div>';
+    return;
+  }
+  list.innerHTML = auditLogs.map(item => `
+    <div class="log-item">
+      <div class="log-time">${escapeHtml(item.ts)}</div>
+      <div>${escapeHtml(item.msg)}</div>
+    </div>
+  `).join('');
+}
+
+function toggleAnalytics() {
+  chartsVisible = !chartsVisible;
+  document.getElementById('analyticsPanel').classList.toggle('hidden', !chartsVisible);
+  document.getElementById('toggleChartsBtn').classList.toggle('active', chartsVisible);
+}
+
+function toggleRowExpansion() {
+  isExpandedMode = !isExpandedMode;
+  document.body.classList.toggle('expanded-rows', isExpandedMode);
+  const btn = document.getElementById('toggleExpandBtn');
+  btn.classList.toggle('active', isExpandedMode);
+  btn.textContent = isExpandedMode ? '↕ Compact Scroll Rows' : '↕ Expand Full Text';
+  applyRowHeights();
+}
+
+function applyRowHeights() {
+  document.querySelectorAll('textarea.editable-textarea').forEach(el => {
+    if (isExpandedMode) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight + 2) + 'px';
+    } else {
+      el.style.height = '';
+    }
+  });
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+const MONTHS = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+  apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+  aug: 7, august: 7, sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11
+};
+
+function getISOWeekInfo(dateObj) {
+  const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { isoYear: d.getUTCFullYear(), isoWeek: weekNo };
+}
+
+function formatWeekendRange(isoYear, isoWeek) {
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (isoWeek - 1) * 7);
+  const sat = new Date(monday);
+  sat.setUTCDate(monday.getUTCDate() + 5);
+  const sun = new Date(monday);
+  sun.setUTCDate(monday.getUTCDate() + 6);
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const sDay = String(sat.getUTCDate()).padStart(2, '0');
+  const eDay = String(sun.getUTCDate()).padStart(2, '0');
+  const sMon = monthNames[sat.getUTCMonth()];
+  const eMon = monthNames[sun.getUTCMonth()];
+  const yr = sun.getUTCFullYear();
+  return sMon === eMon ? `${sDay}-${eDay} ${eMon} ${yr}` : `${sDay} ${sMon}-${eDay} ${eMon} ${yr}`;
+}
+
+const _twMetaCache = new Map();
+function parseTimeWindowMeta(twRaw) {
+  const key = String(twRaw || '');
+  if (_twMetaCache.has(key)) return _twMetaCache.get(key);
+  const clean = key.replace(/\s+/g, ' ').trim();
+  const m = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?\s+([A-Za-z]{3,9})[\s,-]+(\d{4})/i);
+  if (m) {
+    const day1 = parseInt(m[1], 10);
+    const monStr = m[3].toLowerCase();
+    const year = parseInt(m[4], 10);
+    if (monStr in MONTHS) {
+      const monIdx = MONTHS[monStr];
+      const dt = new Date(year, monIdx, day1);
+      const { isoYear, isoWeek } = getISOWeekInfo(dt);
+      const wkPad = String(isoWeek).padStart(2, '0');
+      const rangeStr = formatWeekendRange(isoYear, isoWeek);
+      const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${clean}`;
+      const res = {
+        weekKey: `${isoYear}-W${wkPad}`,
+        shortWeek: `W${wkPad}`,
+        weekLabel: `Week ${wkPad} (${rangeStr})`,
+        sortKey
+      };
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+  const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', sortKey: '9999-99-99_' + clean };
+  _twMetaCache.set(key, fallback);
+  return fallback;
+}
+
+function detectEnvironment(hostname) {
+  const h = String(hostname || '').toUpperCase();
+  if (h.includes('DR SITE') || h.startsWith('DRSV')) return 'DR';
+  if (h.startsWith('UAT')) return 'UAT';
+  if (h.startsWith('DEV')) return 'DEV';
+  return 'PRD';
+}
+
+function normalizeWinStr(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[–—]/g, '-')
+    .replace(/\./g, ':')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isTimeMatchingMaint(maintWin, timeWin) {
+  const mw = normalizeWinStr(maintWin);
+  const tw = normalizeWinStr(timeWin);
+  if (!mw || !tw) return true;
+  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/\bto\b/g, '-').replace(/\s*-\s*/g, '-').trim();
+  const twCore = tw.replace(/\(.*?\)/g, '').replace(/\bto\b/g, '-').replace(/\s*-\s*/g, '-').trim();
+  if (mwCore && twCore.includes(mwCore)) return true;
+
+  const mwTimes = mw.match(/\d{1,2}:\d{2}/g) || [];
+  const twTimes = tw.match(/\d{1,2}:\d{2}/g) || [];
+  const mwHasSat = mw.includes('saturday');
+  const mwHasSun = mw.includes('sunday');
+  const twHasSat = tw.includes('saturday');
+
+  if (mwHasSun && !mwHasSat && twHasSat) return false;
+  if (mwTimes.length >= 2 && twTimes.length >= 2) {
+    const mwStart = mwTimes[0], mwEnd = mwTimes[1];
+    const twStart = twTimes[0], twEnd = twTimes[1];
+    if (mwStart !== twStart || mwEnd !== twEnd) return false;
+  }
+  return true;
+}
+
+function detectSmartFlags(srv) {
+  const flags = [];
+  const combinedText = `${srv.maintWin} ${srv.remarks1}`.toLowerCase();
+  if (combinedText.includes('1st sequence') || combinedText.includes('startup sequence: 1-')) {
+    flags.push({ cls: 'tag-seq1', text: 'SEQ 1', title: '1st Sequence — Patch/Reboot first' });
+  } else if (combinedText.includes('2nd sequence') || combinedText.includes('2st sequence')) {
+    flags.push({ cls: 'tag-seq2', text: 'SEQ 2', title: '2nd Sequence — Patch/Reboot after SEQ 1' });
+  } else if (combinedText.includes('shutdown sequence')) {
+    flags.push({ cls: 'tag-seq2', text: 'Ordered Seq', title: 'Follow strict shutdown/startup sequence in Remarks' });
+  }
+
+  if (!isTimeMatchingMaint(srv.maintWin, srv.timeWin)) {
+    flags.push({
+      cls: 'tag-warn',
+      text: 'Window Mismatch',
+      title: `Time Windows ("${srv.timeWin}") differs from Maintenance Windows ("${srv.maintWin}"). Update Time Windows to match to clear this alert.`
+    });
+  }
+  return flags;
+}
+
+const PASTEL_PALETTE = [
+  '#FFF5F5', '#F0F7FF', '#F2FBF5', '#FFFBEB', '#F7F5EB',
+  '#FAF5FF', '#F0FDFA', '#FFF7ED', '#F8FAFC', '#F3F4F6'
+];
+
+function getSortedAndGrouped() {
+  const enriched = appState.servers.map(s => {
+    const meta = parseTimeWindowMeta(s.timeWin);
+    const env = detectEnvironment(s.hostname);
+    const flags = detectSmartFlags(s);
+    return { ...s, ...meta, env, flags };
+  });
+
+  enriched.sort((a, b) => {
+    if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
+    if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
+    return a.hostname.localeCompare(b.hostname);
+  });
+
+  const uniqueWeeks = [...new Set(enriched.map(x => x.weekKey))];
+  const weekColorMap = {};
+  const weekLabelMap = {};
+  const weekShortMap = {};
+  const weekCountMap = {};
+
+  uniqueWeeks.forEach((wk, idx) => {
+    weekColorMap[wk] = PASTEL_PALETTE[idx % PASTEL_PALETTE.length];
+  });
+
+  enriched.forEach(item => {
+    weekLabelMap[item.weekKey] = item.weekLabel;
+    weekShortMap[item.weekKey] = item.shortWeek;
+    weekCountMap[item.weekKey] = (weekCountMap[item.weekKey] || 0) + 1;
+  });
+
+  return { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap };
+}
+
+function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
+  const maxWeekTotal = Math.max(1, ...uniqueWeeks.map(wk => enriched.filter(s => s.weekKey === wk).length));
+  const weeklyChartEl = document.getElementById('weeklyChart');
+  weeklyChartEl.innerHTML = uniqueWeeks.map(wk => {
+    const items = enriched.filter(s => s.weekKey === wk);
+    const tot = items.length;
+    const p = items.filter(s => s.status === 'Patched').length;
+    const f = items.filter(s => s.status === 'Failed').length;
+    const pend = tot - p - f;
+    const heightPct = Math.round((tot / maxWeekTotal) * 86);
+    const pPct = tot ? (p / tot) * 100 : 0;
+    const pendPct = tot ? (pend / tot) * 100 : 0;
+    const fPct = tot ? (f / tot) * 100 : 0;
+    return `
+      <div class="w-bar-col" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed)" onclick="quickFilterWeek('${wk}')">
+        <div class="w-bar-count">${tot}</div>
+        <div class="w-bar-stack" style="height:${Math.max(8, heightPct)}px;">
+          <div class="seg-patched" style="height:${pPct}%;"></div>
+          <div class="seg-pending" style="height:${pendPct}%;"></div>
+          <div class="seg-failed" style="height:${fPct}%;"></div>
+        </div>
+        <div class="w-bar-label">${weekShortMap[wk]}</div>
+      </div>
+    `;
+  }).join('');
+
+  const total = Math.max(1, enriched.length);
+  const sheetColors = {
+    'Win SVR 2019': '#2563EB',
+    'Win SRV 2022': '#0D9488',
+    'Ripen Infra SVR': '#7C3AED',
+    'Win SVR 2016': '#D97706',
+    'Win SVR 2012R2': '#DC2626'
+  };
+  const osHtml = Object.entries(sheetColors).map(([sh, color]) => {
+    const cnt = enriched.filter(s => s.osSheet === sh).length;
+    const pct = Math.round((cnt / total) * 100);
+    return `
+      <div class="h-bar-row">
+        <div class="h-bar-meta"><span>${sh}</span><span>${cnt} (${pct}%)</span></div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('osEnvChart').innerHTML = osHtml;
+
+  const engItems = [
+    { label: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, color: '#0284C7' },
+    { label: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, color: '#F97316' },
+    { label: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, color: '#8B5CF6' },
+    { label: 'Unassigned', cnt: enriched.filter(s => !s.by).length, color: '#94A3B8' },
+    { label: 'Production (PRD) Servers', cnt: enriched.filter(s => s.env === 'PRD').length, color: '#1E3A5F' }
+  ];
+  document.getElementById('engineerChart').innerHTML = engItems.map(item => {
+    const pct = Math.round((item.cnt / total) * 100);
+    return `
+      <div class="h-bar-row">
+        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt} (${pct}%)</span></div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function quickFilterWeek(wk) {
+  const el = document.getElementById('filterWeek');
+  el.value = (el.value === wk) ? '' : wk;
+  renderTable();
+}
+
+let _searchTimer = null;
+function debouncedRender() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(renderTable, 120);
+}
+
+function renderTable() {
+  const { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap } = getSortedAndGrouped();
+  renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap);
+
+  const filterWeekEl = document.getElementById('filterWeek');
+  const prevWeekVal = filterWeekEl.value;
+  filterWeekEl.innerHTML = '<option value="">All Weeks (' + uniqueWeeks.length + ' batches)</option>';
+  uniqueWeeks.forEach(wk => {
+    const opt = document.createElement('option');
+    opt.value = wk;
+    opt.textContent = `${weekLabelMap[wk]} — ${weekCountMap[wk]} servers`;
+    filterWeekEl.appendChild(opt);
+  });
+  filterWeekEl.value = uniqueWeeks.includes(prevWeekVal) ? prevWeekVal : '';
+
+  const pillsEl = document.getElementById('weekPills');
+  pillsEl.innerHTML = '<span class="week-pills-label">📅 Weekly Batches:</span>';
+  uniqueWeeks.forEach(wk => {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'week-pill' + (filterWeekEl.value === wk ? ' active' : '');
+    pill.style.background = weekColorMap[wk];
+    pill.innerHTML = `<span>${weekLabelMap[wk]}</span><span class="badge">${weekCountMap[wk]}</span>`;
+    pill.onclick = () => quickFilterWeek(wk);
+    pillsEl.appendChild(pill);
+  });
+
+  const total = enriched.length;
+  const patched = enriched.filter(s => s.status === 'Patched').length;
+  const failed = enriched.filter(s => s.status === 'Failed').length;
+  const pending = total - patched - failed;
+  const alertCnt = enriched.filter(s => s.flags.length > 0).length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-title">Total Scheduled Rows</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">${uniqueWeeks.length} execution weekends · ${enriched.filter(s=>s.env==='PRD').length} PRD</div>
+    </div>
+    <div class="kpi-card" style="border-left-color:#10B981;">
+      <div class="kpi-title">Patched Completed</div>
+      <div class="kpi-value" style="color:#059669;">${patched}</div>
+      <div class="kpi-sub">${total ? Math.round((patched/total)*100) : 0}% completion rate</div>
+    </div>
+    <div class="kpi-card" style="border-left-color:#3B82F6;">
+      <div class="kpi-title">Pending / Remaining</div>
+      <div class="kpi-value" style="color:#2563EB;">${pending}</div>
+      <div class="kpi-sub">${failed > 0 ? failed + ' Failed — review required' : '0 Failed'}</div>
+    </div>
+    <div class="kpi-card" style="border-left-color:#F59E0B;">
+      <div class="kpi-title">Sequence &amp; Window Flags</div>
+      <div class="kpi-value" style="color:#B45309;">${alertCnt}</div>
+      <div class="kpi-sub">Ordered reboot sequence &amp; window checks</div>
+    </div>
+  `;
+
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const fWeek = filterWeekEl.value;
+  const fEnv = document.getElementById('filterEnv').value;
+  const fSheet = document.getElementById('filterSheet').value;
+  const fBy = document.getElementById('filterBy').value;
+  const fStatus = document.getElementById('filterStatus').value;
+
+  const filtered = enriched.filter(s => {
+    if (fWeek && s.weekKey !== fWeek) return false;
+    if (fEnv && s.env !== fEnv) return false;
+    if (fSheet && s.osSheet !== fSheet) return false;
+    if (fBy === '__UNASSIGNED__' && s.by !== '') return false;
+    if (fBy && fBy !== '__UNASSIGNED__' && s.by !== fBy) return false;
+    if (fStatus === '__PENDING__' && s.status !== '') return false;
+    if (fStatus === '__ALERTS__' && s.flags.length === 0) return false;
+    if (fStatus && !['__PENDING__','__ALERTS__'].includes(fStatus) && s.status !== fStatus) return false;
+    if (q) {
+      const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  window._lastFilteredIds = filtered.map(x => x.id);
+
+  const tbody = document.getElementById('scheduleBody');
+  const rowsHtml = [];
+
+  let currentWk = null;
+  const globalNoMap = {};
+  enriched.forEach((s, i) => globalNoMap[s.id] = i + 1);
+
+  const shownCountByWeek = {};
+  filtered.forEach(x => { shownCountByWeek[x.weekKey] = (shownCountByWeek[x.weekKey] || 0) + 1; });
+
+  filtered.forEach(srv => {
+    if (srv.weekKey !== currentWk) {
+      currentWk = srv.weekKey;
+      const totalInWeek = weekCountMap[currentWk] || 0;
+      const shownInWeek = shownCountByWeek[currentWk] || 0;
+      const countText = (shownInWeek === totalInWeek)
+        ? `${totalInWeek} servers`
+        : `${shownInWeek} shown of ${totalInWeek} servers`;
+
+      rowsHtml.push(`
+        <tr class="week-banner">
+          <td colspan="14">
+            <div class="banner-inner">
+              <span>📅 ${srv.weekLabel}</span>
+              <span class="banner-count-pill">Total Servers: ${countText}</span>
+              <button type="button" class="banner-mini-btn" onclick="selectWeekServers('${currentWk}')">☑ Select Week</button>
+              <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'hostname')">📋 Copy Hostnames</button>
+              <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'ip')">🌐 Copy IPs</button>
+            </div>
+          </td>
+        </tr>`);
+    }
+
+    const rowBg = weekColorMap[srv.weekKey];
+    const rowCls = 'data-row' + (selectedIds.has(srv.id) ? ' selected-row' : '');
+    const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : '');
+    const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : ''));
+    const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : 'tag-env-dr');
+    const tagsHtml = [
+      `<span class="smart-tag ${envBadgeCls}">${srv.env}</span>`,
+      ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
+    ].join('');
+
+    rowsHtml.push(`
+      <tr class="${rowCls}" style="background-color:${rowBg};">
+        <td class="center sticky-col-1" style="background:${rowBg};">
+          <input type="checkbox" ${selectedIds.has(srv.id) ? 'checked' : ''} onclick="handleRowCheckboxClick(event, ${srv.id})" />
+        </td>
+        <td class="center sticky-col-2" style="font-weight:700;color:#475569;background:${rowBg};">${globalNoMap[srv.id]}</td>
+        <td class="sticky-col-3" style="background:${rowBg};">
+          <input class="editable-cell" style="font-weight:700;color:#0F172A;" value="${escapeHtml(srv.hostname)}" onchange="updateField(${srv.id}, 'hostname', this.value)" />
+          <div class="tag-row">${tagsHtml}</div>
+        </td>
+        <td><input class="editable-cell center mono" value="${escapeHtml(srv.ip)}" onchange="updateField(${srv.id}, 'ip', this.value)" /></td>
+        <td><input class="editable-cell" value="${escapeHtml(srv.os)}" onchange="updateField(${srv.id}, 'os', this.value)" /></td>
+        <td><input class="editable-cell" value="${escapeHtml(srv.app)}" onchange="updateField(${srv.id}, 'app', this.value)" /></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea></td>
+        <td class="center">
+          <select class="editable-cell center" onchange="updateField(${srv.id}, 'osSheet', this.value)">
+            ${['Win SVR 2012R2','Win SVR 2016','Win SVR 2019','Win SRV 2022','Ripen Infra SVR'].map(sh =>
+              `<option value="${sh}" ${srv.osSheet === sh ? 'selected' : ''}>${sh}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
+        <td class="center">
+          <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
+            <option value="" ${srv.by === '' ? 'selected' : ''}></option>
+            <option value="Andy" ${srv.by === 'Andy' ? 'selected' : ''}>Andy</option>
+            <option value="Don" ${srv.by === 'Don' ? 'selected' : ''}>Don</option>
+            <option value="Fung" ${srv.by === 'Fung' ? 'selected' : ''}>Fung</option>
+          </select>
+        </td>
+        <td class="center">
+          <select class="editable-cell center ${statusClass}" onchange="updateField(${srv.id}, 'status', this.value)">
+            <option value="" ${srv.status === '' ? 'selected' : ''}></option>
+            <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
+            <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
+          </select>
+        </td>
+        <td class="center">
+          <button type="button" class="del-btn" title="Remove server" onclick="deleteServer(${srv.id})">✕</button>
+        </td>
+      </tr>`);
+  });
+
+  tbody.innerHTML = rowsHtml.join('');
+
+  syncStickyOffsets();
+  updateBulkBar();
+  if (isExpandedMode) requestAnimationFrame(applyRowHeights);
+}
+
+/* Selection & Bulk Actions (with Shift+Click Range Support) */
+let lastClickedRowId = null;
+
+function handleRowCheckboxClick(event, id) {
+  const checked = event.target.checked;
+  const visibleIds = window._lastFilteredIds || [];
+  if (event.shiftKey && lastClickedRowId !== null && visibleIds.includes(lastClickedRowId) && visibleIds.includes(id)) {
+    const start = visibleIds.indexOf(lastClickedRowId);
+    const end = visibleIds.indexOf(id);
+    const [lo, hi] = start < end ? [start, end] : [end, start];
+    for (let i = lo; i <= hi; i++) {
+      if (checked) selectedIds.add(visibleIds[i]);
+      else selectedIds.delete(visibleIds[i]);
+    }
+  } else {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+  }
+  lastClickedRowId = id;
+  renderTable();
+}
+
+function moveSelectedToSchedule() {
+  if (selectedIds.size === 0) return;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+  if (!twVal) {
+    showToast('⚠️ Please enter or select a Target Schedule / Time Window first');
+    document.getElementById('bulkTimeWin').focus();
+    return;
+  }
+  let count = 0;
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      srv.timeWin = twVal;
+      count++;
+    }
+  });
+  const meta = parseTimeWindowMeta(twVal);
+  addAuditEntry(`Moved ${count} servers to schedule "${twVal}" (${meta.weekLabel})`);
+  document.getElementById('bulkTimeWin').value = '';
+  saveState();
+  renderTable();
+  showToast(`📅 Moved ${count} servers → ${meta.weekLabel}`);
+}
+
+function copySelectedToSchedule() {
+  if (selectedIds.size === 0) return;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+  if (!twVal) {
+    showToast('⚠️ Please enter or select a Target Schedule / Time Window to copy into');
+    document.getElementById('bulkTimeWin').focus();
+    return;
+  }
+  let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
+  const clones = [];
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      maxId += 1;
+      clones.push({
+        ...JSON.parse(JSON.stringify(srv)),
+        id: maxId,
+        timeWin: twVal,
+        by: '',
+        status: ''
+      });
+    }
+  });
+  appState.servers.push(...clones);
+  const meta = parseTimeWindowMeta(twVal);
+  addAuditEntry(`Copied ${clones.length} servers into new schedule "${twVal}" (${meta.weekLabel})`);
+  document.getElementById('bulkTimeWin').value = '';
+  clearSelection();
+  saveState();
+  renderTable();
+  showToast(`📑 Copied ${clones.length} servers into ${meta.weekLabel}`);
+}
+
+function toggleSelectAllVisible(checked) {
+  (window._lastFilteredIds || []).forEach(id => {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+  });
+  renderTable();
+}
+
+function selectWeekServers(weekKey) {
+  const { enriched } = getSortedAndGrouped();
+  const weekItems = enriched.filter(s => s.weekKey === weekKey);
+  const allAlreadySelected = weekItems.every(s => selectedIds.has(s.id));
+  weekItems.forEach(s => {
+    if (allAlreadySelected) selectedIds.delete(s.id);
+    else selectedIds.add(s.id);
+  });
+  renderTable();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  const masterCb = document.getElementById('selectAllVisible');
+  if (masterCb) masterCb.checked = false;
+  renderTable();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  document.getElementById('selectedCount').textContent = selectedIds.size;
+  bar.classList.toggle('visible', selectedIds.size > 0);
+}
+
+function applyBulkUpdate() {
+  if (selectedIds.size === 0) return;
+  const byVal = document.getElementById('bulkBy').value;
+  const statusVal = document.getElementById('bulkStatus').value;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+
+  let count = 0;
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      if (byVal !== '__KEEP__') srv.by = byVal;
+      if (statusVal !== '__KEEP__') srv.status = statusVal;
+      if (twVal) srv.timeWin = twVal;
+      count++;
+    }
+  });
+
+  const changes = [];
+  if (byVal !== '__KEEP__') changes.push(`By=${byVal || 'Blank'}`);
+  if (statusVal !== '__KEEP__') changes.push(`Status=${statusVal || 'Blank'}`);
+  if (twVal) changes.push(`Window="${twVal}"`);
+  if (changes.length > 0) {
+    addAuditEntry(`Bulk updated ${count} servers (${changes.join(', ')})`);
+  }
+
+  document.getElementById('bulkBy').value = '__KEEP__';
+  document.getElementById('bulkStatus').value = '__KEEP__';
+  document.getElementById('bulkTimeWin').value = '';
+  saveState();
+  renderTable();
+  showToast(`✓ Updated ${count} selected servers`);
+}
+
+function bulkDeleteSelected() {
+  if (selectedIds.size === 0) return;
+  const count = selectedIds.size;
+  showCustomConfirm(
+    'Remove Selected Servers',
+    `Remove ${count} selected server(s) from the patching schedule?`,
+    `Remove (${count})`,
+    '#EF4444',
+    () => {
+      appState.servers = appState.servers.filter(s => !selectedIds.has(s.id));
+      selectedIds.clear();
+      saveState();
+      addAuditEntry(`Bulk removed ${count} servers`);
+      renderTable();
+      showToast(`🗑️ Removed ${count} selected servers`);
+    }
+  );
+}
+
+function legacyExecCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.left = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function openCopyFallbackModal(title, text) {
+  document.getElementById('copyModalTitle').textContent = title || '📋 Copy Text';
+  const ta = document.getElementById('copyModalTextarea');
+  ta.value = text;
+  document.getElementById('copyFallbackModal').classList.add('open');
+  setTimeout(() => {
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+  }, 40);
+}
+
+function retryExecCopyFromModal() {
+  const ta = document.getElementById('copyModalTextarea');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  if (ok) {
+    document.getElementById('copyFallbackModal').classList.remove('open');
+    showToast('📋 Copied to clipboard');
+  } else {
+    showToast('⚠️ Press Ctrl+C on your keyboard to copy');
+  }
+}
+
+function sharePointSafeCopy(text, successMsg, modalTitle) {
+  if (!text) {
+    showToast('⚠️ Nothing to copy');
+    return;
+  }
+  if (legacyExecCopy(text)) {
+    showToast(successMsg);
+    return;
+  }
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg);
+      }).catch(() => {
+        openCopyFallbackModal(modalTitle, text);
+      });
+      return;
+    } catch (err) {}
+  }
+  openCopyFallbackModal(modalTitle, text);
+}
+
+function copySelectedHosts() {
+  const { enriched } = getSortedAndGrouped();
+  const names = enriched
+    .filter(s => selectedIds.has(s.id))
+    .map(s => s.hostname.split('(')[0].trim());
+  sharePointSafeCopy(
+    names.join('\n'),
+    `📋 Copied ${names.length} selected hostnames to clipboard`,
+    `📋 Selected Hostnames (${names.length})`
+  );
+}
+
+function copySelectedIPs() {
+  const { enriched } = getSortedAndGrouped();
+  const ips = enriched
+    .filter(s => selectedIds.has(s.id))
+    .map(s => s.ip)
+    .filter(Boolean);
+  sharePointSafeCopy(
+    ips.join('\n'),
+    `🌐 Copied ${ips.length} selected IP addresses to clipboard`,
+    `🌐 Selected IP Addresses (${ips.length})`
+  );
+}
+
+function copyWeekList(weekKey, field) {
+  const { enriched } = getSortedAndGrouped();
+  const vals = enriched
+    .filter(s => s.weekKey === weekKey)
+    .map(s => field === 'hostname' ? s.hostname.split('(')[0].trim() : s.ip)
+    .filter(Boolean);
+  const label = field === 'hostname' ? 'hostnames' : 'IP addresses';
+  sharePointSafeCopy(
+    vals.join('\n'),
+    `📋 Copied ${vals.length} ${label} for ${weekKey}`,
+    `📋 ${weekKey} ${label}`
+  );
+}
+
+/* Audit & Handover Drawer */
+function openAuditDrawer() {
+  updateAuditUI();
+  document.getElementById('auditDrawer').classList.add('open');
+}
+function closeAuditDrawer() {
+  document.getElementById('auditDrawer').classList.remove('open');
+}
+function clearAuditLog() {
+  auditLogs = [];
+  localStorage.removeItem(AUDIT_KEY);
+  updateAuditUI();
+}
+function copyHandoverSummary() {
+  const { enriched } = getSortedAndGrouped();
+  const total = enriched.length;
+  const patched = enriched.filter(s => s.status === 'Patched').length;
+  const failed = enriched.filter(s => s.status === 'Failed').length;
+  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('\n');
+  const summary = [
+    `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
+    `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
+    ``,
+    `Recent Activity:`,
+    recent || '- No changes recorded in this session.'
+  ].join('\n');
+  sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function updateField(id, field, value, isTimeWin = false) {
+  const item = appState.servers.find(s => s.id === id);
+  if (!item) return;
+  const oldVal = item[field];
+  const newVal = value.trim();
+  if (oldVal === newVal) return;
+
+  item[field] = newVal;
+  saveState();
+  addAuditEntry(`${item.hostname}: changed ${field} from "${oldVal || 'Blank'}" → "${newVal || 'Blank'}"`);
+  renderTable();
+
+  if (isTimeWin) {
+    const meta = parseTimeWindowMeta(item.timeWin);
+    showToast(`✓ Moved ${item.hostname} → ${meta.weekLabel}`);
+  } else {
+    showToast(`✓ Saved ${item.hostname}`);
+  }
+}
+
+let _confirmCallback = null;
+function showCustomConfirm(title, message, okLabel, okColor, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.style.background = okColor || '#EF4444';
+  _confirmCallback = onConfirm;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal(confirmed) {
+  document.getElementById('confirmModal').classList.remove('open');
+  const cb = _confirmCallback;
+  _confirmCallback = null;
+  if (confirmed && typeof cb === 'function') cb();
+}
+
+function deleteServer(id) {
+  const item = appState.servers.find(s => s.id === id);
+  if (!item) return;
+  showCustomConfirm(
+    'Remove Server',
+    `Remove ${item.hostname} (${item.ip || 'No IP'}) from the patching schedule?`,
+    'Remove',
+    '#EF4444',
+    () => {
+      appState.servers = appState.servers.filter(s => s.id !== id);
+      selectedIds.delete(id);
+      saveState();
+      addAuditEntry(`Removed server ${item.hostname}`);
+      renderTable();
+      showToast(`🗑️ Removed ${item.hostname}`);
+    }
+  );
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function saveNewServer() {
+  const host = document.getElementById('newHost').value.trim();
+  const timeWin = document.getElementById('newTime').value.trim();
+  if (!host || !timeWin) {
+    showToast('⚠️ Hostname and Time Windows are required');
+    return;
+  }
+  const maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
+  const newSrv = {
+    id: maxId + 1,
+    hostname: host,
+    ip: document.getElementById('newIp').value.trim(),
+    os: document.getElementById('newOs').value.trim(),
+    app: document.getElementById('newApp').value.trim(),
+    maintWin: document.getElementById('newMaint').value.trim(),
+    timeWin: timeWin,
+    osSheet: document.getElementById('newSheet').value,
+    remarks1: document.getElementById('newRem1').value.trim(),
+    remarks2: '',
+    by: document.getElementById('newBy').value,
+    status: document.getElementById('newStatus').value
+  };
+  appState.servers.push(newSrv);
+  saveState();
+  addAuditEntry(`Added new server ${host} (${timeWin})`);
+  closeAddModal();
+  renderTable();
+  showToast(`✓ Added ${host}`);
+}
+
+function resetToDefault() {
+  showCustomConfirm(
+    'Reset Schedule',
+    'Reset all edits back to the original baseline schedule? Any unsaved local edits will be cleared.',
+    'Reset Data',
+    '#D97706',
+    () => {
+      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      selectedIds.clear();
+      saveState();
+      addAuditEntry('Reset schedule back to baseline');
+      renderTable();
+      showToast('↺ Reset to original baseline data');
+    }
+  );
+}
+
+function ensureXLSX(callback) {
+  if (typeof XLSX !== 'undefined') {
+    callback();
+    return;
+  }
+  showToast('⏳ Loading Excel engine...');
+  const script = document.createElement('script');
+  script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+  script.onload = () => callback();
+  script.onerror = () => {
+    showToast('⚠️ SharePoint blocked external Excel library — exporting CSV instead');
+    exportCSVFallback();
+  };
+  document.head.appendChild(script);
+}
+
+function exportCSVFallback() {
+  const { enriched } = getSortedAndGrouped();
+  const headers = ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'Remarks i', 'Remarks ii', 'By', 'Status'];
+  const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
+  const lines = [headers.map(esc).join(',')];
+  enriched.forEach((srv, idx) => {
+    lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Q4_2026_Patching_Schedule_Updated.csv';
+  a.click();
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  ensureXLSX(() => {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets['Consolidated Schedule'];
+      if (!ws) {
+        showToast('⚠️ Could not find "Consolidated Schedule" sheet in uploaded workbook');
+        return;
+      }
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const importedServers = [];
+      for (let r = 2; r < rows.length; r++) {
+        const row = rows[r];
+        const colA = String(row[0] || '').trim();
+        const host = String(row[1] || '').trim();
+        if (host && !colA.startsWith('📅') && !colA.startsWith('=')) {
+          importedServers.push({
+            id: importedServers.length + 1,
+            hostname: host,
+            ip: String(row[2] || '').trim(),
+            os: String(row[3] || '').trim(),
+            app: String(row[4] || '').trim(),
+            maintWin: String(row[5] || '').trim(),
+            timeWin: String(row[6] || '').trim(),
+            osSheet: String(row[7] || '').trim(),
+            remarks1: String(row[8] || '').trim(),
+            remarks2: String(row[9] || '').trim(),
+            by: String(row[10] || '').trim(),
+            status: String(row[11] || '').trim()
+          });
+        }
+      }
+      if (importedServers.length > 0) {
+        appState.servers = importedServers;
+        selectedIds.clear();
+        saveState();
+        addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
+        renderTable();
+        showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
+      } else {
+        showToast('⚠️ No valid server rows found');
+      }
+    } catch (err) {
+      showToast('⚠️ Error reading Excel file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  });
+  event.target.value = '';
+}
+
+function exportExcel() {
+  ensureXLSX(() => {
+  const { enriched } = getSortedAndGrouped();
+  const wb = XLSX.utils.book_new();
+
+  const aoa = [
+    ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)'],
+    ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'Remarks i', 'Remarks ii', 'By', 'Status']
+  ];
+
+  let currentWk = null;
+  let prevLabel = '';
+  let bannerIdx = -1;
+  let wkStartExcelRow = 0;
+
+  enriched.forEach((srv, idx) => {
+    if (srv.weekKey !== currentWk) {
+      if (bannerIdx !== -1) {
+        const wkEndExcelRow = aoa.length;
+        aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+      }
+      currentWk = srv.weekKey;
+      prevLabel = srv.weekLabel;
+      bannerIdx = aoa.length;
+      aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
+      wkStartExcelRow = aoa.length + 1;
+    }
+
+    aoa.push([
+      idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
+      srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
+    ]);
+  });
+
+  if (bannerIdx !== -1) {
+    const wkEndExcelRow = aoa.length;
+    aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+  }
+
+  const wsCons = XLSX.utils.aoa_to_sheet(aoa);
+  wsCons['!cols'] = [
+    {wch: 6}, {wch: 26}, {wch: 16}, {wch: 32}, {wch: 16},
+    {wch: 35}, {wch: 42}, {wch: 18}, {wch: 40}, {wch: 24},
+    {wch: 12}, {wch: 14}
+  ];
+  XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
+
+  const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
+  sheetOrder.forEach(sName => {
+    const sheetServers = enriched.filter(s => s.osSheet === sName);
+    const sAoa = [['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks']];
+    sheetServers.forEach((srv, i) => {
+      sAoa.push([i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1]);
+    });
+    const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
+    wsSub['!cols'] = [{wch: 6}, {wch: 26}, {wch: 16}, {wch: 32}, {wch: 16}, {wch: 35}, {wch: 42}, {wch: 45}];
+    XLSX.utils.book_append_sheet(wb, wsSub, sName);
+  });
+
+  XLSX.writeFile(wb, 'Q4_2026_Patching_Schedule_Updated.xlsx');
+  showToast('⬇ Exported Q4_2026_Patching_Schedule_Updated.xlsx');
+  });
+}
+
+/* Column Drag-Resizing + Sticky Offset Sync */
+const DEFAULT_COL_WIDTHS = [34, 36, 128, 108, 185, 82, 185, 222, 112, 262, 135, 70, 84, 30];
+const COL_WIDTHS_KEY = 'patching_schedule_v40_col_widths';
+
+function syncStickyOffsets() {
+  const widths = window._currentColWidths || DEFAULT_COL_WIDTHS;
+  const col1W = widths[0] || 34;
+  const col2W = widths[1] || 36;
+  document.querySelectorAll('thead th.sticky-col-2, tbody td.sticky-col-2').forEach(el => {
+    el.style.left = col1W + 'px';
+  });
+  document.querySelectorAll('thead th.sticky-col-3, tbody td.sticky-col-3').forEach(el => {
+    el.style.left = (col1W + col2W) + 'px';
+  });
+}
+
+function applyColumnWidths(widths) {
+  const cols = document.querySelectorAll('#scheduleColGroup col');
+  widths.forEach((w, idx) => {
+    if (cols[idx]) cols[idx].style.width = w + 'px';
+  });
+  window._currentColWidths = widths;
+  syncStickyOffsets();
+}
+
+function initColumnResizers() {
+  let saved = null;
+  try {
+    const raw = localStorage.getItem(COL_WIDTHS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length === DEFAULT_COL_WIDTHS.length) saved = parsed;
+    }
+  } catch (e) {}
+  applyColumnWidths(saved || [...DEFAULT_COL_WIDTHS]);
+
+  const ths = document.querySelectorAll('thead th');
+  const cols = document.querySelectorAll('#scheduleColGroup col');
+
+  ths.forEach((th, idx) => {
+    if (idx === 0 || idx === ths.length - 1) return;
+    const handle = document.createElement('div');
+    handle.className = 'col-resizer';
+    handle.title = 'Drag to resize column width';
+    th.appendChild(handle);
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.pageX;
+      const startWidth = cols[idx].offsetWidth || parseInt(cols[idx].style.width, 10) || DEFAULT_COL_WIDTHS[idx];
+      handle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+
+      const onMouseMove = (moveEvt) => {
+        const delta = moveEvt.pageX - startX;
+        const newW = Math.max(30, Math.min(600, startWidth + delta));
+        const nextWidths = [...(window._currentColWidths || DEFAULT_COL_WIDTHS)];
+        nextWidths[idx] = newW;
+        applyColumnWidths(nextWidths);
+      };
+
+      const onMouseUp = () => {
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        try { localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(window._currentColWidths)); } catch (err) {}
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
+}
+
+function resetColumnWidths() {
+  localStorage.removeItem(COL_WIDTHS_KEY);
+  applyColumnWidths([...DEFAULT_COL_WIDTHS]);
+  showToast('↔ Reset column widths to default');
+}
+
+window.addEventListener('unhandledrejection', (e) => { e.preventDefault(); });
+window.addEventListener('resize', () => { if (isExpandedMode) applyRowHeights(); });
+initColumnResizers();
+updateAuditUI();
+renderTable();
+if (getFirebaseEndpoint()) {
+  startFirebaseRealtimeStream();
+}
+</script>
+</body>
+</html>
