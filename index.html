@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.0 Live Team Sync)</title>
+<title>Windows Server Patching Schedule Manager (v5.1 Live Team Sync)</title>
 <!-- SheetJS loaded on-demand only when Import/Export is clicked to prevent SharePoint CSP/network lag -->
 <style>
   :root {
@@ -743,7 +743,7 @@
 
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.0 Live Team Sync)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.1 Live Team Sync)</h1>
     <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
   </div>
   <div class="toolbar">
@@ -1449,32 +1449,64 @@ function formatWeekendRange(isoYear, isoWeek) {
 }
 
 const _twMetaCache = new Map();
+function buildWeekMetaResult(year, monIdx, day1, clean) {
+  const dt = new Date(year, monIdx, day1);
+  const { isoYear, isoWeek } = getISOWeekInfo(dt);
+  const wkPad = String(isoWeek).padStart(2, '0');
+  const rangeStr = formatWeekendRange(isoYear, isoWeek);
+  const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${clean}`;
+  return {
+    weekKey: `${isoYear}-W${wkPad}`,
+    shortWeek: `W${wkPad}`,
+    weekLabel: `Week ${wkPad} (${rangeStr})`,
+    sortKey
+  };
+}
+
 function parseTimeWindowMeta(twRaw) {
   const key = String(twRaw || '');
   if (_twMetaCache.has(key)) return _twMetaCache.get(key);
-  const clean = key.replace(/\s+/g, ' ').trim();
-  const m = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?\s+([A-Za-z]{3,9})[\s,-]+(\d{4})/i);
-  if (m) {
-    const day1 = parseInt(m[1], 10);
-    const monStr = m[3].toLowerCase();
-    const year = parseInt(m[4], 10);
+  const clean = key.replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
+
+  // Pattern A: "28-Feb-2027", "28 Feb 2027", "6-7-Mar-2027", "14-15 Nov 2026"
+  const mText = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})/i);
+  if (mText) {
+    const day1 = parseInt(mText[1], 10);
+    const monStr = mText[3].toLowerCase();
+    const year = parseInt(mText[4], 10);
     if (monStr in MONTHS) {
-      const monIdx = MONTHS[monStr];
-      const dt = new Date(year, monIdx, day1);
-      const { isoYear, isoWeek } = getISOWeekInfo(dt);
-      const wkPad = String(isoWeek).padStart(2, '0');
-      const rangeStr = formatWeekendRange(isoYear, isoWeek);
-      const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${clean}`;
-      const res = {
-        weekKey: `${isoYear}-W${wkPad}`,
-        shortWeek: `W${wkPad}`,
-        weekLabel: `Week ${wkPad} (${rangeStr})`,
-        sortKey
-      };
+      const res = buildWeekMetaResult(year, MONTHS[monStr], day1, clean);
       _twMetaCache.set(key, res);
       return res;
     }
   }
+
+  // Pattern B: ISO format "2027-02-28" or "2027/02/28"
+  const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (mIso) {
+    const year = parseInt(mIso[1], 10);
+    const monIdx = parseInt(mIso[2], 10) - 1;
+    const day1 = parseInt(mIso[3], 10);
+    if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
+      const res = buildWeekMetaResult(year, monIdx, day1, clean);
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+
+  // Pattern C: Numeric DD/MM/YYYY or DD-MM-YYYY (e.g. "28/02/2027" or "28-02-2027")
+  const mDmy = clean.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (mDmy) {
+    const day1 = parseInt(mDmy[1], 10);
+    const monIdx = parseInt(mDmy[2], 10) - 1;
+    const year = parseInt(mDmy[3], 10);
+    if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
+      const res = buildWeekMetaResult(year, monIdx, day1, clean);
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+
   const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', sortKey: '9999-99-99_' + clean };
   _twMetaCache.set(key, fallback);
   return fallback;
@@ -1497,6 +1529,24 @@ function normalizeWinStr(s) {
     .trim();
 }
 
+function extractTimeTokens(str) {
+  const tokens = [];
+  const rx = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi;
+  let m;
+  while ((m = rx.exec(str)) !== null) {
+    // Skip 4-digit years or day numbers followed by month names
+    if (m[1].length > 2) continue;
+    if (!m[2] && !m[3]) continue; // require either :MM or am/pm
+    let hr = parseInt(m[1], 10);
+    const min = m[2] ? parseInt(m[2], 10) : 0;
+    const ampm = (m[3] || '').toLowerCase();
+    if (ampm === 'am' && hr === 12) hr = 0;
+    else if (ampm === 'pm' && hr < 12) hr += 12;
+    tokens.push(`${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+  }
+  return tokens;
+}
+
 function isTimeMatchingMaint(maintWin, timeWin) {
   const mw = normalizeWinStr(maintWin);
   const tw = normalizeWinStr(timeWin);
@@ -1505,8 +1555,8 @@ function isTimeMatchingMaint(maintWin, timeWin) {
   const twCore = tw.replace(/\(.*?\)/g, '').replace(/\bto\b/g, '-').replace(/\s*-\s*/g, '-').trim();
   if (mwCore && twCore.includes(mwCore)) return true;
 
-  const mwTimes = mw.match(/\d{1,2}:\d{2}/g) || [];
-  const twTimes = tw.match(/\d{1,2}:\d{2}/g) || [];
+  const mwTimes = extractTimeTokens(mw);
+  const twTimes = extractTimeTokens(tw);
   const mwHasSat = mw.includes('saturday');
   const mwHasSun = mw.includes('sunday');
   const twHasSat = tw.includes('saturday');
