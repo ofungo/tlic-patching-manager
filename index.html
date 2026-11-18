@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.1 Live Team Sync)</title>
+<title>Windows Server Patching Schedule Manager (v5.2 Styled Excel & Live Sync)</title>
 <!-- SheetJS loaded on-demand only when Import/Export is clicked to prevent SharePoint CSP/network lag -->
 <style>
   :root {
@@ -743,7 +743,7 @@
 
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.1 Live Team Sync)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.2 Styled Excel & Live Sync)</h1>
     <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
   </div>
   <div class="toolbar">
@@ -2298,13 +2298,20 @@ function ensureXLSX(callback) {
     callback();
     return;
   }
-  showToast('⏳ Loading Excel engine...');
+  showToast('⏳ Loading Styled Excel engine...');
   const script = document.createElement('script');
-  script.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+  script.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
   script.onload = () => callback();
   script.onerror = () => {
-    showToast('⚠️ SharePoint blocked external Excel library — exporting CSV instead');
-    exportCSVFallback();
+    // Fallback to standard SheetJS if jsdelivr is blocked
+    const fallbackScript = document.createElement('script');
+    fallbackScript.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+    fallbackScript.onload = () => callback();
+    fallbackScript.onerror = () => {
+      showToast('⚠️ External Excel library blocked — exporting CSV instead');
+      exportCSVFallback();
+    };
+    document.head.appendChild(fallbackScript);
   };
   document.head.appendChild(script);
 }
@@ -2381,12 +2388,118 @@ function handleImport(event) {
 
 function exportExcel() {
   ensureXLSX(() => {
-  const { enriched } = getSortedAndGrouped();
+  const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
   const wb = XLSX.utils.book_new();
 
+  // Shared Styling Palette matching the Web UI
+  const thinBorder = {
+    top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
+    bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    left:   { style: 'thin', color: { rgb: 'CBD5E1' } },
+    right:  { style: 'thin', color: { rgb: 'CBD5E1' } }
+  };
+  const bannerBorder = {
+    top:    { style: 'medium', color: { rgb: '94B0DA' } },
+    bottom: { style: 'medium', color: { rgb: '94B0DA' } },
+    left:   { style: 'thin',   color: { rgb: '94B0DA' } },
+    right:  { style: 'thin',   color: { rgb: '94B0DA' } }
+  };
+  const titleStyle = {
+    font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '132A4A' } },
+    alignment: { horizontal: 'left', vertical: 'center', indent: 1 }
+  };
+  const headerStyle = {
+    font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '1E3A5F' } },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: {
+      top:    { style: 'thin',   color: { rgb: '132640' } },
+      bottom: { style: 'medium', color: { rgb: '132640' } },
+      left:   { style: 'thin',   color: { rgb: '2F527D' } },
+      right:  { style: 'thin',   color: { rgb: '2F527D' } }
+    }
+  };
+  const weekBannerStyle = {
+    font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
+    fill: { fgColor: { rgb: 'DCE6F7' } },
+    alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+    border: bannerBorder
+  };
+
+  function getStatusCellStyle(status, baseHex) {
+    if (status === 'Patched') {
+      return {
+        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } },
+        fill: { fgColor: { rgb: 'DCFCE7' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+    if (status === 'Failed') {
+      return {
+        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } },
+        fill: { fgColor: { rgb: 'FEE2E2' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+    return {
+      font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+      fill: { fgColor: { rgb: baseHex } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: thinBorder
+    };
+  }
+
+  function getEngineerCellStyle(by, baseHex) {
+    const map = {
+      'Andy': { fg: 'E0F2FE', text: '0369A1' },
+      'Don':  { fg: 'FFEDD5', text: 'C2410C' },
+      'Fung': { fg: 'EDE9FE', text: '5B21B6' }
+    };
+    if (map[by]) {
+      return {
+        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } },
+        fill: { fgColor: { rgb: map[by].fg } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+    return {
+      font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+      fill: { fgColor: { rgb: baseHex } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: thinBorder
+    };
+  }
+
+  function calcRowHeight(values, colWidths) {
+    let maxLines = 1;
+    values.forEach((val, idx) => {
+      const s = String(val || '');
+      if (!s) return;
+      const w = Math.max(8, (colWidths[idx] || 20) - 3);
+      const lines = s.split(/\r?\n/).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / w)), 0);
+      if (lines > maxLines) maxLines = lines;
+    });
+    return Math.min(180, Math.max(22, maxLines * 15 + 6));
+  }
+
+  // =========================================================================
+  // SHEET 1: Consolidated Schedule (Full Colors, Merged Week Banners, Badges)
+  // =========================================================================
+  const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
   const aoa = [
-    ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)'],
+    ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
     ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'Remarks i', 'Remarks ii', 'By', 'Status']
+  ];
+  const rowMeta = [
+    { type: 'title', height: 32 },
+    { type: 'header', height: 28 }
+  ];
+  const merges = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }
   ];
 
   let currentWk = null;
@@ -2404,13 +2517,24 @@ function exportExcel() {
       prevLabel = srv.weekLabel;
       bannerIdx = aoa.length;
       aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
+      rowMeta.push({ type: 'banner', height: 25 });
+      merges.push({ s: { r: bannerIdx, c: 0 }, e: { r: bannerIdx, c: 11 } });
       wkStartExcelRow = aoa.length + 1;
     }
 
-    aoa.push([
+    const rowVals = [
       idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
       srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
-    ]);
+    ];
+    const baseHex = (weekColorMap[srv.weekKey] || '#FFFFFF').replace('#', '').toUpperCase();
+    aoa.push(rowVals);
+    rowMeta.push({
+      type: 'data',
+      baseHex,
+      by: srv.by,
+      status: srv.status,
+      height: calcRowHeight(rowVals, consColWidths)
+    });
   });
 
   if (bannerIdx !== -1) {
@@ -2419,27 +2543,155 @@ function exportExcel() {
   }
 
   const wsCons = XLSX.utils.aoa_to_sheet(aoa);
-  wsCons['!cols'] = [
-    {wch: 6}, {wch: 26}, {wch: 16}, {wch: 32}, {wch: 16},
-    {wch: 35}, {wch: 42}, {wch: 18}, {wch: 40}, {wch: 24},
-    {wch: 12}, {wch: 14}
-  ];
+  wsCons['!cols'] = consColWidths.map(wch => ({ wch }));
+  wsCons['!rows'] = rowMeta.map(m => ({ hpt: m.height }));
+  wsCons['!merges'] = merges;
+  wsCons['!freeze'] = { xSplit: 2, ySplit: 2, topLeftCell: 'C3', activePane: 'bottomRight', state: 'frozen' };
+
+  for (let r = 0; r < aoa.length; r++) {
+    const meta = rowMeta[r];
+    for (let c = 0; c < 12; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!wsCons[addr]) wsCons[addr] = { t: 's', v: '' };
+
+      if (meta.type === 'title') {
+        wsCons[addr].s = titleStyle;
+      } else if (meta.type === 'header') {
+        wsCons[addr].s = headerStyle;
+      } else if (meta.type === 'banner') {
+        wsCons[addr].s = weekBannerStyle;
+      } else {
+        if (c === 10) {
+          wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
+        } else if (c === 11) {
+          wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
+        } else {
+          const isCenter = (c === 0 || c === 2 || c === 7);
+          const isBoldHost = (c === 1);
+          const isMonoIp = (c === 2);
+          wsCons[addr].s = {
+            font: {
+              name: isMonoIp ? 'Consolas' : 'Calibri',
+              sz: 10,
+              bold: isBoldHost || (c === 0),
+              color: { rgb: c === 0 ? '475569' : '0F172A' }
+            },
+            fill: { fgColor: { rgb: meta.baseHex } },
+            alignment: {
+              horizontal: isCenter ? 'center' : 'left',
+              vertical: 'center',
+              wrapText: true
+            },
+            border: thinBorder
+          };
+        }
+      }
+    }
+  }
   XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
 
+  // =========================================================================
+  // SHEET 2: Weekly Summary & KPI Overview
+  // =========================================================================
+  const sumAoa = [
+    ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
+    ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
+  ];
+  uniqueWeeks.forEach(wk => {
+    const items = enriched.filter(s => s.weekKey === wk);
+    const tot = items.length;
+    const p = items.filter(s => s.status === 'Patched').length;
+    const f = items.filter(s => s.status === 'Failed').length;
+    const pend = tot - p - f;
+    const pct = tot ? Math.round((p / tot) * 100) + '%' : '0%';
+    sumAoa.push([weekLabelMap[wk], tot, p, pend, f, pct]);
+  });
+  const totAll = enriched.length;
+  const pAll = enriched.filter(s => s.status === 'Patched').length;
+  const fAll = enriched.filter(s => s.status === 'Failed').length;
+  sumAoa.push(['TOTAL ALL BATCHES', totAll, pAll, totAll - pAll - fAll, fAll, totAll ? Math.round((pAll / totAll) * 100) + '%' : '0%']);
+
+  const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
+  wsSum['!cols'] = [{ wch: 36 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+  wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+  wsSum['!rows'] = sumAoa.map((_, i) => ({ hpt: i === 0 ? 30 : (i === 1 ? 26 : 22) }));
+
+  for (let r = 0; r < sumAoa.length; r++) {
+    const isTotalRow = (r === sumAoa.length - 1);
+    const wkKey = (r >= 2 && !isTotalRow) ? uniqueWeeks[r - 2] : null;
+    const rowHex = wkKey ? (weekColorMap[wkKey] || '#FFFFFF').replace('#', '').toUpperCase() : 'E2E8F0';
+    for (let c = 0; c < 6; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
+      if (r === 0) wsSum[addr].s = titleStyle;
+      else if (r === 1) wsSum[addr].s = headerStyle;
+      else {
+        wsSum[addr].s = {
+          font: { name: 'Calibri', sz: 10, bold: isTotalRow || c === 0 || c === 5, color: { rgb: '0F172A' } },
+          fill: { fgColor: { rgb: isTotalRow ? 'DCE6F7' : rowHex } },
+          alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+          border: isTotalRow ? bannerBorder : thinBorder
+        };
+      }
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
+
+  // =========================================================================
+  // SHEETS 3–7: Individual OS Tabs (Styled Headers, Zebra Rows & Status Badges)
+  // =========================================================================
   const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
+  const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
   sheetOrder.forEach(sName => {
     const sheetServers = enriched.filter(s => s.osSheet === sName);
-    const sAoa = [['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks']];
+    const sAoa = [
+      [`${sName} — Patching Schedule (${sheetServers.length} Servers)`, '', '', '', '', '', '', '', '', ''],
+      ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks', 'By', 'Status']
+    ];
+    const sRowHeights = [{ hpt: 30 }, { hpt: 26 }];
     sheetServers.forEach((srv, i) => {
-      sAoa.push([i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1]);
+      const rVals = [i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1, srv.by, srv.status];
+      sAoa.push(rVals);
+      sRowHeights.push({ hpt: calcRowHeight(rVals, subColWidths) });
     });
+
     const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
-    wsSub['!cols'] = [{wch: 6}, {wch: 26}, {wch: 16}, {wch: 32}, {wch: 16}, {wch: 35}, {wch: 42}, {wch: 45}];
+    wsSub['!cols'] = subColWidths.map(wch => ({ wch }));
+    wsSub['!rows'] = sRowHeights;
+    wsSub['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+    for (let r = 0; r < sAoa.length; r++) {
+      const zebraHex = (r % 2 === 0) ? 'FFFFFF' : 'F8FAFC';
+      const srvObj = r >= 2 ? sheetServers[r - 2] : null;
+      for (let c = 0; c < 10; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!wsSub[addr]) wsSub[addr] = { t: 's', v: '' };
+        if (r === 0) wsSub[addr].s = titleStyle;
+        else if (r === 1) wsSub[addr].s = headerStyle;
+        else if (c === 8) wsSub[addr].s = getEngineerCellStyle(srvObj.by, zebraHex);
+        else if (c === 9) wsSub[addr].s = getStatusCellStyle(srvObj.status, zebraHex);
+        else {
+          const isCenter = (c === 0 || c === 2);
+          wsSub[addr].s = {
+            font: {
+              name: c === 2 ? 'Consolas' : 'Calibri',
+              sz: 10,
+              bold: (c === 0 || c === 1),
+              color: { rgb: c === 0 ? '475569' : '0F172A' }
+            },
+            fill: { fgColor: { rgb: zebraHex } },
+            alignment: { horizontal: isCenter ? 'center' : 'left', vertical: 'center', wrapText: true },
+            border: thinBorder
+          };
+        }
+      }
+    }
     XLSX.utils.book_append_sheet(wb, wsSub, sName);
   });
 
-  XLSX.writeFile(wb, 'Q4_2026_Patching_Schedule_Updated.xlsx');
-  showToast('⬇ Exported Q4_2026_Patching_Schedule_Updated.xlsx');
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
+  showToast(`⬇ Exported styled Windows_Patching_Schedule_${dateStamp}.xlsx`);
   });
 }
 
