@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.7)</title>
+<title>Windows Server Patching Schedule Manager (v5.8)</title>
 <style>
   :root {
     --bg: #F4F6F9;
@@ -32,13 +32,18 @@
   header {
     background: linear-gradient(135deg, #132A4A 0%, #1E3A5F 100%);
     color: #fff;
-    padding: 9px 16px;
+    padding: 9px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  .header-top-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    gap: 10px;
   }
   .header-brand {
     display: flex;
@@ -64,43 +69,47 @@
     padding: 1px 7px;
     border-radius: 999px;
   }
-  header p {
-    margin: 2px 0 0;
-    font-size: 0.76rem;
-    color: #CBD5E1;
-  }
-  .toolbar {
+  .header-actions-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 7px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
   }
-  .toolbar-group {
+  .toolbar-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+  }
+  .cycle-pill-box {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(15, 23, 42, 0.34);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    padding: 4px 6px;
-    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 3px 6px 3px 9px;
+    border-radius: 7px;
   }
   .cycle-select {
     background: #0F172A;
     color: #F8FAFC;
     border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 5px 9px;
+    border-radius: 5px;
+    padding: 4px 8px;
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
-    min-height: 31px;
+    min-height: 30px;
   }
   .cycle-select:hover { border-color: #60A5FA; }
   .btn {
     border: none;
     border-radius: 6px;
     padding: 6px 12px;
-    min-height: 31px;
+    min-height: 32px;
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -111,52 +120,14 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
     white-space: nowrap;
   }
-  /* Header Dropdown Menu for Secondary Actions */
-  .header-dropdown {
-    position: relative;
-    display: inline-block;
+  .btn-danger-soft {
+    background: rgba(239, 68, 68, 0.18);
+    color: #FECACA;
+    border: 1px solid rgba(248, 113, 113, 0.42);
   }
-  .header-dropdown-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    min-width: 230px;
-    background: #FFFFFF;
-    color: #0F172A;
-    border: 1px solid #CBD5E1;
-    border-radius: 9px;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
-    padding: 5px;
-    display: none;
-    flex-direction: column;
-    gap: 2px;
-    z-index: 1500;
-  }
-  .header-dropdown-menu.open { display: flex; }
-  .dropdown-item {
-    width: 100%;
-    border: none;
-    background: transparent;
-    color: #1E293B;
-    font-family: inherit;
-    font-size: 0.81rem;
-    font-weight: 600;
-    padding: 8px 11px;
-    border-radius: 6px;
-    text-align: left;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.12s ease;
-  }
-  .dropdown-item:hover { background: #F1F5F9; color: #0F172A; }
-  .dropdown-item.danger { color: #DC2626; }
-  .dropdown-item.danger:hover { background: #FEF2F2; }
-  .dropdown-divider {
-    height: 1px;
-    background: #E2E8F0;
-    margin: 4px 6px;
+  .btn-danger-soft:hover {
+    background: rgba(239, 68, 68, 0.32);
+    color: #FFFFFF;
   }
   .btn-primary { background: #10B981; color: #fff; }
   .btn-primary:hover { background: #059669; }
@@ -402,47 +373,132 @@
   }
   .filter-bar input { min-width: 210px; flex: 1; }
 
+  .week-strip-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E2E8F0;
+  }
+  .week-strip-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding-right: 6px;
+    border-right: 1px solid #E2E8F0;
+    flex-shrink: 0;
+  }
+  .week-pills-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--primary);
+    white-space: nowrap;
+  }
+  .week-all-btn {
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.14s ease;
+  }
+  .week-all-btn:hover { border-color: var(--accent); background: #EFF6FF; }
+  .week-all-btn.active {
+    background: #1E3A5F;
+    color: #FFFFFF;
+    border-color: #1E3A5F;
+  }
   .week-pills {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    padding-top: 4px;
-    border-top: 1px dashed #E2E8F0;
+    align-items: stretch;
+    gap: 6px;
+    flex: 1;
   }
-  .week-pills-label {
-    font-size: 0.69rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-right: 3px;
-  }
-  .week-pill {
+  .week-batch-card {
     border: 1px solid #CBD5E1;
-    border-radius: 999px;
-    padding: 1px 8px;
-    font-size: 0.67rem;
-    font-weight: 600;
+    border-radius: 7px;
+    padding: 4px 9px;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: #1E293B;
-    transition: all 0.12s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3px;
+    min-width: 122px;
+    color: #0F172A;
+    transition: all 0.14s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    text-align: left;
   }
-  .week-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .week-pill.active {
+  .week-batch-card:hover {
+    border-color: #0284C7;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(2, 132, 199, 0.14);
+  }
+  .week-batch-card.active {
     background: #1E3A5F !important;
     color: #FFFFFF !important;
-    border-color: #1E3A5F;
+    border-color: #0F172A;
+    box-shadow: 0 3px 8px rgba(30, 58, 95, 0.28);
   }
-  .week-pill .badge {
-    background: rgba(15, 23, 42, 0.12);
-    padding: 0px 5px;
-    border-radius: 999px;
+  .wb-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .wb-wk-tag {
+    font-size: 0.72rem;
     font-weight: 800;
-    font-size: 0.65rem;
+    letter-spacing: 0.2px;
   }
-  .week-pill.active .badge { background: rgba(255,255,255,0.22); }
+  .wb-count-pill {
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.1);
+    color: #1E293B;
+  }
+  .week-batch-card.active .wb-count-pill {
+    background: rgba(255, 255, 255, 0.22);
+    color: #FFFFFF;
+  }
+  .wb-count-pill.done-all {
+    background: #DCFCE7;
+    color: #166534;
+  }
+  .week-batch-card.active .wb-count-pill.done-all {
+    background: #10B981;
+    color: #FFFFFF;
+  }
+  .wb-date {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+  }
+  .week-batch-card.active .wb-date {
+    color: #CBD5E1;
+  }
+  .wb-progress-track {
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    display: flex;
+  }
+  .week-batch-card.active .wb-progress-track {
+    background: rgba(255, 255, 255, 0.22);
+  }
 
   /* Table Wrapper - Maximized Viewport Height for 1920x1080 */
   .table-card {
@@ -943,58 +999,57 @@
 
 
 <header>
-  <div class="header-brand">
-    <h1>🛡️ Patching Schedule Manager <span class="ver-pill">v5.7</span></h1>
-  </div>
-
-  <div class="toolbar">
-    <!-- Group 1: Quarter Cycle Switcher -->
-    <div class="toolbar-group" title="Switch or create quarterly patching schedules">
-      <span style="font-size:0.78rem;font-weight:700;color:#93C5FD;padding-left:4px;">📆</span>
-      <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
-        <option value="2026_Q4">2026 Q4 (Active)</option>
-      </select>
-      <button type="button" class="btn btn-secondary" style="padding:5px 10px;" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
-        🚀 Next Quarter
-      </button>
+  <!-- Tier 1: Brand Title + Quarter Cycle Switcher + Live Sync / Lock -->
+  <div class="header-top-row">
+    <div class="header-brand">
+      <h1>🛡️ Windows Server Patching Schedule Manager <span class="ver-pill">v5.8</span></h1>
     </div>
 
-    <!-- Group 2: Primary Daily Actions -->
-    <div class="toolbar-group">
-      <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
-      <button type="button" class="btn btn-primary" onclick="exportExcel()">⬇ Export .xlsx</button>
-    </div>
+    <div class="toolbar-cluster">
+      <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
+        <span style="font-size:0.75rem;font-weight:700;color:#93C5FD;">📆 Quarter:</span>
+        <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
+          <option value="2026_Q4">2026 Q4 (Active)</option>
+        </select>
+        <button type="button" class="btn btn-add" style="padding:4px 10px;min-height:30px;" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
+          🚀 Next Quarter
+        </button>
+        <button type="button" class="btn btn-danger-soft" style="padding:4px 9px;min-height:30px;" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
+          🗑️ Del Cycle
+        </button>
+      </div>
 
-    <!-- Group 3: Live Sync & Dashboard Toggle -->
-    <div class="toolbar-group">
       <button type="button" class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
         <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
         <span id="syncStatusText">Local Mode</span>
       </button>
-      <button type="button" class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide top dashboard charts">📊 Charts</button>
+
+      <button type="button" class="btn btn-danger-soft" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">
+        🔒 Lock
+      </button>
+    </div>
+  </div>
+
+  <!-- Tier 2: Direct One-Click Action Buttons (No Dropdowns) -->
+  <div class="header-actions-row">
+    <div class="toolbar-cluster">
+      <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
+      <label class="btn btn-secondary" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
+        📂 Import .xlsx
+        <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
+      </label>
+      <button type="button" class="btn btn-primary" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
+        ⬇ Export .xlsx
+      </button>
     </div>
 
-    <!-- Group 4: Overflow Menu for Secondary & Destructive Actions -->
-    <div class="header-dropdown" id="headerMoreDropdown">
-      <button type="button" class="btn btn-secondary" style="padding:6px 12px;font-weight:700;" onclick="toggleHeaderMoreMenu(event)" title="Handover log, Import Excel, Delete Quarter, Lock">
-        ⋯ More (<span id="logCountBadge">0</span>) ▾
+    <div class="toolbar-cluster">
+      <button type="button" class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the top KPI & chart deck">
+        📊 Charts
       </button>
-      <div class="header-dropdown-menu" id="headerMoreMenu">
-        <button type="button" class="dropdown-item" onclick="closeHeaderMoreMenu(); openAuditDrawer();">
-          📋 Shift Handover Log (<span id="logCountMenuBadge">0</span>)
-        </button>
-        <label class="dropdown-item" style="margin:0;">
-          📂 Import Schedule (.xlsx)
-          <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="closeHeaderMoreMenu(); handleImport(event);" />
-        </label>
-        <div class="dropdown-divider"></div>
-        <button type="button" class="dropdown-item danger" onclick="closeHeaderMoreMenu(); deleteOrClearCurrentCycle();">
-          🗑️ Delete / Clear Current Quarter
-        </button>
-        <button type="button" class="dropdown-item danger" onclick="closeHeaderMoreMenu(); lockAndForgetWorkspace();">
-          🔒 Lock &amp; Clear Credentials
-        </button>
-      </div>
+      <button type="button" class="btn btn-secondary" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
+        📋 Handover Log (<span id="logCountBadge">0</span>)
+      </button>
     </div>
   </div>
 </header>
@@ -1076,7 +1131,13 @@
       ↔ Reset Widths
     </button>
     </div>
-    <div class="week-pills" id="weekPills"></div>
+    <div class="week-strip-wrap">
+      <div class="week-strip-header">
+        <span class="week-pills-label">📅 Weekly Batches</span>
+        <button type="button" id="weekAllBtn" class="week-all-btn active" onclick="quickFilterWeek('')">All Weeks</button>
+      </div>
+      <div class="week-pills" id="weekPills"></div>
+    </div>
   </div>
 
   <!-- Schedule Table -->
@@ -1816,19 +1877,6 @@ function updateAuditUI() {
 }
 
 
-function toggleHeaderMoreMenu(e) {
-  if (e) e.stopPropagation();
-  const menu = document.getElementById('headerMoreMenu');
-  if (menu) menu.classList.toggle('open');
-}
-function closeHeaderMoreMenu() {
-  const menu = document.getElementById('headerMoreMenu');
-  if (menu) menu.classList.remove('open');
-}
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('headerMoreDropdown');
-  if (wrap && !wrap.contains(e.target)) closeHeaderMoreMenu();
-});
 
 function toggleAnalytics() {
   chartsVisible = !chartsVisible;
@@ -2395,16 +2443,44 @@ function renderTable() {
   });
   filterWeekEl.value = uniqueWeeks.includes(prevWeekVal) ? prevWeekVal : '';
 
+  const allBtn = document.getElementById('weekAllBtn');
+  if (allBtn) {
+    allBtn.classList.toggle('active', !filterWeekEl.value);
+    allBtn.textContent = `All (${enriched.length})`;
+  }
   const pillsEl = document.getElementById('weekPills');
-  pillsEl.innerHTML = '<span class="week-pills-label">📅 Weekly Batches:</span>';
+  pillsEl.innerHTML = '';
   uniqueWeeks.forEach(wk => {
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.className = 'week-pill' + (filterWeekEl.value === wk ? ' active' : '');
-    pill.style.background = weekColorMap[wk];
-    pill.innerHTML = `<span>${weekLabelMap[wk]}</span><span class="badge">${weekCountMap[wk]}</span>`;
-    pill.onclick = () => quickFilterWeek(wk);
-    pillsEl.appendChild(pill);
+    const wkItems = enriched.filter(s => s.weekKey === wk);
+    const tot = wkItems.length;
+    const done = wkItems.filter(s => s.status === 'Patched').length;
+    const fail = wkItems.filter(s => s.status === 'Failed').length;
+    const donePct = tot ? Math.round((done / tot) * 100) : 0;
+    const failPct = tot ? Math.round((fail / tot) * 100) : 0;
+    const isAllDone = tot > 0 && done === tot;
+
+    // Extract clean date range from "Week 46 (14-15 Nov 2026)" -> "14-15 Nov 2026"
+    const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
+    const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'week-batch-card' + (filterWeekEl.value === wk ? ' active' : '');
+    card.style.background = weekColorMap[wk];
+    card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}`;
+    card.innerHTML = `
+      <div class="wb-top">
+        <span class="wb-wk-tag">${weekShortMap[wk]}</span>
+        <span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span>
+      </div>
+      <div class="wb-date">${escapeHtml(shortRange)}</div>
+      <div class="wb-progress-track">
+        <div style="width:${donePct}%;background:#10B981;"></div>
+        <div style="width:${failPct}%;background:#EF4444;"></div>
+      </div>
+    `;
+    card.onclick = () => quickFilterWeek(wk);
+    pillsEl.appendChild(card);
   });
 
   const total = enriched.length;
