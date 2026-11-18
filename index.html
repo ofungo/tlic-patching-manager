@@ -1,250 +1,3712 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Windows Server Patching Schedule Manager</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS for Excel Import/Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .expanded-rows td { white-space: normal !important; word-break: break-word; }
-        .compact-rows td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Windows Server Patching Schedule Manager (v5.9)</title>
+<style>
+  :root {
+    --bg: #F1F5F9;
+    --surface: #FFFFFF;
+    --primary: #1E3A5F;
+    --primary-light: #2B5282;
+    --accent: #0284C7;
+    --text-main: #0F172A;
+    --text-muted: #475569;
+    --border: #CBD5E1;
+    --border-light: #E2E8F0;
+    --banner-bg: #DCE6F7;
+    --banner-text: #16325C;
+    --patched-bg: #DCFCE7;
+    --patched-text: #166534;
+    --failed-bg: #FEE2E2;
+    --failed-text: #991B1B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+  }
+
+  /* High-Readability Two-Row Top Header Bar */
+  header {
+    background: #FFFFFF;
+    color: #0F172A;
+    padding: 12px 20px;
+    border-bottom: 1px solid #CBD5E1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+  .header-left-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .header-right-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .header-right-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .header-sub-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.16rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .ver-pill {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .subtitle-pill {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #64748B;
+    padding-left: 8px;
+    border-left: 1px solid #CBD5E1;
+  }
+  @keyframes pulseLive {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(1.22); }
+  }
+  .live-dot-pulse {
+    animation: pulseLive 1.8s infinite ease-in-out;
+  }
+
+  /* High-Contrast Top Bar Buttons (36px height, 13px crisp labels) */
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0 13px;
+    height: 36px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.14s ease;
+    white-space: nowrap;
+  }
+  .btn-live-pill {
+    background: #ECFDF5;
+    color: #065F46;
+    border-color: #10B981;
+    font-weight: 700;
+  }
+  .btn-live-pill:hover {
+    background: #D1FAE5;
+  }
+  .btn-lock {
+    background: #F8FAFC;
+    color: #334155;
+    border-color: #CBD5E1;
+  }
+  .btn-lock:hover {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FCA5A5;
+  }
+  .btn-add {
+    background: #2563EB;
+    color: #FFFFFF;
+    border-color: #1D4ED8;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+  }
+  .btn-add:hover { background: #1D4ED8; }
+  .btn-surface {
+    background: #FFFFFF;
+    color: #1E293B;
+    border-color: #CBD5E1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .btn-surface:hover {
+    background: #F8FAFC;
+    border-color: #94A3B8;
+  }
+  .btn-handover {
+    background: #EEF2FF;
+    color: #3730A3;
+    border-color: #C7D2FE;
+  }
+  .btn-handover:hover {
+    background: #E0E7FF;
+    border-color: #A5B4FC;
+  }
+  .log-badge-pill {
+    background: #3730A3;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .btn-charts {
+    background: #F0FDFA;
+    color: #0F766E;
+    border-color: #99F6E4;
+  }
+  .btn-charts:hover {
+    background: #CCFBF1;
+  }
+  .btn-charts.active {
+    background: #0F766E;
+    color: #FFFFFF;
+    border-color: #0D9488;
+  }
+
+  /* Unified Grouped Quarter Cycle Container */
+  .cycle-pill-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    padding: 0 6px 0 11px;
+    height: 36px;
+    border-radius: 8px;
+  }
+  .cycle-label-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+  }
+  .cycle-select {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 0 10px;
+    height: 28px;
+    min-width: 175px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cycle-select:hover { border-color: #2563EB; }
+  .cycle-sub-btn {
+    height: 28px;
+    padding: 0 9px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.14s ease;
+    white-space: nowrap;
+  }
+  .cycle-next-btn {
+    background: #DBEAFE;
+    color: #1E40AF;
+    border-color: #93C5FD;
+  }
+  .cycle-next-btn:hover { background: #BFDBFE; }
+  .cycle-del-btn {
+    background: #FFFFFF;
+    color: #B91C1C;
+    border-color: #FECACA;
+  }
+  .cycle-del-btn:hover { background: #FEE2E2; }
+
+  .btn-primary { background: #10B981; color: #fff; }
+  .btn-primary:hover { background: #059669; }
+  .btn-secondary { background: #FFFFFF; color: #334155; border-color: #CBD5E1; }
+  .btn-secondary:hover { background: #F1F5F9; }
+  .btn-toggle { background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1; height: 30px; padding: 0 10px; font-size: 0.76rem; }
+  .btn-toggle.active { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
+
+  @media (max-width: 1080px) {
+    .header-right-col { align-items: flex-start; }
+    .header-right-line { justify-content: flex-start; }
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 7px 12px 14px;
+  }
+
+  /* 4-Column Command Center Dashboard (Balanced Proportions on 1920x1080) */
+  .command-deck {
+    display: grid;
+    grid-template-columns: 265px 1.18fr 0.96fr 1.04fr;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: stretch;
+  }
+  .command-deck.hidden { display: none; }
+  @media (max-width: 1360px) {
+    .command-deck { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 820px) {
+    .command-deck { grid-template-columns: 1fr; }
+  }
+
+  /* 2x2 Readable KPI Card (Full-Height Stretch) */
+  .kpi-quad-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+    padding: 9px 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    height: 100%;
+  }
+  .kpi-quad-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 7px;
+    flex: 1;
+  }
+  .kpi-box {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-left: 3.5px solid var(--primary);
+    border-radius: 5px;
+    padding: 7px 9px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.12s ease;
+  }
+  .kpi-box:hover { background: #EFF6FF; border-color: #93C5FD; }
+  .kpi-box-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+  .kpi-box-val {
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text-main);
+  }
+  .kpi-box-sub {
+    font-size: 0.64rem;
+    color: var(--text-muted);
+  }
+  .kpi-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+  }
+  .kpi-bar-track {
+    flex: 1;
+    height: 7px;
+    background: #E2E8F0;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .chart-card {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+    padding: 8px 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .chart-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 8px;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-right: 3px;
+  }
+
+  /* Weekly Stacked Bar Chart */
+  .weekly-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 92px;
+    padding-top: 12px;
+    border-bottom: 1px solid #CBD5E1;
+  }
+  .w-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    min-width: 22px;
+  }
+  .w-bar-col:hover .w-bar-stack { transform: scaleY(1.04); filter: brightness(0.95); }
+  .w-bar-count {
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 1px;
+  }
+  .w-bar-stack {
+    width: 100%;
+    max-width: 28px;
+    display: flex;
+    flex-direction: column-reverse;
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+    transition: transform 0.15s ease;
+    background: #E2E8F0;
+  }
+  .seg-patched { background: #10B981; }
+  .seg-pending { background: #3B82F6; }
+  .seg-failed  { background: #EF4444; }
+  .w-bar-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* Side-by-Side Breakdown inside Right Chart Card */
+  .h-bar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .h-bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    cursor: pointer;
+    padding: 1px 3px;
+    border-radius: 4px;
+    transition: background 0.12s ease;
+  }
+  .h-bar-row:hover { background: #F1F5F9; }
+  .h-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: #334155;
+  }
+  .h-bar-track {
+    height: 5px;
+    background: #E2E8F0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .h-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
+
+  /* Unified Control Strip: Filter Bar + Weekly Batch Cards */
+  .controls-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+    padding: 5px 9px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 4px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.75rem;
+    background: #fff;
+    color: var(--text-main);
+  }
+  .filter-bar input { min-width: 210px; flex: 1; }
+
+  .week-strip-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E2E8F0;
+  }
+  .week-strip-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding-right: 6px;
+    border-right: 1px solid #E2E8F0;
+    flex-shrink: 0;
+  }
+  .week-pills-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--primary);
+    white-space: nowrap;
+  }
+  .week-all-btn {
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.14s ease;
+  }
+  .week-all-btn:hover { border-color: var(--accent); background: #EFF6FF; }
+  .week-all-btn.active {
+    background: #1E3A5F;
+    color: #FFFFFF;
+    border-color: #1E3A5F;
+  }
+  .week-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 6px;
+    flex: 1;
+  }
+  .week-batch-card {
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    padding: 4px 9px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3px;
+    min-width: 122px;
+    color: #0F172A;
+    transition: all 0.14s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    text-align: left;
+  }
+  .week-batch-card:hover {
+    border-color: #0284C7;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(2, 132, 199, 0.14);
+  }
+  .week-batch-card.active {
+    background: #1E3A5F !important;
+    color: #FFFFFF !important;
+    border-color: #0F172A;
+    box-shadow: 0 3px 8px rgba(30, 58, 95, 0.28);
+  }
+  .wb-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .wb-wk-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+  }
+  .wb-count-pill {
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.1);
+    color: #1E293B;
+  }
+  .week-batch-card.active .wb-count-pill {
+    background: rgba(255, 255, 255, 0.22);
+    color: #FFFFFF;
+  }
+  .wb-count-pill.done-all {
+    background: #DCFCE7;
+    color: #166534;
+  }
+  .week-batch-card.active .wb-count-pill.done-all {
+    background: #10B981;
+    color: #FFFFFF;
+  }
+  .wb-date {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+  }
+  .week-batch-card.active .wb-date {
+    color: #CBD5E1;
+  }
+  .wb-progress-track {
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    display: flex;
+  }
+  .week-batch-card.active .wb-progress-track {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  /* Table Wrapper - Maximized Viewport Height for 1920x1080 */
+  .table-card {
+    background: var(--surface);
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .table-scroll {
+    overflow-x: auto;
+    max-height: calc(100vh - 255px);
+    min-height: 440px;
+  }
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.76rem;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    padding: 7px 4px;
+    border: 1px solid #2F527D;
+    white-space: normal;
+    line-height: 1.2;
+    font-size: 0.73rem;
+    user-select: none;
+  }
+  /* Column Drag-Resize Handle */
+  .col-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 25;
+  }
+  .col-resizer:hover, .col-resizer.resizing {
+    background: #38BDF8;
+    opacity: 0.85;
+  }
+  /* Sticky Left Columns */
+  thead th.sticky-col-1, tbody td.sticky-col-1 { position: sticky; left: 0; z-index: 12; }
+  thead th.sticky-col-2, tbody td.sticky-col-2 { position: sticky; left: 34px; z-index: 12; }
+  thead th.sticky-col-3, tbody td.sticky-col-3 { position: sticky; left: 70px; z-index: 12; box-shadow: 2px 0 4px rgba(15,23,42,0.06); }
+  thead th.sticky-col-1, thead th.sticky-col-2, thead th.sticky-col-3 { z-index: 20; background: var(--primary); }
+
+  tbody tr.week-banner td {
+    background: var(--banner-bg) !important;
+    color: var(--banner-text);
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 7px 10px;
+    border-top: 2px solid #94B0DA;
+    border-bottom: 2px solid #94B0DA;
+    position: sticky;
+    left: 0;
+  }
+  .banner-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .banner-count-pill {
+    background: #1E3A5F;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .banner-mini-btn {
+    background: rgba(255,255,255,0.75);
+    border: 1px solid #94B0DA;
+    color: #1E3A5F;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.69rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .banner-mini-btn:hover { background: #fff; }
+
+  tbody tr.data-row td {
+    border: 1px solid var(--border);
+    padding: 3px 4px;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  tbody tr.data-row:hover td {
+    filter: brightness(0.97);
+  }
+  tbody tr.data-row.selected-row td {
+    box-shadow: inset 0 0 0 1px #0284C7;
+  }
+  td.center { text-align: center; vertical-align: middle !important; }
+  td.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.74rem; }
+
+  /* Smart Badges under Hostname */
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 2px;
+  }
+  .smart-tag {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0px 4px;
+    border-radius: 3px;
+    line-height: 1.35;
+    display: inline-block;
+  }
+  .tag-env-prd { background: #FEE2E2; color: #991B1B; }
+  .tag-env-uat { background: #FEF3C7; color: #92400E; }
+  .tag-env-dr  { background: #E0E7FF; color: #3730A3; }
+  .tag-seq1    { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+  .tag-seq2    { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
+  .tag-warn    { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
+
+  /* Editable Inputs & Textareas (Expanded Full Text by Default) */
+  .editable-cell {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    padding: 2px 3px;
+    border-radius: 4px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .editable-cell:hover {
+    border-color: #94A3B8;
+    background: rgba(255,255,255,0.75);
+  }
+  .editable-cell:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+  }
+  textarea.editable-textarea {
+    resize: vertical;
+    height: 36px;
+    min-height: 32px;
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.28;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: block;
+  }
+  body.expanded-rows textarea.editable-textarea {
+    height: auto;
+    max-height: none;
+    overflow-y: hidden;
+    resize: none;
+  }
+  select.editable-cell {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 2px 1px;
+  }
+
+  /* Status & Engineer Pills */
+  .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
+  .status-failed  { background-color: var(--failed-bg) !important; color: var(--failed-text) !important; font-weight: 700; }
+  .by-andy { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
+  .by-don  { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
+  .by-fung { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
+
+  .del-btn {
+    background: transparent;
+    border: none;
+    color: #94A3B8;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .del-btn:hover { background: #FEE2E2; color: #DC2626; }
+
+  /* Floating Bulk Action Bar */
+  .bulk-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #0F172A;
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    z-index: 950;
+    transition: transform 0.2s ease;
+    border: 1px solid #334155;
+  }
+  .bulk-bar.visible { transform: translateX(-50%) translateY(0); }
+  .bulk-bar select, .bulk-bar input {
+    background: #1E293B;
+    color: #fff;
+    border: 1px solid #475569;
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+  }
+  .bulk-btn {
+    background: #0284C7;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bulk-btn:hover { background: #0369A1; }
+  .bulk-btn-green { background: #10B981; }
+  .bulk-btn-green:hover { background: #059669; }
+  .bulk-btn-ghost { background: transparent; border: 1px solid #475569; color: #CBD5E1; }
+
+  /* Shift Handover / Audit Log Drawer */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: none;
+    justify-content: flex-end;
+    z-index: 1050;
+  }
+  .drawer-backdrop.open { display: flex; }
+  .drawer {
+    width: 420px;
+    max-width: 95vw;
+    background: #fff;
+    height: 100%;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -6px 0 24px rgba(0,0,0,0.18);
+  }
+  .drawer h3 { margin: 0 0 6px; color: var(--primary); font-size: 1.05rem; }
+  .log-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px;
+    background: #F8FAFC;
+    font-size: 0.78rem;
+    margin: 10px 0;
+  }
+  .log-item {
+    padding: 6px 8px;
+    border-bottom: 1px solid #E2E8F0;
+    line-height: 1.35;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-time { color: #64748B; font-size: 0.7rem; font-weight: 600; }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: #0F172A;
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 1100;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Add Server Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 10px;
+    width: 560px;
+    max-width: 95vw;
+    padding: 20px 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin: 0 0 14px; font-size: 1.05rem; color: var(--primary); }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: span 2; }
+  .form-group label { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 8px 10px;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-family: inherit;
+  }
+  .modal-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Team Workspace Unlock Overlay */
+  .unlock-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 55%, #0F172A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  .unlock-overlay.unlocked {
+    display: none;
+  }
+  .unlock-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    width: 470px;
+    max-width: 96vw;
+    padding: 28px 26px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    border: 1px solid #CBD5E1;
+  }
+  .unlock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    font-size: 0.73rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .unlock-card h2 {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+    color: #0F172A;
+  }
+  .unlock-card p.sub {
+    margin: 0 0 18px;
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.45;
+  }
+  .unlock-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 13px;
+  }
+  .unlock-field label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+  }
+  .unlock-field input {
+    padding: 9px 11px;
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: #F8FAFC;
+  }
+  .unlock-field input:focus {
+    outline: none;
+    border-color: #0284C7;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.16);
+  }
+  .unlock-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #334155;
+    margin: 6px 0 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .unlock-error {
+    background: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .unlock-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .unlock-submit {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    background: #0284C7;
+    color: #fff;
+  }
+  .unlock-submit:hover { background: #0369A1; }
+  .unlock-local-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.79rem;
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+    box-shadow: none;
+  }
+  .unlock-local-btn:hover { background: #E2E8F0; color: #0F172A; }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="expanded-rows">
 
-    <!-- TOP BAR HEADER (Colored background: #E2E8F0) -->
-    <header class="bg-[#E2E8F0] border-b border-[#94A3B8] px-4 py-3 shadow-sm">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            
-            <!-- LEFT SIDE: Title card (White background) & Row 2 controls -->
-            <div class="flex flex-col gap-2">
-                <div class="bg-white px-3 py-1.5 rounded-md border border-slate-300 shadow-sm flex items-center gap-2 w-fit">
-                    <h1 class="text-base font-bold text-slate-900 tracking-tight">Windows Server Patching Schedule Manager</h1>
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">v5.9</span>
-                </div>
-                <!-- Row 2: Live indicator & Lock button -->
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Live: patching_schedule_main
-                    </span>
-                    <button id="lockToggleBtn" onclick="toggleLock()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-md border border-slate-300 shadow-xs transition">
-                        🔒 <span id="lockBtnText">Locked</span>
-                    </button>
-                </div>
-            </div>
+<!-- Team Workspace Unlock Overlay -->
+<div class="unlock-overlay" id="unlockOverlay">
+  <div class="unlock-card">
+    <div class="unlock-badge">🔒 Zero-Leak Protected Workspace</div>
+    <h2>Windows Patching Schedule Login</h2>
+    <p class="sub">No server hostnames, IPs, or database URLs are stored in this public page. Enter your <strong>Firebase Database URL</strong>, <strong>Team Secret Key</strong>, and <strong>Room</strong> to load your team schedule.</p>
 
-            <!-- RIGHT SIDE: Two-row button layout -->
-            <div class="flex flex-col gap-2 w-full md:w-auto items-start md:items-end">
-                <!-- Row 1: Add Server, Import, Export, Handover Log -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xs transition flex items-center gap-1">
-                        + Add Server
-                    </button>
-                    <label class="bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 shadow-xs cursor-pointer transition flex items-center gap-1">
-                        📂 Import .xlsx
-                        <input type="file" id="importFile" accept=".xlsx, .xls" class="hidden" onchange="importExcel(event)">
-                    </label>
-                    <button onclick="exportExcel()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 shadow-xs transition flex items-center gap-1">
-                        ⬇ Export .xlsx
-                    </button>
-                    <button onclick="openHandoverModal()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-indigo-200 shadow-xs transition flex items-center gap-1">
-                        📋 Handover Log <span id="handoverCount" class="bg-indigo-200 text-indigo-800 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
-                    </button>
-                </div>
+    <div class="unlock-error" id="unlockErrorMsg"></div>
 
-                <!-- Row 2: Quarter selector & Charts button -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-slate-300 shadow-xs">
-                        <span class="text-xs font-bold text-slate-600">📆 Quarter:</span>
-                        <select id="quarterSelect" onchange="changeQuarter()" class="text-xs bg-transparent font-medium text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="2026 Q4">2026 Q4</option>
-                        </select>
-                        <button onclick="addNewQuarter()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded border border-slate-300" title="Add Next Quarter">+</button>
-                        <button onclick="deleteCurrentQuarter()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-1.5 py-0.5 rounded border border-red-200" title="Delete Quarter">🗑️</button>
-                    </div>
-                    <button onclick="openChartsModal()" class="bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-teal-200 shadow-xs transition flex items-center gap-1">
-                        📊 Charts
-                    </button>
-                </div>
-            </div>
+    <form onsubmit="event.preventDefault(); submitTeamUnlock();">
+      <div class="unlock-field">
+        <label>Firebase Realtime Database URL *</label>
+        <input type="url" id="loginFirebaseUrl" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" required />
+      </div>
 
+      <div class="unlock-field">
+        <label>Team Secret Key (Firebase Rule Path) *</label>
+        <div style="display:flex;gap:6px;">
+          <input type="password" id="loginTeamSecret" placeholder="e.g. abcd1234" style="flex:1;" required />
+          <button type="button" class="btn btn-toggle" style="padding:0 10px;" onclick="toggleSecretVisibility()" title="Show/Hide Secret Key">👁️</button>
         </div>
-    </header>
+      </div>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col gap-4">
-        
-        <!-- Controls & Search Toolbar -->
-        <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2 flex-1 min-w-[240px]">
-                <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search hostname, IP, application, assignee..." class="w-full text-xs px-3 py-1.5 rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="viewToggleBtn" onclick="toggleViewMode()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 transition">
-                    ↕ Compact Scroll Rows
-                </button>
-                <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 transition">
-                    Reset Filters
-                </button>
-            </div>
-        </div>
+      <div class="unlock-field">
+        <label>Room Name *</label>
+        <input type="text" id="loginRoomName" value="patching_schedule_main" placeholder="patching_schedule_main" required />
+      </div>
 
-        <!-- Data Table Container -->
-        <div id="tableContainer" class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto flex-1">
-            <table id="scheduleTable" class="w-full text-left border-collapse text-xs expanded-rows">
-                <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                    <tr>
-                        <th class="p-3">Actions</th>
-                        <th class="p-3">Hostname</th>
-                        <th class="p-3">IP Address</th>
-                        <th class="p-3">Environment</th>
-                        <th class="p-3">OS</th>
-                        <th class="p-3">Application</th>
-                        <th class="p-3">Patch Window</th>
-                        <th class="p-3">Assignee</th>
-                        <th class="p-3">Status</th>
-                        <th class="p-3">SOP / Notes</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody" class="divide-y divide-slate-200">
-                    <!-- Dynamic rows populate here -->
-                </tbody>
-            </table>
-        </div>
-    </main>
+      <label class="unlock-remember">
+        <input type="checkbox" id="loginRememberMe" checked />
+        <span>Remember credentials on this workstation (auto-login next time)</span>
+      </label>
 
-    <!-- UNLOCK OVERLAY MODAL -->
-    <div id="unlockOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full mx-4 flex flex-col gap-4 border border-slate-200">
-            <div class="flex flex-col gap-1">
-                <h3 class="text-sm font-bold text-slate-900">Enter Unlock Password</h3>
-                <p class="text-xs text-slate-500">Changes are currently locked to prevent accidental edits.</p>
-            </div>
-            <form onsubmit="handleUnlock(event)" class="flex flex-col gap-3">
-                <input type="password" id="unlockPassword" placeholder="Enter password..." class="text-xs px-3 py-2 rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeUnlockModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md">Cancel</button>
-                    <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md">Unlock</button>
-                </div>
-            </form>
-        </div>
+      <div class="unlock-actions">
+        <button type="submit" class="btn unlock-submit">🔓 Unlock &amp; Connect Live</button>
+        <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue Offline / Demo Mode (No Cloud Sync)</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Redesigned High-Readability Two-Row Top Header Bar (v5.9) -->
+<header>
+  <!-- Left Column: Title on Line 1, Live Status Pill + Lock Button directly underneath on Line 2 -->
+  <div class="header-left-col">
+    <h1>
+      <span>🛡️ Windows Server Patching Schedule Manager</span>
+      <span class="ver-pill">v5.9</span>
+      <span class="subtitle-pill">TLIC Patch Operations</span>
+    </h1>
+    <div class="header-sub-left">
+      <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
+        <span id="syncDot" class="live-dot-pulse" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#10B981;"></span>
+        <span id="syncStatusText">Live: patching_schedule_main</span>
+      </button>
+      <button type="button" class="btn btn-lock" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">
+        🔒 Lock
+      </button>
+    </div>
+  </div>
+
+  <!-- Right Column: Line 1 (+ Add Server, Import .xlsx, Export .xlsx, Handover Log) | Line 2 (Quarter + Charts) -->
+  <div class="header-right-col">
+    <div class="header-right-line">
+      <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
+      <label class="btn btn-surface" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
+        <span style="color:#059669;font-size:0.95rem;">📂</span>
+        <span>Import .xlsx</span>
+        <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
+      </label>
+      <button type="button" class="btn btn-surface" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
+        <span style="color:#2563EB;font-size:0.95rem;">⬇</span>
+        <span>Export .xlsx</span>
+      </button>
+      <button type="button" class="btn btn-handover" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
+        <span>📋 Handover Log</span>
+        <span class="log-badge-pill" id="logCountBadge">0</span>
+      </button>
     </div>
 
-    <script>
-        let isExpandedMode = true;
-        let isLocked = false;
-        let servers = [
-            { id: 1, hostname: 'tlic-db-01', ip: '10.100.20.11', env: 'Production', os: 'Windows Server 2019', app: 'Core Database', window: 'Sat 01:00 - 03:00', assignee: 'Andy', status: 'Pending', notes: 'Pre-check snapshot required. Coordinate with DB team.' },
-            { id: 2, hostname: 'tlic-app-02', ip: '10.100.20.25', env: 'Production', os: 'Windows Server 2022', app: 'Portal Services', window: 'Sat 03:00 - 05:00', assignee: 'Don', status: 'Pending', notes: 'Verify IIS bindings after patching.' }
-        ];
+    <div class="header-right-line">
+      <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
+        <span class="cycle-label-text">📆 Quarter:</span>
+        <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
+          <option value="2026_Q4">2026 Q4 (Active)</option>
+        </select>
+        <button type="button" class="cycle-sub-btn cycle-next-btn" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
+          + Next
+        </button>
+        <button type="button" class="cycle-sub-btn cycle-del-btn" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
+          🗑️ Del
+        </button>
+      </div>
 
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            tbody.innerHTML = '';
+      <button type="button" class="btn btn-charts active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the KPI & weekly workload charts">
+        📊 Charts
+      </button>
+    </div>
+  </div>
+</header>
 
-            const filtered = servers.filter(s => 
-                s.hostname.toLowerCase().includes(search) ||
-                s.ip.toLowerCase().includes(search) ||
-                s.app.toLowerCase().includes(search) ||
-                s.assignee.toLowerCase().includes(search)
-            );
+<div class="container">
+  <!-- 4-Card Command Deck: 2x2 KPI + Weekly Load + OS Sheet + Engineer & Env -->
+  <div class="command-deck" id="analyticsPanel">
+    <div class="kpi-quad-card" id="kpiGrid"></div>
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">No servers found matching filter criteria.</td></tr>`;
-                return;
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">📈 Weekly Load (Click to Filter)</span>
+        <div class="chart-legend">
+          <span><i class="legend-dot seg-patched"></i>Done</span>
+          <span><i class="legend-dot seg-pending"></i>Pend</span>
+          <span><i class="legend-dot seg-failed"></i>Fail</span>
+        </div>
+      </div>
+      <div class="weekly-bars" id="weeklyChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">🖥️ OS Sheet Breakdown</span>
+        <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
+      </div>
+      <div class="h-bar-list" id="osEnvChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">👷 Engineer &amp; Env Split</span>
+        <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
+      </div>
+      <div class="h-bar-list" id="engineerChart"></div>
+    </div>
+  </div>
+
+  <!-- Unified Filter & Weekly Batch Strip -->
+  <div class="controls-wrapper">
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+      <select id="filterWeek" onchange="renderTable()">
+        <option value="">All Weeks</option>
+      </select>
+      <select id="filterEnv" onchange="renderTable()">
+        <option value="">All Environments</option>
+        <option value="PRD">Production (PRD)</option>
+        <option value="UAT">UAT</option>
+        <option value="DR">DR / DR Site</option>
+        <option value="DEV">DEV</option>
+      </select>
+      <select id="filterSheet" onchange="renderTable()">
+        <option value="">All OS Sheets</option>
+        <option value="Win SVR 2012R2">Win SVR 2012R2</option>
+        <option value="Win SVR 2016">Win SVR 2016</option>
+        <option value="Win SVR 2019">Win SVR 2019</option>
+        <option value="Win SRV 2022">Win SRV 2022</option>
+        <option value="Ripen Infra SVR">Ripen Infra SVR</option>
+      </select>
+      <select id="filterBy" onchange="renderTable()">
+        <option value="">All Engineers</option>
+        <option value="Andy">Andy</option>
+        <option value="Don">Don</option>
+        <option value="Fung">Fung</option>
+        <option value="__UNASSIGNED__">Unassigned</option>
+      </select>
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="">All Statuses</option>
+        <option value="Patched">Patched</option>
+        <option value="Failed">Failed</option>
+        <option value="__PENDING__">Pending / Blank</option>
+        <option value="__ALERTS__">⚠️ Sequence / Multi-Window Only</option>
+      </select>
+      <button type="button" id="toggleExpandBtn" class="btn btn-toggle active" onclick="toggleRowExpansion()">
+        ↕ Compact Scroll Rows
+      </button>
+      <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
+        ↔ Reset Widths
+      </button>
+    </div>
+    <div class="week-strip-wrap">
+      <div class="week-strip-header">
+        <span class="week-pills-label">📅 Weekly Batches</span>
+        <button type="button" id="weekAllBtn" class="week-all-btn active" onclick="quickFilterWeek('')">All Weeks</button>
+      </div>
+      <div class="week-pills" id="weekPills"></div>
+    </div>
+  </div>
+
+  <!-- Schedule Table -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <colgroup id="scheduleColGroup">
+          <col style="width: 34px;" />   <!-- Select -->
+          <col style="width: 36px;" />   <!-- No -->
+          <col style="width: 128px;" />  <!-- Hostname + Badges -->
+          <col style="width: 108px;" />  <!-- IP Address -->
+          <col style="width: 185px;" />  <!-- Operating System -->
+          <col style="width: 82px;" />   <!-- Application -->
+          <col style="width: 185px;" />  <!-- Maintenance Windows -->
+          <col style="width: 222px;" />  <!-- Time Windows -->
+          <col style="width: 112px;" />  <!-- OS Sheet -->
+          <col style="width: 262px;" />  <!-- SOP Notes -->
+          <col style="width: 135px;" />  <!-- Remarks -->
+          <col style="width: 70px;" />   <!-- By -->
+          <col style="width: 84px;" />   <!-- Status -->
+          <col style="width: 30px;" />   <!-- Delete -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="sticky-col-1"><input type="checkbox" id="selectAllVisible" onchange="toggleSelectAllVisible(this.checked)" title="Select all visible rows" /></th>
+            <th class="sticky-col-2">No</th>
+            <th class="sticky-col-3">Hostname</th>
+            <th>IP Address</th>
+            <th>Operating System</th>
+            <th>Application</th>
+            <th>Maintenance Windows</th>
+            <th>Time Windows (Auto-Sorts)</th>
+            <th>OS Sheet</th>
+            <th>SOP Notes</th>
+            <th>Remarks</th>
+            <th>By</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Bulk Action Bar -->
+<div class="bulk-bar" id="bulkBar">
+  <span style="font-weight:700;font-size:0.82rem;color:#38BDF8;"><span id="selectedCount">0</span> selected <span style="font-weight:400;color:#94A3B8;font-size:0.72rem;">(Shift+Click for range)</span></span>
+  <select id="bulkBy">
+    <option value="__KEEP__">Assign Engineer...</option>
+    <option value="Andy">By: Andy</option>
+    <option value="Don">By: Don</option>
+    <option value="Fung">By: Fung</option>
+    <option value="">Clear Engineer</option>
+  </select>
+  <select id="bulkStatus">
+    <option value="__KEEP__">Set Status...</option>
+    <option value="Patched">Status: Patched</option>
+    <option value="Failed">Status: Failed</option>
+    <option value="">Clear Status</option>
+  </select>
+  <button class="bulk-btn bulk-btn-green" onclick="applyBulkUpdate()">✓ Apply By/Status</button>
+  <span style="color:#475569;">|</span>
+  <input type="text" id="bulkTimeWin" placeholder="Target Schedule / Time Window..." list="timeSuggestions" style="width:255px;" />
+  <button class="bulk-btn" onclick="moveSelectedToSchedule()" title="Move selected servers into this new Time Window">📅 Move to Schedule</button>
+  <button class="bulk-btn" style="background:#8B5CF6;" onclick="copySelectedToSchedule()" title="Duplicate selected servers into this new Time Window (keeps original rows)">📑 Copy to New Schedule</button>
+  <button type="button" class="bulk-btn" style="background:#334155;" onclick="copySelectedHosts()">📋 Copy Names</button>
+  <button type="button" class="bulk-btn" style="background:#334155;" onclick="copySelectedIPs()">🌐 Copy IPs</button>
+  <button class="bulk-btn" style="background:#DC2626;" onclick="bulkDeleteSelected()">🗑️ Remove</button>
+  <button class="bulk-btn bulk-btn-ghost" onclick="clearSelection()">✕</button>
+</div>
+
+<!-- Shift Handover & Audit Trail Drawer -->
+<div class="drawer-backdrop" id="auditDrawer" onclick="if(event.target===this) closeAuditDrawer()">
+  <div class="drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>📋 Shift Handover &amp; Change Log</h3>
+      <button class="del-btn" style="font-size:1.1rem;" onclick="closeAuditDrawer()">✕</button>
+    </div>
+    <p style="margin:0;font-size:0.78rem;color:#475569;">Tracks status flips, engineer assignments, and reschedules during your shift.</p>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="copyHandoverSummary()">📋 Copy Shift Handover Summary</button>
+      <button class="btn btn-toggle" onclick="clearAuditLog()">Clear Log</button>
+    </div>
+    <div class="log-list" id="auditLogList"></div>
+  </div>
+</div>
+
+<!-- Add Server Modal -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <h3>Add New Server to Patching Schedule</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Hostname *</label>
+        <input type="text" id="newHost" placeholder="e.g. PRDVNEW01" />
+      </div>
+      <div class="form-group">
+        <label>IP Address</label>
+        <input type="text" id="newIp" placeholder="e.g. 10.19.32.100" />
+      </div>
+      <div class="form-group">
+        <label>Operating System</label>
+        <input type="text" id="newOs" value="Microsoft Windows Server 2019" />
+      </div>
+      <div class="form-group">
+        <label>OS Sheet</label>
+        <select id="newSheet">
+          <option value="Win SVR 2019">Win SVR 2019</option>
+          <option value="Win SRV 2022">Win SRV 2022</option>
+          <option value="Win SVR 2016">Win SVR 2016</option>
+          <option value="Win SVR 2012R2">Win SVR 2012R2</option>
+          <option value="Ripen Infra SVR">Ripen Infra SVR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Application</label>
+        <input type="text" id="newApp" placeholder="e.g. WeChat / IIS" />
+      </div>
+      <div class="form-group">
+        <label>Maintenance Windows</label>
+        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" />
+      </div>
+      <div class="form-group full">
+        <label>Time Windows * (Determines Week &amp; Auto-Sort Position)</label>
+        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" />
+      </div>
+      <div class="form-group">
+        <label>Assigned By</label>
+        <select id="newBy">
+          <option value="">-- Blank --</option>
+          <option value="Andy">Andy</option>
+          <option value="Don">Don</option>
+          <option value="Fung">Fung</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="newStatus">
+          <option value="">-- Blank --</option>
+          <option value="Patched">Patched</option>
+          <option value="Failed">Failed</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>SOP Notes (Supports multiple lines)</label>
+        <textarea id="newRem1" rows="3" placeholder="Optional multi-line notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-add" onclick="saveNewServer()">Add Server</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="timeSuggestions">
+  <option value="14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30">
+  <option value="28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00">
+  <option value="28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30">
+  <option value="5 DEC 2026 - Saturday 10:00 – 14:00">
+  <option value="13 Dec 2026 - Sunday 00:00 - 03:00">
+  <option value="13 Dec 2026 - Sunday 00:00 - 07:30">
+  <option value="10 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="17 Jan 2027 - Sunday 10:00 -  07:30">
+  <option value="17 Jan 2027 - Sunday 10:00 - 13:30">
+  <option value="24 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="30 Jan 2027 - Sunday 00:00 - 03.00">
+  <option value="31 Jan 2027 - Sunday 00:00 - 03:00">
+  <option value="13 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
+  <option value="14 Feb 2027 - Sunday - 00:00 - Sunday 03:00">
+  <option value="21 Feb 2027 - Sunday - 00:00 - 03:00">
+  <option value="21 Feb 2027 - Sunday - 10:00 - 07:00">
+  <option value="27 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
+  <option value="27 Feb 2027 - Sunday - 10:00 - 03:00">
+  <option value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00">
+</datalist>
+
+<!-- Custom SharePoint-Safe Confirm Modal -->
+<div class="modal-backdrop" id="confirmModal" style="z-index:1200;">
+  <div class="modal" style="width:410px;">
+    <h3 id="confirmTitle" style="margin-bottom:8px;">Confirm Action</h3>
+    <p id="confirmMessage" style="margin:0 0 18px;font-size:0.86rem;color:#334155;line-height:1.45;"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeConfirmModal(false)">Cancel</button>
+      <button type="button" class="btn" id="confirmOkBtn" style="background:#EF4444;color:#fff;" onclick="closeConfirmModal(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- SharePoint-Safe Clipboard Fallback Modal -->
+<div class="modal-backdrop" id="copyFallbackModal" style="z-index:1250;">
+  <div class="modal" style="width:460px;">
+    <h3 id="copyModalTitle" style="margin-bottom:6px;">📋 Copy List</h3>
+    <p id="copyModalDesc" style="margin:0 0 10px;font-size:0.8rem;color:#475569;">Press <strong>Ctrl + C</strong> to copy the selected text below:</p>
+    <textarea id="copyModalTextarea" rows="10" readonly style="width:100%;font-family:'Consolas',monospace;font-size:0.82rem;padding:8px;border:1px solid #94A3B8;border-radius:6px;background:#F8FAFC;color:#0F172A;"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" onclick="retryExecCopyFromModal()">📋 Try Copy Again</button>
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="document.getElementById('copyFallbackModal').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Live Sync Setup Modal -->
+<div class="modal-backdrop" id="syncModal" style="z-index:1220;" onclick="if(event.target===this) closeSyncModal()">
+  <div class="modal" style="width:520px;">
+    <h3 style="margin-bottom:6px;">☁️ Real-Time Team Sync (Firebase Realtime Database)</h3>
+    <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
+      Connect a free <strong>Firebase Realtime Database</strong> so Andy, Don, and Fung see every status update, assignment, and schedule change live without refreshing.
+    </p>
+    <div class="form-group full" style="margin-bottom:10px;">
+      <label>Firebase Realtime Database URL *</label>
+      <input type="text" id="firebaseDbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" oninput="updateShareLinkPreview()" />
+    </div>
+    <div class="form-group full" style="margin-bottom:10px;">
+      <label>Team Secret Key (Firebase Rule Path) *</label>
+      <input type="text" id="firebaseSecretInput" placeholder="e.g. abcd1234" oninput="updateShareLinkPreview()" />
+    </div>
+    <div class="form-group full" style="margin-bottom:12px;">
+      <label>Room Name *</label>
+      <input type="text" id="firebaseRoomInput" value="patching_schedule_main" placeholder="patching_schedule_main" oninput="updateShareLinkPreview()" />
+    </div>
+    <div id="shareLinkBox" style="display:none;background:#EFF6FF;border:1px solid #93C5FD;border-radius:7px;padding:8px 10px;margin-bottom:12px;">
+      <div style="font-size:0.74rem;font-weight:700;color:#1E40AF;margin-bottom:4px;">🔗 One-Click Team Share Link (Auto-connects teammates):</div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="shareTeamUrlOutput" readonly style="flex:1;font-size:0.75rem;padding:5px 8px;border:1px solid #93C5FD;border-radius:5px;background:#fff;" />
+        <button type="button" class="btn btn-add" style="padding:5px 10px;font-size:0.75rem;" onclick="copyTeamShareUrl()">Copy Link</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" class="btn btn-toggle" style="color:#DC2626;" onclick="disconnectFirebase()">Disconnect (Local Only)</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeSyncModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveAndConnectFirebase()">⚡ Connect &amp; Sync Live</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Next Quarter Cycle Rollover Modal (e.g., 2026 Q4 -> 2027 Q1) -->
+<div class="modal-backdrop" id="rolloverModal" style="z-index:1230;" onclick="if(event.target===this) closeRolloverModal()">
+  <div class="modal" style="width:520px;">
+    <h3 style="margin-bottom:6px;">🚀 Rollover / Clone Schedule to Next Quarter</h3>
+    <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
+      Create a brand-new quarterly cycle (e.g. <strong>2027 Q1</strong>) from your current <strong><span id="rolloverSourceCount">0</span> servers</strong> while keeping <strong><span id="rolloverSourceName">2026 Q4</span></strong> archived and accessible anytime in the top dropdown.
+    </p>
+
+    <div class="form-grid" style="margin-bottom:10px;">
+      <div class="form-group">
+        <label>Target Quarter Name *</label>
+        <input type="text" id="rolloverTargetLabel" value="2027 Q1" placeholder="e.g. 2027 Q1" />
+      </div>
+      <div class="form-group">
+        <label>Date Shift Strategy</label>
+        <select id="rolloverDateMode">
+          <option value="shift13w">Auto-Shift +13 Weeks (+91 Days, keeps Sat/Sun)</option>
+          <option value="clear_tw">Clear Time Windows (Set to TBD for fresh planning)</option>
+          <option value="keep_tw">Keep Exact Same Time Windows</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:7px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:7px;font-size:0.8rem;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverResetStatus" checked />
+        <span>Reset <strong>Status</strong> to blank (Pending) for all cloned servers</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverKeepEngineers" checked />
+        <span>Keep existing <strong>Engineer (By: Andy / Don / Fung)</strong> assignments</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverClearRemarks2" checked />
+        <span>Clear temporary execution notes in <strong>Remarks</strong> (keep permanent notes in SOP Notes)</span>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeRolloverModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="executeQuarterRollover()">✨ Create New Quarter Cycle</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_DATA = {
+  servers: [
+    {
+      id: 1,
+      hostname: "PRDAPPWEB01",
+      ip: "10.19.32.11",
+      os: "Microsoft Windows Server 2019",
+      app: "Portal IIS",
+      maintWin: "Saturday 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      osSheet: "Win SVR 2019",
+      remarks1: "1st Sequence: Drain NLB node before reboot.\nVerify HTTPS health check endpoint after patch.",
+      remarks2: "KB5046615 installed cleanly",
+      by: "Andy",
+      status: "Patched"
+    },
+    {
+      id: 2,
+      hostname: "PRDAPPWEB02",
+      ip: "10.19.32.12",
+      os: "Microsoft Windows Server 2019",
+      app: "Portal IIS",
+      maintWin: "Saturday 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      osSheet: "Win SVR 2019",
+      remarks1: "2nd Sequence: Patch only after PRDAPPWEB01 is back online and serving traffic.",
+      remarks2: "",
+      by: "Don",
+      status: ""
+    },
+    {
+      id: 3,
+      hostname: "PRDSQLCORE01",
+      ip: "10.19.40.25",
+      os: "Microsoft Windows Server 2022",
+      app: "MSSQL AlwaysOn",
+      maintWin: "Sunday 00:00 - 03:00",
+      timeWin: "13 Dec 2026 - Sunday 00:00 - 03:00",
+      osSheet: "Win SRV 2022",
+      remarks1: "Failover AG role to secondary node before Windows Update.\nConfirm SQL Agent jobs resume post-reboot.",
+      remarks2: "",
+      by: "Fung",
+      status: ""
+    },
+    {
+      id: 4,
+      hostname: "UATAPI01",
+      ip: "10.29.18.44",
+      os: "Microsoft Windows Server 2016",
+      app: "Payment Gateway",
+      maintWin: "Sunday 00:00 - 03:00",
+      timeWin: "10 Jan 2027 - Sunday 00:00 - 03:00",
+      osSheet: "Win SVR 2016",
+      remarks1: "Stop Tomcat & MQ services prior to patching; verify queue depth = 0.",
+      remarks2: "Pending vendor sign-off",
+      by: "Andy",
+      status: ""
+    },
+    {
+      id: 5,
+      hostname: "DRSVINFRA01 (DR Site)",
+      ip: "10.88.10.15",
+      os: "Microsoft Windows Server 2019",
+      app: "AD / DNS / WSUS",
+      maintWin: "Saturday 10:00 - Sunday 03:00",
+      timeWin: "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00",
+      osSheet: "Ripen Infra SVR",
+      remarks1: "Run dcdiag /v and repadmin /replsummary after reboot.",
+      remarks2: "",
+      by: "Don",
+      status: ""
+    }
+  ],
+  osSheets: {
+    "Win SVR 2012R2": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SVR 2016": { headers: ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SVR 2019": { headers: ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SRV 2022": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Ripen Infra SVR": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] }
+  }
+};
+
+const STORAGE_KEY = 'patching_schedule_v40_state';
+const AUDIT_KEY = 'patching_schedule_v40_audit';
+const FB_CFG_KEY = 'patching_schedule_firebase_cfg_v54';
+
+let appState = loadState();
+let auditLogs = loadAuditLogs();
+let selectedIds = new Set();
+let isExpandedMode = true; // Default: Expand Full Text is active
+let chartsVisible = true;
+
+let fbConfig = loadFirebaseConfig();
+let fbEventSource = null;
+let isApplyingRemoteUpdate = false;
+let clientSessionId = 'client_' + Math.random().toString(36).slice(2, 10);
+
+function sanitizePathSegment(str) {
+  return String(str || '').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+function loadFirebaseConfig() {
+  try {
+    if (window.location.hash && window.location.hash.includes('fb=')) {
+      const m = window.location.hash.match(/fb=([^&]+)/);
+      if (m && m[1]) {
+        const decoded = JSON.parse(atob(decodeURIComponent(m[1])));
+        if (decoded && decoded.url && decoded.secret && decoded.room) {
+          localStorage.setItem(FB_CFG_KEY, JSON.stringify(decoded));
+          return decoded;
+        }
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const sessRaw = sessionStorage.getItem(FB_CFG_KEY);
+    if (sessRaw) {
+      const parsed = JSON.parse(sessRaw);
+      if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
+    }
+  } catch (e) {}
+
+  try {
+    const raw = localStorage.getItem(FB_CFG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
+    }
+  } catch (e) {}
+
+  return { url: '', secret: '', room: 'patching_schedule_main' };
+}
+
+function toggleSecretVisibility() {
+  const inp = document.getElementById('loginTeamSecret');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function showUnlockError(msg) {
+  const box = document.getElementById('unlockErrorMsg');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+async function submitTeamUnlock() {
+  const url = document.getElementById('loginFirebaseUrl').value.trim().replace(/\/$/, '');
+  const rawSecret = document.getElementById('loginTeamSecret').value.trim();
+  const rawRoom = document.getElementById('loginRoomName').value.trim() || 'patching_schedule_main';
+  const remember = document.getElementById('loginRememberMe').checked;
+  const errBox = document.getElementById('unlockErrorMsg');
+  errBox.style.display = 'none';
+
+  if (!url.startsWith('https://')) {
+    showUnlockError('Please enter a valid https:// Firebase Realtime Database URL.');
+    return;
+  }
+  if (rawSecret.length < 4) {
+    showUnlockError('Team Secret Key must be at least 4 characters.');
+    return;
+  }
+
+  const secretSeg = sanitizePathSegment(rawSecret);
+  const roomSeg = sanitizePathSegment(rawRoom) || 'patching_schedule_main';
+  const testEndpoint = `${url}/${secretSeg}/${roomSeg}.json`;
+
+  const submitBtn = document.querySelector('.unlock-submit');
+  const origText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Verifying & Connecting...';
+
+  try {
+    const res = await fetch(testEndpoint);
+    if (!res.ok) {
+      throw new Error(res.status === 401 || res.status === 403
+        ? 'Access Denied (HTTP ' + res.status + ') — Check your Team Secret Key or Firebase Rules.'
+        : 'Connection failed (HTTP ' + res.status + ') — Verify your Firebase URL.');
+    }
+    const remoteData = await res.json();
+
+    fbConfig = { url, secret: secretSeg, room: roomSeg };
+    if (remember) {
+      localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+      sessionStorage.removeItem(FB_CFG_KEY);
+    } else {
+      sessionStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+      localStorage.removeItem(FB_CFG_KEY);
+    }
+
+    if (remoteData && Array.isArray(remoteData.servers)) {
+      if (remoteData.cycles) {
+        appState.cycles = remoteData.cycles;
+        appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+      }
+      appState.servers = remoteData.servers;
+      ensureCyclesStructure();
+      if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+      if (Array.isArray(remoteData.auditLogs)) {
+        auditLogs = remoteData.auditLogs;
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
+        updateAuditUI();
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    document.getElementById('unlockOverlay').classList.add('unlocked');
+    renderTable();
+    startFirebaseRealtimeStream();
+    showToast(`🔓 Connected to ${secretSeg} / ${roomSeg}`);
+  } catch (err) {
+    showUnlockError(err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = origText;
+  }
+}
+
+function enterOfflineEmptyMode() {
+  document.getElementById('unlockOverlay').classList.add('unlocked');
+  setSyncIndicator('live', 'Live: patching_schedule_main');
+  renderTable();
+  showToast('Opened in Demo / Offline Mode — ready to edit or import .xlsx');
+}
+
+function lockAndForgetWorkspace() {
+  showCustomConfirm(
+    'Lock & Clear Credentials',
+    'Lock the workspace and clear saved Firebase URL, Team Secret Key, Room, and cached server data from this browser?',
+    'Lock & Clear',
+    '#DC2626',
+    () => {
+      if (fbEventSource) {
+        fbEventSource.close();
+        fbEventSource = null;
+      }
+      localStorage.removeItem(FB_CFG_KEY);
+      sessionStorage.removeItem(FB_CFG_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('patching_schedule_v34_state');
+      localStorage.removeItem(AUDIT_KEY);
+      fbConfig = { url: '', secret: '', room: 'patching_schedule_main' };
+      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      auditLogs = [];
+      selectedIds.clear();
+      if (window.location.hash.includes('fb=')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      document.getElementById('loginFirebaseUrl').value = '';
+      document.getElementById('loginTeamSecret').value = '';
+      document.getElementById('loginRoomName').value = 'patching_schedule_main';
+      document.getElementById('unlockErrorMsg').style.display = 'none';
+      document.getElementById('unlockOverlay').classList.remove('unlocked');
+      setSyncIndicator('local', 'Locked');
+      renderTable();
+      showToast('🔒 Workspace locked & local credentials cleared');
+    }
+  );
+}
+
+function setSyncIndicator(state, text) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncStatusText');
+  if (!dot || !label) return;
+  const colors = {
+    live: '#10B981',
+    syncing: '#38BDF8',
+    error: '#EF4444',
+    local: '#10B981'
+  };
+  dot.style.background = colors[state] || '#10B981';
+  label.textContent = text;
+}
+
+function getFirebaseEndpoint() {
+  if (!fbConfig || !fbConfig.url || !fbConfig.secret) return '';
+  const base = fbConfig.url.replace(/\/$/, '');
+  const secret = sanitizePathSegment(fbConfig.secret);
+  const room = sanitizePathSegment(fbConfig.room || 'patching_schedule_main') || 'patching_schedule_main';
+  return `${base}/${secret}/${room}.json`;
+}
+
+async function pushStateToFirebase() {
+  const endpoint = getFirebaseEndpoint();
+  if (!endpoint || isApplyingRemoteUpdate) return;
+  setSyncIndicator('syncing', 'Syncing...');
+  try {
+    ensureCyclesStructure();
+    appState.cycles[appState.activeCycle].servers = appState.servers;
+    appState.cycles[appState.activeCycle].auditLogs = auditLogs.slice(0, 80);
+    const payload = {
+      activeCycle: appState.activeCycle,
+      cycles: appState.cycles,
+      servers: appState.servers,
+      osSheets: appState.osSheets || DEFAULT_DATA.osSheets,
+      auditLogs: auditLogs.slice(0, 80),
+      updatedBy: clientSessionId,
+      updatedAt: Date.now()
+    };
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    setSyncIndicator('live', `Live: ${fbConfig.room}`);
+  } catch (err) {
+    console.error('Firebase sync error:', err);
+    setSyncIndicator('error', 'Sync Error (Check Rules)');
+    showToast('⚠️ Firebase sync failed: ' + err.message);
+  }
+}
+
+function startFirebaseRealtimeStream() {
+  if (fbEventSource) {
+    fbEventSource.close();
+    fbEventSource = null;
+  }
+  const endpoint = getFirebaseEndpoint();
+  if (!endpoint) {
+    setSyncIndicator('live', `Live: ${fbConfig.room || 'patching_schedule_main'}`);
+    return;
+  }
+
+  setSyncIndicator('syncing', 'Connecting...');
+  try {
+    fbEventSource = new EventSource(endpoint);
+
+    const handleStreamPayload = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (!msg || msg.data === undefined) return;
+        if (msg.path === '/') {
+          if (msg.data === null) {
+            pushStateToFirebase();
+            return;
+          }
+          if (msg.data.updatedBy === clientSessionId) {
+            setSyncIndicator('live', `Live: ${fbConfig.room}`);
+            return;
+          }
+          if (Array.isArray(msg.data.servers)) {
+            isApplyingRemoteUpdate = true;
+            if (msg.data.cycles) {
+              appState.cycles = msg.data.cycles;
+              appState.activeCycle = msg.data.activeCycle || appState.activeCycle;
             }
-
-            filtered.forEach(s => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition';
-                tr.innerHTML = `
-                    <td class="p-3">
-                        <button onclick="editServer(${s.id})" class="text-blue-600 hover:underline font-medium mr-2">Edit</button>
-                        <button onclick="deleteServer(${s.id})" class="text-red-600 hover:underline font-medium">Del</button>
-                    </td>
-                    <td class="p-3 font-semibold text-slate-900">${s.hostname}</td>
-                    <td class="p-3 font-mono text-slate-600">${s.ip}</td>
-                    <td class="p-3">${s.env}</td>
-                    <td class="p-3">${s.os}</td>
-                    <td class="p-3">${s.app}</td>
-                    <td class="p-3">${s.window}</td>
-                    <td class="p-3"><span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-medium">${s.assignee}</span></td>
-                    <td class="p-3">
-                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                            ${s.status}
-                        </span>
-                    </td>
-                    <td class="p-3 text-slate-600">${s.notes}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function toggleViewMode() {
-            isExpandedMode = !isExpandedMode;
-            const table = document.getElementById('scheduleTable');
-            const btn = document.getElementById('viewToggleBtn');
-            if (isExpandedMode) {
-                table.className = 'w-full text-left border-collapse text-xs expanded-rows';
-                btn.textContent = '↕ Compact Scroll Rows';
-            } else {
-                table.className = 'w-full text-left border-collapse text-xs compact-rows';
-                btn.textContent = '↕ Expand Full Text';
+            appState.servers = msg.data.servers;
+            ensureCyclesStructure();
+            if (Array.isArray(msg.data.auditLogs)) {
+              auditLogs = msg.data.auditLogs;
+              localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
+              updateAuditUI();
             }
-        }
-
-        function toggleLock() {
-            if (!isLocked) {
-                document.getElementById('unlockOverlay').classList.remove('hidden');
-            } else {
-                isLocked = false;
-                document.getElementById('lockBtnText').textContent = 'Locked';
-                document.getElementById('lockToggleBtn').classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-            }
-        }
-
-        function handleUnlock(e) {
-            e.preventDefault();
-            const pass = document.getElementById('unlockPassword').value;
-            if (pass === 'admin123' || pass === '') {
-                isLocked = false;
-                document.getElementById('unlockOverlay').classList.add('hidden');
-                document.getElementById('unlockPassword').value = '';
-                document.getElementById('lockBtnText').textContent = 'Unlocked';
-                document.getElementById('lockToggleBtn').classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-            } else {
-                alert('Incorrect password!');
-            }
-        }
-
-        function closeUnlockModal() {
-            document.getElementById('unlockOverlay').classList.add('hidden');
-        }
-
-        function openAddModal() { alert('Add Server modal placeholder'); }
-        function editServer(id) { alert('Edit server ID: ' + id); }
-        function deleteServer(id) { servers = servers.filter(s => s.id !== id); renderTable(); }
-        function exportExcel() { alert('Exporting to Excel (.xlsx)...'); }
-        function importExcel(e) { alert('Importing Excel file...'); }
-        function openHandoverModal() { alert('Handover log modal placeholder'); }
-        function openChartsModal() { alert('Charts view placeholder'); }
-        function changeQuarter() { alert('Quarter changed'); }
-        function addNewQuarter() { alert('New quarter added'); }
-        function deleteCurrentQuarter() { alert('Delete quarter action'); }
-        function resetFilters() { document.getElementById('searchInput').value = ''; renderTable(); }
-
-        window.onload = function() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
             renderTable();
+            isApplyingRemoteUpdate = false;
+            showToast('🔄 Live update received from teammate');
+          }
+          setSyncIndicator('live', `Live: ${fbConfig.room}`);
+        } else {
+          fetch(endpoint).then(r => r.json()).then(remoteData => {
+            if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
+              isApplyingRemoteUpdate = true;
+              if (remoteData.cycles) {
+                appState.cycles = remoteData.cycles;
+                appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+              }
+              appState.servers = remoteData.servers;
+              ensureCyclesStructure();
+              if (Array.isArray(remoteData.auditLogs)) {
+                auditLogs = remoteData.auditLogs;
+                updateAuditUI();
+              }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+              renderTable();
+              isApplyingRemoteUpdate = false;
+              showToast('🔄 Live update received from teammate');
+            }
+            setSyncIndicator('live', `Live: ${fbConfig.room}`);
+          }).catch(() => {});
+        }
+      } catch (parseErr) {}
+    };
+
+    fbEventSource.addEventListener('put', handleStreamPayload);
+    fbEventSource.addEventListener('patch', handleStreamPayload);
+    fbEventSource.onopen = () => setSyncIndicator('live', `Live: ${fbConfig.room}`);
+    fbEventSource.onerror = () => {
+      setSyncIndicator('error', 'Reconnecting...');
+    };
+  } catch (e) {
+    setSyncIndicator('error', 'Stream Error');
+  }
+}
+
+function openSyncModal() {
+  document.getElementById('firebaseDbUrlInput').value = fbConfig.url || '';
+  document.getElementById('firebaseSecretInput').value = fbConfig.secret || '';
+  document.getElementById('firebaseRoomInput').value = fbConfig.room || 'patching_schedule_main';
+  updateShareLinkPreview();
+  document.getElementById('syncModal').classList.add('open');
+}
+
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('open');
+}
+
+function updateShareLinkPreview() {
+  const url = document.getElementById('firebaseDbUrlInput').value.trim();
+  const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
+  const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
+  const box = document.getElementById('shareLinkBox');
+  if (!url || !secret) {
+    box.style.display = 'none';
+    return;
+  }
+  const encoded = encodeURIComponent(btoa(JSON.stringify({ url: url.replace(/\/$/, ''), secret, room })));
+  const baseHref = window.location.href.split('#')[0];
+  document.getElementById('shareTeamUrlOutput').value = `${baseHref}#fb=${encoded}`;
+  box.style.display = 'block';
+}
+
+function copyTeamShareUrl() {
+  const val = document.getElementById('shareTeamUrlOutput').value;
+  sharePointSafeCopy(val, '🔗 Team live-sync URL copied! Share this link with Andy & Don.', '🔗 Team Share Link');
+}
+
+async function saveAndConnectFirebase() {
+  const url = document.getElementById('firebaseDbUrlInput').value.trim().replace(/\/$/, '');
+  const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
+  const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
+  if (!url || !url.startsWith('https://')) {
+    showToast('⚠️ Please enter a valid https:// Firebase Realtime Database URL');
+    return;
+  }
+  if (!secret) {
+    showToast('⚠️ Please enter your Team Secret Key');
+    return;
+  }
+  fbConfig = { url, secret, room };
+  localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+  updateShareLinkPreview();
+
+  try {
+    const res = await fetch(`${url}/${secret}/${room}.json`);
+    if (res.ok) {
+      const remoteData = await res.json();
+      if (remoteData && Array.isArray(remoteData.servers)) {
+        if (remoteData.cycles) {
+          appState.cycles = remoteData.cycles;
+          appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+        }
+        appState.servers = remoteData.servers;
+        ensureCyclesStructure();
+        if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        renderTable();
+      }
+    }
+  } catch (e) {}
+
+  startFirebaseRealtimeStream();
+  closeSyncModal();
+  showToast(`⚡ Connected to ${secret} / ${room}`);
+}
+
+function disconnectFirebase() {
+  if (fbEventSource) {
+    fbEventSource.close();
+    fbEventSource = null;
+  }
+  fbConfig = { url: '', secret: '', room: 'patching_schedule_main' };
+  localStorage.removeItem(FB_CFG_KEY);
+  sessionStorage.removeItem(FB_CFG_KEY);
+  if (window.location.hash.includes('fb=')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+  setSyncIndicator('live', 'Live: patching_schedule_main');
+  closeSyncModal();
+  showToast('Disconnected — switched back to Local Browser storage');
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('patching_schedule_v34_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.servers) && parsed.servers.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
+  if (!isApplyingRemoteUpdate && getFirebaseEndpoint()) {
+    pushStateToFirebase();
+  }
+}
+
+function loadAuditLogs() {
+  try {
+    const raw = localStorage.getItem(AUDIT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function addAuditEntry(msg) {
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' +
+             now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  auditLogs.unshift({ ts, msg });
+  if (auditLogs.length > 120) auditLogs.pop();
+  try { localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs)); } catch (e) {}
+  updateAuditUI();
+}
+
+function updateAuditUI() {
+  document.getElementById('logCountBadge').textContent = auditLogs.length;
+  const list = document.getElementById('auditLogList');
+  if (!list) return;
+  if (auditLogs.length === 0) {
+    list.innerHTML = '<div style="color:#64748B;text-align:center;padding:24px;">No edits recorded yet in this session.</div>';
+    return;
+  }
+  list.innerHTML = auditLogs.map(item => `
+    <div class="log-item">
+      <div class="log-time">${escapeHtml(item.ts)}</div>
+      <div>${escapeHtml(item.msg)}</div>
+    </div>
+  `).join('');
+}
+
+function toggleAnalytics() {
+  chartsVisible = !chartsVisible;
+  document.getElementById('analyticsPanel').classList.toggle('hidden', !chartsVisible);
+  document.getElementById('toggleChartsBtn').classList.toggle('active', chartsVisible);
+}
+
+function toggleRowExpansion() {
+  isExpandedMode = !isExpandedMode;
+  document.body.classList.toggle('expanded-rows', isExpandedMode);
+  const btn = document.getElementById('toggleExpandBtn');
+  btn.classList.toggle('active', isExpandedMode);
+  btn.textContent = isExpandedMode ? '↕ Compact Scroll Rows' : '↕ Expand Full Text';
+  applyRowHeights();
+}
+
+function applyRowHeights() {
+  document.querySelectorAll('textarea.editable-textarea').forEach(el => {
+    if (isExpandedMode) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight + 2) + 'px';
+    } else {
+      el.style.height = '';
+    }
+  });
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+const MONTHS = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+  apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+  aug: 7, august: 7, sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11
+};
+
+function getISOWeekInfo(dateObj) {
+  const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { isoYear: d.getUTCFullYear(), isoWeek: weekNo };
+}
+
+function formatWeekendRange(isoYear, isoWeek) {
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (isoWeek - 1) * 7);
+  const sat = new Date(monday);
+  sat.setUTCDate(monday.getUTCDate() + 5);
+  const sun = new Date(monday);
+  sun.setUTCDate(monday.getUTCDate() + 6);
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const sDay = String(sat.getUTCDate()).padStart(2, '0');
+  const eDay = String(sun.getUTCDate()).padStart(2, '0');
+  const sMon = monthNames[sat.getUTCMonth()];
+  const eMon = monthNames[sun.getUTCMonth()];
+  const yr = sun.getUTCFullYear();
+  return sMon === eMon ? `${sDay}-${eDay} ${eMon} ${yr}` : `${sDay} ${sMon}-${eDay} ${eMon} ${yr}`;
+}
+
+const _twMetaCache = new Map();
+function buildWeekMetaResult(year, monIdx, day1, clean) {
+  const dt = new Date(year, monIdx, day1);
+  const { isoYear, isoWeek } = getISOWeekInfo(dt);
+  const wkPad = String(isoWeek).padStart(2, '0');
+  const rangeStr = formatWeekendRange(isoYear, isoWeek);
+  const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${clean}`;
+  return {
+    weekKey: `${isoYear}-W${wkPad}`,
+    shortWeek: `W${wkPad}`,
+    weekLabel: `Week ${wkPad} (${rangeStr})`,
+    sortKey
+  };
+}
+
+function parseTimeWindowMeta(twRaw) {
+  const key = String(twRaw || '');
+  if (_twMetaCache.has(key)) return _twMetaCache.get(key);
+  const clean = key.replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
+
+  const mText = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})/i);
+  if (mText) {
+    const day1 = parseInt(mText[1], 10);
+    const monStr = mText[3].toLowerCase();
+    const year = parseInt(mText[4], 10);
+    if (monStr in MONTHS) {
+      const res = buildWeekMetaResult(year, MONTHS[monStr], day1, clean);
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+
+  const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (mIso) {
+    const year = parseInt(mIso[1], 10);
+    const monIdx = parseInt(mIso[2], 10) - 1;
+    const day1 = parseInt(mIso[3], 10);
+    if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
+      const res = buildWeekMetaResult(year, monIdx, day1, clean);
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+
+  const mDmy = clean.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (mDmy) {
+    const day1 = parseInt(mDmy[1], 10);
+    const monIdx = parseInt(mDmy[2], 10) - 1;
+    const year = parseInt(mDmy[3], 10);
+    if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
+      const res = buildWeekMetaResult(year, monIdx, day1, clean);
+      _twMetaCache.set(key, res);
+      return res;
+    }
+  }
+
+  const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', sortKey: '9999-99-99_' + clean };
+  _twMetaCache.set(key, fallback);
+  return fallback;
+}
+
+function detectEnvironment(hostname) {
+  const h = String(hostname || '').toUpperCase();
+  if (h.includes('DR SITE') || h.startsWith('DRSV')) return 'DR';
+  if (h.startsWith('UAT')) return 'UAT';
+  if (h.startsWith('DEV')) return 'DEV';
+  return 'PRD';
+}
+
+function normalizeWinStr(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[–—]/g, '-')
+    .replace(/\./g, ':')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractTimeTokens(str) {
+  const tokens = [];
+  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  let m;
+  while ((m = rx.exec(str)) !== null) {
+    if (m[1].length > 2) continue;
+    if (!m[2] && !m[3]) continue;
+    let hr = parseInt(m[1], 10);
+    const min = m[2] ? parseInt(m[2], 10) : 0;
+    const ampm = (m[3] || '').toLowerCase();
+    if (ampm === 'am' && hr === 12) hr = 0;
+    else if (ampm === 'pm' && hr < 12) hr += 12;
+    tokens.push(`${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+  }
+  return tokens;
+}
+
+function isTimeMatchingMaint(maintWin, timeWin) {
+  const mw = normalizeWinStr(maintWin);
+  const tw = normalizeWinStr(timeWin);
+  if (!mw || !tw) return true;
+  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
+  const twCore = tw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
+  if (mwCore && twCore.includes(mwCore)) return true;
+
+  const mwTimes = extractTimeTokens(mw);
+  const twTimes = extractTimeTokens(tw);
+  const mwHasSat = mw.includes('saturday');
+  const mwHasSun = mw.includes('sunday');
+  const twHasSat = tw.includes('saturday');
+
+  if (mwHasSun && !mwHasSat && twHasSat) return false;
+  if (mwTimes.length >= 2 && twTimes.length >= 2) {
+    const mwStart = mwTimes[0], mwEnd = mwTimes[1];
+    const twStart = twTimes[0], twEnd = twTimes[1];
+    if (mwStart !== twStart || mwEnd !== twEnd) return false;
+  }
+  return true;
+}
+
+function detectSmartFlags(srv) {
+  const flags = [];
+  const combinedText = `${srv.maintWin} ${srv.remarks1}`.toLowerCase();
+  if (combinedText.includes('1st sequence') || combinedText.includes('startup sequence: 1-')) {
+    flags.push({ cls: 'tag-seq1', text: 'SEQ 1', title: '1st Sequence — Patch/Reboot first' });
+  } else if (combinedText.includes('2nd sequence') || combinedText.includes('2st sequence')) {
+    flags.push({ cls: 'tag-seq2', text: 'SEQ 2', title: '2nd Sequence — Patch/Reboot after SEQ 1' });
+  } else if (combinedText.includes('shutdown sequence')) {
+    flags.push({ cls: 'tag-seq2', text: 'Ordered Seq', title: 'Follow strict shutdown/startup sequence in Remarks' });
+  }
+
+  if (!isTimeMatchingMaint(srv.maintWin, srv.timeWin)) {
+    flags.push({
+      cls: 'tag-warn',
+      text: 'Window Mismatch',
+      title: `Time Windows ("${srv.timeWin}") differs from Maintenance Windows ("${srv.maintWin}"). Update Time Windows to match to clear this alert.`
+    });
+  }
+  return flags;
+}
+
+const PASTEL_PALETTE = [
+  '#FFF5F5', '#F0F7FF', '#F2FBF5', '#FFFBEB', '#F7F5EB',
+  '#FAF5FF', '#F0FDFA', '#FFF7ED', '#F8FAFC', '#F3F4F6'
+];
+
+function getSortedAndGrouped() {
+  const enriched = appState.servers.map(s => {
+    const meta = parseTimeWindowMeta(s.timeWin);
+    const env = detectEnvironment(s.hostname);
+    const flags = detectSmartFlags(s);
+    return { ...s, ...meta, env, flags };
+  });
+
+  enriched.sort((a, b) => {
+    if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
+    if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
+    return a.hostname.localeCompare(b.hostname);
+  });
+
+  const uniqueWeeks = [...new Set(enriched.map(x => x.weekKey))];
+  const weekColorMap = {};
+  const weekLabelMap = {};
+  const weekShortMap = {};
+  const weekCountMap = {};
+
+  uniqueWeeks.forEach((wk, idx) => {
+    weekColorMap[wk] = PASTEL_PALETTE[idx % PASTEL_PALETTE.length];
+  });
+
+  enriched.forEach(item => {
+    weekLabelMap[item.weekKey] = item.weekLabel;
+    weekShortMap[item.weekKey] = item.shortWeek;
+    weekCountMap[item.weekKey] = (weekCountMap[item.weekKey] || 0) + 1;
+  });
+
+  return { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap };
+}
+
+function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
+  const maxWeekTotal = Math.max(1, ...uniqueWeeks.map(wk => enriched.filter(s => s.weekKey === wk).length));
+  const weeklyChartEl = document.getElementById('weeklyChart');
+  weeklyChartEl.innerHTML = uniqueWeeks.map(wk => {
+    const items = enriched.filter(s => s.weekKey === wk);
+    const tot = items.length;
+    const p = items.filter(s => s.status === 'Patched').length;
+    const f = items.filter(s => s.status === 'Failed').length;
+    const pend = tot - p - f;
+    const heightPct = Math.round((tot / maxWeekTotal) * 66);
+    const pPct = tot ? (p / tot) * 100 : 0;
+    const pendPct = tot ? (pend / tot) * 100 : 0;
+    const fPct = tot ? (f / tot) * 100 : 0;
+    return `
+      <div class="w-bar-col" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed)" onclick="quickFilterWeek('${wk}')">
+        <div class="w-bar-count">${tot}</div>
+        <div class="w-bar-stack" style="height:${Math.max(8, heightPct)}px;">
+          <div class="seg-patched" style="height:${pPct}%;"></div>
+          <div class="seg-pending" style="height:${pendPct}%;"></div>
+          <div class="seg-failed" style="height:${fPct}%;"></div>
+        </div>
+        <div class="w-bar-label">${weekShortMap[wk]}</div>
+      </div>
+    `;
+  }).join('');
+
+  const total = Math.max(1, enriched.length);
+  const sheetColors = {
+    'Win SVR 2019': '#2563EB',
+    'Win SRV 2022': '#0D9488',
+    'Ripen Infra SVR': '#7C3AED',
+    'Win SVR 2016': '#D97706',
+    'Win SVR 2012R2': '#DC2626'
+  };
+  const osHtml = Object.entries(sheetColors).map(([sh, color]) => {
+    const cnt = enriched.filter(s => s.osSheet === sh).length;
+    const doneCnt = enriched.filter(s => s.osSheet === sh && s.status === 'Patched').length;
+    const pct = Math.round((cnt / total) * 100);
+    return `
+      <div class="h-bar-row" onclick="quickFilterSheet('${sh}')" title="Filter ${sh}: ${cnt} servers (${doneCnt} Patched)">
+        <div class="h-bar-meta"><span>${sh}</span><span>${cnt} <span style="color:#059669;font-weight:700;">(${doneCnt}✓)</span></span></div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('osEnvChart').innerHTML = osHtml;
+
+  const engItems = [
+    { label: 'Andy', filterType: 'by', filterVal: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, done: enriched.filter(s => s.by === 'Andy' && s.status === 'Patched').length, color: '#0284C7' },
+    { label: 'Don', filterType: 'by', filterVal: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, done: enriched.filter(s => s.by === 'Don' && s.status === 'Patched').length, color: '#F97316' },
+    { label: 'Fung', filterType: 'by', filterVal: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, done: enriched.filter(s => s.by === 'Fung' && s.status === 'Patched').length, color: '#8B5CF6' },
+    { label: 'Unassigned', filterType: 'by', filterVal: '__UNASSIGNED__', cnt: enriched.filter(s => !s.by).length, done: 0, color: '#94A3B8' },
+    { label: 'Production (PRD)', filterType: 'env', filterVal: 'PRD', cnt: enriched.filter(s => s.env === 'PRD').length, done: enriched.filter(s => s.env === 'PRD' && s.status === 'Patched').length, color: '#1E3A5F' }
+  ];
+  document.getElementById('engineerChart').innerHTML = engItems.map(item => {
+    const pct = Math.round((item.cnt / total) * 100);
+    const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
+    return `
+      <div class="h-bar-row" onclick="quickFilterChart('${item.filterType}', '${item.filterVal}')" title="Click to filter ${item.label}">
+        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function quickFilterSheet(sh) {
+  const el = document.getElementById('filterSheet');
+  el.value = (el.value === sh) ? '' : sh;
+  renderTable();
+}
+
+function quickFilterChart(type, val) {
+  const el = document.getElementById(type === 'env' ? 'filterEnv' : 'filterBy');
+  el.value = (el.value === val) ? '' : val;
+  renderTable();
+}
+
+/* Multi-Quarter Cycle Engine (2026 Q4 -> 2027 Q1 Rollover) */
+function ensureCyclesStructure() {
+  if (!appState.cycles) {
+    appState.cycles = {
+      '2026_Q4': {
+        label: '2026 Q4',
+        servers: Array.isArray(appState.servers) ? appState.servers : [],
+        auditLogs: Array.isArray(auditLogs) ? auditLogs : []
+      }
+    };
+  }
+  if (!appState.activeCycle || !appState.cycles[appState.activeCycle]) {
+    appState.activeCycle = Object.keys(appState.cycles)[0] || '2026_Q4';
+  }
+  appState.servers = appState.cycles[appState.activeCycle].servers;
+  updateCycleSelectorUI();
+}
+
+function updateCycleSelectorUI() {
+  const sel = document.getElementById('cycleSelector');
+  if (!sel || !appState.cycles) return;
+  const keys = Object.keys(appState.cycles);
+  sel.innerHTML = keys.map(k => {
+    const cyc = appState.cycles[k];
+    const cnt = (cyc.servers || []).length;
+    const done = (cyc.servers || []).filter(s => s.status === 'Patched').length;
+    const pct = cnt ? Math.round((done / cnt) * 100) : 0;
+    return `<option value="${k}" ${k === appState.activeCycle ? 'selected' : ''}>${escapeHtml(cyc.label)} (${done}/${cnt} · ${pct}%)</option>`;
+  }).join('');
+}
+
+function switchQuarterCycle(cycleKey) {
+  ensureCyclesStructure();
+  if (!appState.cycles[cycleKey]) return;
+  appState.cycles[appState.activeCycle].servers = appState.servers;
+  appState.cycles[appState.activeCycle].auditLogs = auditLogs;
+
+  appState.activeCycle = cycleKey;
+  appState.servers = appState.cycles[cycleKey].servers || [];
+  auditLogs = appState.cycles[cycleKey].auditLogs || [];
+  selectedIds.clear();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  updateAuditUI();
+  updateCycleSelectorUI();
+  renderTable();
+  showToast(`📆 Switched to ${appState.cycles[cycleKey].label}`);
+}
+
+function openRolloverModal() {
+  ensureCyclesStructure();
+  const cur = appState.cycles[appState.activeCycle];
+  document.getElementById('rolloverSourceName').textContent = cur.label;
+  document.getElementById('rolloverSourceCount').textContent = (cur.servers || []).length;
+
+  const m = cur.label.match(/(\d{4})\s*Q([1-4])/i);
+  if (m) {
+    let yr = parseInt(m[1], 10);
+    let q = parseInt(m[2], 10) + 1;
+    if (q > 4) { q = 1; yr += 1; }
+    document.getElementById('rolloverTargetLabel').value = `${yr} Q${q}`;
+  }
+  document.getElementById('rolloverModal').classList.add('open');
+}
+
+function closeRolloverModal() {
+  document.getElementById('rolloverModal').classList.remove('open');
+}
+
+function shiftTimeWindowByWeeks(twStr, weeksToAdd) {
+  const s = String(twStr || '').trim();
+  if (!s) return '';
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const daysDelta = weeksToAdd * 7;
+
+  const rx = /(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})(.*)/i;
+  const m = s.match(rx);
+  if (!m) return s + ' (Next Qtr)';
+
+  const d1 = parseInt(m[1], 10);
+  const d2 = m[2] ? parseInt(m[2], 10) : null;
+  const monKey = m[3].toLowerCase();
+  const yr = parseInt(m[4], 10);
+  const tail = m[5] || '';
+
+  if (!(monKey in MONTHS)) return s;
+  const baseDate = new Date(Date.UTC(yr, MONTHS[monKey], d1));
+  baseDate.setUTCDate(baseDate.getUTCDate() + daysDelta);
+
+  const newD1 = baseDate.getUTCDate();
+  const newMon = monthNames[baseDate.getUTCMonth()];
+  const newYr = baseDate.getUTCFullYear();
+
+  if (d2 !== null) {
+    const endDate = new Date(Date.UTC(yr, MONTHS[monKey], d2));
+    endDate.setUTCDate(endDate.getUTCDate() + daysDelta);
+    const newD2 = endDate.getUTCDate();
+    const endMon = monthNames[endDate.getUTCMonth()];
+    const endYr = endDate.getUTCFullYear();
+    if (newMon === endMon && newYr === endYr) {
+      return `${newD1}-${newD2} ${newMon} ${newYr}${tail}`;
+    }
+    return `${newD1} ${newMon}-${newD2} ${endMon} ${endYr}${tail}`;
+  }
+  return `${newD1} ${newMon} ${newYr}${tail}`;
+}
+
+function executeQuarterRollover() {
+  ensureCyclesStructure();
+  const targetLabel = document.getElementById('rolloverTargetLabel').value.trim();
+  if (!targetLabel) {
+    showToast('⚠️ Please enter a Target Quarter Name (e.g. 2027 Q1)');
+    return;
+  }
+  const targetKey = sanitizePathSegment(targetLabel.replace(/\s+/g, '_'));
+  const dateMode = document.getElementById('rolloverDateMode').value;
+  const resetStatus = document.getElementById('rolloverResetStatus').checked;
+  const keepEngineers = document.getElementById('rolloverKeepEngineers').checked;
+  const clearRem2 = document.getElementById('rolloverClearRemarks2').checked;
+
+  const sourceServers = appState.servers || [];
+  const clonedServers = sourceServers.map((srv, idx) => {
+    let nextTw = srv.timeWin;
+    if (dateMode === 'shift13w') nextTw = shiftTimeWindowByWeeks(srv.timeWin, 13);
+    else if (dateMode === 'clear_tw') nextTw = 'TBC - ' + targetLabel;
+
+    return {
+      ...JSON.parse(JSON.stringify(srv)),
+      id: idx + 1,
+      timeWin: nextTw,
+      status: resetStatus ? '' : srv.status,
+      by: keepEngineers ? srv.by : '',
+      remarks2: clearRem2 ? '' : srv.remarks2
+    };
+  });
+
+  appState.cycles[targetKey] = {
+    label: targetLabel,
+    servers: clonedServers,
+    auditLogs: [{
+      ts: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
+      msg: `Created ${targetLabel} cycle by cloning ${clonedServers.length} servers from ${appState.cycles[appState.activeCycle].label}`
+    }]
+  };
+
+  appState.activeCycle = targetKey;
+  appState.servers = clonedServers;
+  auditLogs = appState.cycles[targetKey].auditLogs;
+  selectedIds.clear();
+
+  saveState();
+  updateAuditUI();
+  updateCycleSelectorUI();
+  closeRolloverModal();
+  renderTable();
+  showToast(`✨ Created ${targetLabel} with ${clonedServers.length} servers!`);
+}
+
+function deleteOrClearCurrentCycle() {
+  ensureCyclesStructure();
+  const keys = Object.keys(appState.cycles);
+  const curKey = appState.activeCycle;
+  const curObj = appState.cycles[curKey];
+  const curLabel = curObj ? curObj.label : curKey;
+  const srvCount = (curObj && Array.isArray(curObj.servers)) ? curObj.servers.length : 0;
+
+  if (keys.length > 1) {
+    showCustomConfirm(
+      `Delete Quarter Cycle "${curLabel}"?`,
+      `Permanently remove "${curLabel}" (${srvCount} servers) and switch back to another saved quarter cycle? This cannot be undone.`,
+      `Delete "${curLabel}"`,
+      '#DC2626',
+      () => {
+        delete appState.cycles[curKey];
+        const nextKey = Object.keys(appState.cycles)[0];
+        appState.activeCycle = nextKey;
+        appState.servers = appState.cycles[nextKey].servers || [];
+        auditLogs = appState.cycles[nextKey].auditLogs || [];
+        selectedIds.clear();
+        saveState();
+        updateAuditUI();
+        updateCycleSelectorUI();
+        renderTable();
+        showToast(`🗑️ Deleted cycle "${curLabel}" → Switched to ${appState.cycles[nextKey].label}`);
+      }
+    );
+  } else {
+    showCustomConfirm(
+      `Clear All Servers in "${curLabel}"?`,
+      `"${curLabel}" is your only quarter cycle. Clear all ${srvCount} servers from "${curLabel}" so you can import a fresh .xlsx or start clean?`,
+      `Clear ${srvCount} Servers`,
+      '#DC2626',
+      () => {
+        appState.cycles[curKey].servers = [];
+        appState.servers = [];
+        selectedIds.clear();
+        addAuditEntry(`Cleared all ${srvCount} servers from ${curLabel}`);
+        saveState();
+        updateCycleSelectorUI();
+        renderTable();
+        showToast(`🗑️ Cleared all servers in "${curLabel}"`);
+      }
+    );
+  }
+}
+
+function quickFilterWeek(wk) {
+  const el = document.getElementById('filterWeek');
+  el.value = (el.value === wk) ? '' : wk;
+  renderTable();
+}
+
+let _searchTimer = null;
+function debouncedRender() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(renderTable, 120);
+}
+
+function renderTable() {
+  ensureCyclesStructure();
+  const { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap } = getSortedAndGrouped();
+  renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap);
+
+  const filterWeekEl = document.getElementById('filterWeek');
+  const prevWeekVal = filterWeekEl.value;
+  filterWeekEl.innerHTML = '<option value="">All Weeks (' + uniqueWeeks.length + ' batches)</option>';
+  uniqueWeeks.forEach(wk => {
+    const opt = document.createElement('option');
+    opt.value = wk;
+    opt.textContent = `${weekLabelMap[wk]} — ${weekCountMap[wk]} servers`;
+    filterWeekEl.appendChild(opt);
+  });
+  filterWeekEl.value = uniqueWeeks.includes(prevWeekVal) ? prevWeekVal : '';
+
+  const allBtn = document.getElementById('weekAllBtn');
+  if (allBtn) {
+    allBtn.classList.toggle('active', !filterWeekEl.value);
+    allBtn.textContent = `All (${enriched.length})`;
+  }
+  const pillsEl = document.getElementById('weekPills');
+  pillsEl.innerHTML = '';
+  uniqueWeeks.forEach(wk => {
+    const wkItems = enriched.filter(s => s.weekKey === wk);
+    const tot = wkItems.length;
+    const done = wkItems.filter(s => s.status === 'Patched').length;
+    const fail = wkItems.filter(s => s.status === 'Failed').length;
+    const donePct = tot ? Math.round((done / tot) * 100) : 0;
+    const failPct = tot ? Math.round((fail / tot) * 100) : 0;
+    const isAllDone = tot > 0 && done === tot;
+
+    const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
+    const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'week-batch-card' + (filterWeekEl.value === wk ? ' active' : '');
+    card.style.background = weekColorMap[wk];
+    card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}`;
+    card.innerHTML = `
+      <div class="wb-top">
+        <span class="wb-wk-tag">${weekShortMap[wk]}</span>
+        <span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span>
+      </div>
+      <div class="wb-date">${escapeHtml(shortRange)}</div>
+      <div class="wb-progress-track">
+        <div style="width:${donePct}%;background:#10B981;"></div>
+        <div style="width:${failPct}%;background:#EF4444;"></div>
+      </div>
+    `;
+    card.onclick = () => quickFilterWeek(wk);
+    pillsEl.appendChild(card);
+  });
+
+  const total = enriched.length;
+  const patched = enriched.filter(s => s.status === 'Patched').length;
+  const failed = enriched.filter(s => s.status === 'Failed').length;
+  const pending = total - patched - failed;
+  const alertCnt = enriched.filter(s => s.flags.length > 0).length;
+
+  const pctDone = total ? Math.round((patched / total) * 100) : 0;
+  const pctFail = total ? Math.round((failed / total) * 100) : 0;
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-quad-grid">
+      <div class="kpi-box" onclick="document.getElementById('filterStatus').value='';renderTable();" title="Show all scheduled rows">
+        <div class="kpi-box-label">Total Rows</div>
+        <div class="kpi-box-val">${total} <span class="kpi-box-sub">(${uniqueWeeks.length} wks)</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();" title="Filter Patched servers">
+        <div class="kpi-box-label">Patched</div>
+        <div class="kpi-box-val" style="color:#059669;">${patched} <span class="kpi-box-sub">(${pctDone}%)</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();" title="Filter Pending servers">
+        <div class="kpi-box-label">Pending</div>
+        <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${failed > 0 ? '· ' + failed + ' Fail' : ''}</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();" title="Filter Sequence / Window Flags">
+        <div class="kpi-box-label">⚠️ Flags</div>
+        <div class="kpi-box-val" style="color:#B45309;">${alertCnt} <span class="kpi-box-sub">alerts</span></div>
+      </div>
+    </div>
+    <div class="kpi-bar-row" title="Overall Completion: ${pctDone}% Patched, ${pctFail}% Failed">
+      <div class="kpi-bar-track">
+        <div style="width:${pctDone}%;background:#10B981;"></div>
+        <div style="width:${pctFail}%;background:#EF4444;"></div>
+      </div>
+      <span style="font-size:0.71rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
+    </div>
+  `;
+
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const fWeek = filterWeekEl.value;
+  const fEnv = document.getElementById('filterEnv').value;
+  const fSheet = document.getElementById('filterSheet').value;
+  const fBy = document.getElementById('filterBy').value;
+  const fStatus = document.getElementById('filterStatus').value;
+
+  const filtered = enriched.filter(s => {
+    if (fWeek && s.weekKey !== fWeek) return false;
+    if (fEnv && s.env !== fEnv) return false;
+    if (fSheet && s.osSheet !== fSheet) return false;
+    if (fBy === '__UNASSIGNED__' && s.by !== '') return false;
+    if (fBy && fBy !== '__UNASSIGNED__' && s.by !== fBy) return false;
+    if (fStatus === '__PENDING__' && s.status !== '') return false;
+    if (fStatus === '__ALERTS__' && s.flags.length === 0) return false;
+    if (fStatus && !['__PENDING__','__ALERTS__'].includes(fStatus) && s.status !== fStatus) return false;
+    if (q) {
+      const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  window._lastFilteredIds = filtered.map(x => x.id);
+
+  const tbody = document.getElementById('scheduleBody');
+  const rowsHtml = [];
+
+  let currentWk = null;
+  const globalNoMap = {};
+  enriched.forEach((s, i) => globalNoMap[s.id] = i + 1);
+
+  const shownCountByWeek = {};
+  filtered.forEach(x => { shownCountByWeek[x.weekKey] = (shownCountByWeek[x.weekKey] || 0) + 1; });
+
+  filtered.forEach(srv => {
+    if (srv.weekKey !== currentWk) {
+      currentWk = srv.weekKey;
+      const totalInWeek = weekCountMap[currentWk] || 0;
+      const shownInWeek = shownCountByWeek[currentWk] || 0;
+      const countText = (shownInWeek === totalInWeek)
+        ? `${totalInWeek} servers`
+        : `${shownInWeek} shown of ${totalInWeek} servers`;
+
+      rowsHtml.push(`
+        <tr class="week-banner">
+          <td colspan="14">
+            <div class="banner-inner">
+              <span>📅 ${srv.weekLabel}</span>
+              <span class="banner-count-pill">Total Servers: ${countText}</span>
+              <button type="button" class="banner-mini-btn" onclick="selectWeekServers('${currentWk}')">☑ Select Week</button>
+              <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'hostname')">📋 Copy Hostnames</button>
+              <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'ip')">🌐 Copy IPs</button>
+            </div>
+          </td>
+        </tr>`);
+    }
+
+    const rowBg = weekColorMap[srv.weekKey];
+    const rowCls = 'data-row' + (selectedIds.has(srv.id) ? ' selected-row' : '');
+    const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : '');
+    const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : ''));
+    const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : 'tag-env-dr');
+    const tagsHtml = [
+      `<span class="smart-tag ${envBadgeCls}">${srv.env}</span>`,
+      ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
+    ].join('');
+
+    rowsHtml.push(`
+      <tr class="${rowCls}" style="background-color:${rowBg};">
+        <td class="center sticky-col-1" style="background:${rowBg};">
+          <input type="checkbox" ${selectedIds.has(srv.id) ? 'checked' : ''} onclick="handleRowCheckboxClick(event, ${srv.id})" />
+        </td>
+        <td class="center sticky-col-2" style="font-weight:700;color:#475569;background:${rowBg};">${globalNoMap[srv.id]}</td>
+        <td class="sticky-col-3" style="background:${rowBg};">
+          <input class="editable-cell" style="font-weight:700;color:#0F172A;" value="${escapeHtml(srv.hostname)}" onchange="updateField(${srv.id}, 'hostname', this.value)" />
+          <div class="tag-row">${tagsHtml}</div>
+        </td>
+        <td><input class="editable-cell center mono" value="${escapeHtml(srv.ip)}" onchange="updateField(${srv.id}, 'ip', this.value)" /></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'os', this.value)">${escapeHtml(srv.os)}</textarea></td>
+        <td><input class="editable-cell" value="${escapeHtml(srv.app)}" onchange="updateField(${srv.id}, 'app', this.value)" /></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea></td>
+        <td class="center">
+          <select class="editable-cell center" onchange="updateField(${srv.id}, 'osSheet', this.value)">
+            ${['Win SVR 2012R2','Win SVR 2016','Win SVR 2019','Win SRV 2022','Ripen Infra SVR'].map(sh =>
+              `<option value="${sh}" ${srv.osSheet === sh ? 'selected' : ''}>${sh}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
+        <td class="center">
+          <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
+            <option value="" ${srv.by === '' ? 'selected' : ''}></option>
+            <option value="Andy" ${srv.by === 'Andy' ? 'selected' : ''}>Andy</option>
+            <option value="Don" ${srv.by === 'Don' ? 'selected' : ''}>Don</option>
+            <option value="Fung" ${srv.by === 'Fung' ? 'selected' : ''}>Fung</option>
+          </select>
+        </td>
+        <td class="center">
+          <select class="editable-cell center ${statusClass}" onchange="updateField(${srv.id}, 'status', this.value)">
+            <option value="" ${srv.status === '' ? 'selected' : ''}></option>
+            <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
+            <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
+          </select>
+        </td>
+        <td class="center">
+          <button type="button" class="del-btn" title="Remove server" onclick="deleteServer(${srv.id})">✕</button>
+        </td>
+      </tr>`);
+  });
+
+  tbody.innerHTML = rowsHtml.join('');
+
+  syncStickyOffsets();
+  updateBulkBar();
+  if (isExpandedMode) requestAnimationFrame(applyRowHeights);
+}
+
+/* Selection & Bulk Actions (with Shift+Click Range Support) */
+let lastClickedRowId = null;
+
+function handleRowCheckboxClick(event, id) {
+  const checked = event.target.checked;
+  const visibleIds = window._lastFilteredIds || [];
+  if (event.shiftKey && lastClickedRowId !== null && visibleIds.includes(lastClickedRowId) && visibleIds.includes(id)) {
+    const start = visibleIds.indexOf(lastClickedRowId);
+    const end = visibleIds.indexOf(id);
+    const [lo, hi] = start < end ? [start, end] : [end, start];
+    for (let i = lo; i <= hi; i++) {
+      if (checked) selectedIds.add(visibleIds[i]);
+      else selectedIds.delete(visibleIds[i]);
+    }
+  } else {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+  }
+  lastClickedRowId = id;
+  renderTable();
+}
+
+function moveSelectedToSchedule() {
+  if (selectedIds.size === 0) return;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+  if (!twVal) {
+    showToast('⚠️ Please enter or select a Target Schedule / Time Window first');
+    document.getElementById('bulkTimeWin').focus();
+    return;
+  }
+  let count = 0;
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      srv.timeWin = twVal;
+      count++;
+    }
+  });
+  const meta = parseTimeWindowMeta(twVal);
+  addAuditEntry(`Moved ${count} servers to schedule "${twVal}" (${meta.weekLabel})`);
+  document.getElementById('bulkTimeWin').value = '';
+  saveState();
+  renderTable();
+  showToast(`📅 Moved ${count} servers → ${meta.weekLabel}`);
+}
+
+function copySelectedToSchedule() {
+  if (selectedIds.size === 0) return;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+  if (!twVal) {
+    showToast('⚠️ Please enter or select a Target Schedule / Time Window to copy into');
+    document.getElementById('bulkTimeWin').focus();
+    return;
+  }
+  let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
+  const clones = [];
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      maxId += 1;
+      clones.push({
+        ...JSON.parse(JSON.stringify(srv)),
+        id: maxId,
+        timeWin: twVal,
+        by: '',
+        status: ''
+      });
+    }
+  });
+  appState.servers.push(...clones);
+  const meta = parseTimeWindowMeta(twVal);
+  addAuditEntry(`Copied ${clones.length} servers into new schedule "${twVal}" (${meta.weekLabel})`);
+  document.getElementById('bulkTimeWin').value = '';
+  clearSelection();
+  saveState();
+  renderTable();
+  showToast(`📑 Copied ${clones.length} servers into ${meta.weekLabel}`);
+}
+
+function toggleSelectAllVisible(checked) {
+  (window._lastFilteredIds || []).forEach(id => {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+  });
+  renderTable();
+}
+
+function selectWeekServers(weekKey) {
+  const { enriched } = getSortedAndGrouped();
+  const weekItems = enriched.filter(s => s.weekKey === weekKey);
+  const allAlreadySelected = weekItems.every(s => selectedIds.has(s.id));
+  weekItems.forEach(s => {
+    if (allAlreadySelected) selectedIds.delete(s.id);
+    else selectedIds.add(s.id);
+  });
+  renderTable();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  const masterCb = document.getElementById('selectAllVisible');
+  if (masterCb) masterCb.checked = false;
+  renderTable();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  document.getElementById('selectedCount').textContent = selectedIds.size;
+  bar.classList.toggle('visible', selectedIds.size > 0);
+}
+
+function applyBulkUpdate() {
+  if (selectedIds.size === 0) return;
+  const byVal = document.getElementById('bulkBy').value;
+  const statusVal = document.getElementById('bulkStatus').value;
+  const twVal = document.getElementById('bulkTimeWin').value.trim();
+
+  let count = 0;
+  appState.servers.forEach(srv => {
+    if (selectedIds.has(srv.id)) {
+      if (byVal !== '__KEEP__') srv.by = byVal;
+      if (statusVal !== '__KEEP__') srv.status = statusVal;
+      if (twVal) srv.timeWin = twVal;
+      count++;
+    }
+  });
+
+  const changes = [];
+  if (byVal !== '__KEEP__') changes.push(`By=${byVal || 'Blank'}`);
+  if (statusVal !== '__KEEP__') changes.push(`Status=${statusVal || 'Blank'}`);
+  if (twVal) changes.push(`Window="${twVal}"`);
+  if (changes.length > 0) {
+    addAuditEntry(`Bulk updated ${count} servers (${changes.join(', ')})`);
+  }
+
+  document.getElementById('bulkBy').value = '__KEEP__';
+  document.getElementById('bulkStatus').value = '__KEEP__';
+  document.getElementById('bulkTimeWin').value = '';
+  saveState();
+  renderTable();
+  showToast(`✓ Updated ${count} selected servers`);
+}
+
+function bulkDeleteSelected() {
+  if (selectedIds.size === 0) return;
+  const count = selectedIds.size;
+  showCustomConfirm(
+    'Remove Selected Servers',
+    `Remove ${count} selected server(s) from the patching schedule?`,
+    `Remove (${count})`,
+    '#EF4444',
+    () => {
+      appState.servers = appState.servers.filter(s => !selectedIds.has(s.id));
+      selectedIds.clear();
+      saveState();
+      addAuditEntry(`Bulk removed ${count} servers`);
+      renderTable();
+      showToast(`🗑️ Removed ${count} selected servers`);
+    }
+  );
+}
+
+function legacyExecCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.left = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function openCopyFallbackModal(title, text) {
+  document.getElementById('copyModalTitle').textContent = title || '📋 Copy Text';
+  const ta = document.getElementById('copyModalTextarea');
+  ta.value = text;
+  document.getElementById('copyFallbackModal').classList.add('open');
+  setTimeout(() => {
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+  }, 40);
+}
+
+function retryExecCopyFromModal() {
+  const ta = document.getElementById('copyModalTextarea');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  if (ok) {
+    document.getElementById('copyFallbackModal').classList.remove('open');
+    showToast('📋 Copied to clipboard');
+  } else {
+    showToast('⚠️ Press Ctrl+C on your keyboard to copy');
+  }
+}
+
+function sharePointSafeCopy(text, successMsg, modalTitle) {
+  if (!text) {
+    showToast('⚠️ Nothing to copy');
+    return;
+  }
+  if (legacyExecCopy(text)) {
+    showToast(successMsg);
+    return;
+  }
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg);
+      }).catch(() => {
+        openCopyFallbackModal(modalTitle, text);
+      });
+      return;
+    } catch (err) {}
+  }
+  openCopyFallbackModal(modalTitle, text);
+}
+
+function copySelectedHosts() {
+  const { enriched } = getSortedAndGrouped();
+  const names = enriched
+    .filter(s => selectedIds.has(s.id))
+    .map(s => s.hostname.split('(')[0].trim());
+  sharePointSafeCopy(
+    names.join(String.fromCharCode(10)),
+    `📋 Copied ${names.length} selected hostnames to clipboard`,
+    `📋 Selected Hostnames (${names.length})`
+  );
+}
+
+function copySelectedIPs() {
+  const { enriched } = getSortedAndGrouped();
+  const ips = enriched
+    .filter(s => selectedIds.has(s.id))
+    .map(s => s.ip)
+    .filter(Boolean);
+  sharePointSafeCopy(
+    ips.join(String.fromCharCode(10)),
+    `🌐 Copied ${ips.length} selected IP addresses to clipboard`,
+    `🌐 Selected IP Addresses (${ips.length})`
+  );
+}
+
+function copyWeekList(weekKey, field) {
+  const { enriched } = getSortedAndGrouped();
+  const vals = enriched
+    .filter(s => s.weekKey === weekKey)
+    .map(s => field === 'hostname' ? s.hostname.split('(')[0].trim() : s.ip)
+    .filter(Boolean);
+  const label = field === 'hostname' ? 'hostnames' : 'IP addresses';
+  sharePointSafeCopy(
+    vals.join(String.fromCharCode(10)),
+    `📋 Copied ${vals.length} ${label} for ${weekKey}`,
+    `📋 ${weekKey} ${label}`
+  );
+}
+
+/* Audit & Handover Drawer */
+function openAuditDrawer() {
+  updateAuditUI();
+  document.getElementById('auditDrawer').classList.add('open');
+}
+function closeAuditDrawer() {
+  document.getElementById('auditDrawer').classList.remove('open');
+}
+function clearAuditLog() {
+  auditLogs = [];
+  localStorage.removeItem(AUDIT_KEY);
+  updateAuditUI();
+}
+function copyHandoverSummary() {
+  const { enriched } = getSortedAndGrouped();
+  const total = enriched.length;
+  const patched = enriched.filter(s => s.status === 'Patched').length;
+  const failed = enriched.filter(s => s.status === 'Failed').length;
+  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join(String.fromCharCode(10));
+  const summary = [
+    `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
+    `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
+    ``,
+    `Recent Activity:`,
+    recent || '- No changes recorded in this session.'
+  ].join(String.fromCharCode(10));
+  sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function updateField(id, field, value, isTimeWin = false) {
+  const item = appState.servers.find(s => s.id === id);
+  if (!item) return;
+  const oldVal = item[field];
+  const newVal = value.trim();
+  if (oldVal === newVal) return;
+
+  item[field] = newVal;
+  saveState();
+  addAuditEntry(`${item.hostname}: changed ${field} from "${oldVal || 'Blank'}" → "${newVal || 'Blank'}"`);
+  renderTable();
+
+  if (isTimeWin) {
+    const meta = parseTimeWindowMeta(item.timeWin);
+    showToast(`✓ Moved ${item.hostname} → ${meta.weekLabel}`);
+  } else {
+    showToast(`✓ Saved ${item.hostname}`);
+  }
+}
+
+let _confirmCallback = null;
+function showCustomConfirm(title, message, okLabel, okColor, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.style.background = okColor || '#EF4444';
+  _confirmCallback = onConfirm;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal(confirmed) {
+  document.getElementById('confirmModal').classList.remove('open');
+  const cb = _confirmCallback;
+  _confirmCallback = null;
+  if (confirmed && typeof cb === 'function') cb();
+}
+
+function deleteServer(id) {
+  const item = appState.servers.find(s => s.id === id);
+  if (!item) return;
+  showCustomConfirm(
+    'Remove Server',
+    `Remove ${item.hostname} (${item.ip || 'No IP'}) from the patching schedule?`,
+    'Remove',
+    '#EF4444',
+    () => {
+      appState.servers = appState.servers.filter(s => s.id !== id);
+      selectedIds.delete(id);
+      saveState();
+      addAuditEntry(`Removed server ${item.hostname}`);
+      renderTable();
+      showToast(`🗑️ Removed ${item.hostname}`);
+    }
+  );
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function saveNewServer() {
+  const host = document.getElementById('newHost').value.trim();
+  const timeWin = document.getElementById('newTime').value.trim();
+  if (!host || !timeWin) {
+    showToast('⚠️ Hostname and Time Windows are required');
+    return;
+  }
+  const maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
+  const newSrv = {
+    id: maxId + 1,
+    hostname: host,
+    ip: document.getElementById('newIp').value.trim(),
+    os: document.getElementById('newOs').value.trim(),
+    app: document.getElementById('newApp').value.trim(),
+    maintWin: document.getElementById('newMaint').value.trim(),
+    timeWin: timeWin,
+    osSheet: document.getElementById('newSheet').value,
+    remarks1: document.getElementById('newRem1').value.trim(),
+    remarks2: '',
+    by: document.getElementById('newBy').value,
+    status: document.getElementById('newStatus').value
+  };
+  appState.servers.push(newSrv);
+  saveState();
+  addAuditEntry(`Added new server ${host} (${timeWin})`);
+  closeAddModal();
+  renderTable();
+  showToast(`✓ Added ${host}`);
+}
+
+function ensureXLSX(callback) {
+  if (typeof XLSX !== 'undefined') {
+    callback();
+    return;
+  }
+  showToast('⏳ Loading Styled Excel engine...');
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+  script.onload = () => callback();
+  script.onerror = () => {
+    const fallbackScript = document.createElement('script');
+    fallbackScript.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+    fallbackScript.onload = () => callback();
+    fallbackScript.onerror = () => {
+      showToast('⚠️ External Excel library blocked — exporting CSV instead');
+      exportCSVFallback();
+    };
+    document.head.appendChild(fallbackScript);
+  };
+  document.head.appendChild(script);
+}
+
+function exportCSVFallback() {
+  const { enriched } = getSortedAndGrouped();
+  const headers = ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status'];
+  const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
+  const lines = [headers.map(esc).join(',')];
+  enriched.forEach((srv, idx) => {
+    lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join(String.fromCharCode(13, 10))], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Q4_2026_Patching_Schedule_Updated.csv';
+  a.click();
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  ensureXLSX(() => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets['Consolidated Schedule'] || wb.Sheets[wb.SheetNames[0]];
+        if (!ws) {
+          showToast('⚠️ Could not find a valid sheet in uploaded workbook');
+          return;
+        }
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        const importedServers = [];
+        for (let r = 2; r < rows.length; r++) {
+          const row = rows[r];
+          const colA = String(row[0] || '').trim();
+          const host = String(row[1] || '').trim();
+          if (host && !colA.startsWith('📅') && !colA.startsWith('=')) {
+            importedServers.push({
+              id: importedServers.length + 1,
+              hostname: host,
+              ip: String(row[2] || '').trim(),
+              os: String(row[3] || '').trim(),
+              app: String(row[4] || '').trim(),
+              maintWin: String(row[5] || '').trim(),
+              timeWin: String(row[6] || '').trim(),
+              osSheet: String(row[7] || '').trim() || 'Win SVR 2019',
+              remarks1: String(row[8] || '').trim(),
+              remarks2: String(row[9] || '').trim(),
+              by: String(row[10] || '').trim(),
+              status: String(row[11] || '').trim()
+            });
+          }
+        }
+        if (importedServers.length > 0) {
+          appState.servers = importedServers;
+          selectedIds.clear();
+          saveState();
+          addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
+          renderTable();
+          showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
+        } else {
+          showToast('⚠️ No valid server rows found');
+        }
+      } catch (err) {
+        showToast('⚠️ Error reading Excel file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  event.target.value = '';
+}
+
+function exportExcel() {
+  ensureXLSX(() => {
+    const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
+    const wb = XLSX.utils.book_new();
+
+    const thinBorder = {
+      top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
+      bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+      left:   { style: 'thin', color: { rgb: 'CBD5E1' } },
+      right:  { style: 'thin', color: { rgb: 'CBD5E1' } }
+    };
+    const bannerBorder = {
+      top:    { style: 'medium', color: { rgb: '94B0DA' } },
+      bottom: { style: 'medium', color: { rgb: '94B0DA' } },
+      left:   { style: 'thin',   color: { rgb: '94B0DA' } },
+      right:  { style: 'thin',   color: { rgb: '94B0DA' } }
+    };
+    const titleStyle = {
+      font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '132A4A' } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 }
+    };
+    const headerStyle = {
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1E3A5F' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: {
+        top:    { style: 'thin',   color: { rgb: '132640' } },
+        bottom: { style: 'medium', color: { rgb: '132640' } },
+        left:   { style: 'thin',   color: { rgb: '2F527D' } },
+        right:  { style: 'thin',   color: { rgb: '2F527D' } }
+      }
+    };
+    const weekBannerStyle = {
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
+      fill: { fgColor: { rgb: 'DCE6F7' } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: bannerBorder
+    };
+
+    function getStatusCellStyle(status, baseHex) {
+      if (status === 'Patched') {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } },
+          fill: { fgColor: { rgb: 'DCFCE7' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
         };
-    </script>
+      }
+      if (status === 'Failed') {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } },
+          fill: { fgColor: { rgb: 'FEE2E2' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
+        };
+      }
+      return {
+        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+        fill: { fgColor: { rgb: baseHex } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+
+    function getEngineerCellStyle(by, baseHex) {
+      const map = {
+        'Andy': { fg: 'E0F2FE', text: '0369A1' },
+        'Don':  { fg: 'FFEDD5', text: 'C2410C' },
+        'Fung': { fg: 'EDE9FE', text: '5B21B6' }
+      };
+      if (map[by]) {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } },
+          fill: { fgColor: { rgb: map[by].fg } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
+        };
+      }
+      return {
+        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+        fill: { fgColor: { rgb: baseHex } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+
+    function calcRowHeight(values, colWidths) {
+      let maxLines = 1;
+      values.forEach((val, idx) => {
+        const s = String(val || '');
+        if (!s) return;
+        const w = Math.max(8, (colWidths[idx] || 20) - 3);
+        const lines = s.split(String.fromCharCode(10)).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(new RegExp(String.fromCharCode(13), 'g'), '').length / w)), 0);
+        if (lines > maxLines) maxLines = lines;
+      });
+      return Math.min(180, Math.max(22, maxLines * 15 + 6));
+    }
+
+    const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
+    const aoa = [
+      ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
+      ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status']
+    ];
+    const rowMeta = [
+      { type: 'title', height: 32 },
+      { type: 'header', height: 28 }
+    ];
+    const merges = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }
+    ];
+
+    let currentWk = null;
+    let prevLabel = '';
+    let bannerIdx = -1;
+    let wkStartExcelRow = 0;
+
+    enriched.forEach((srv, idx) => {
+      if (srv.weekKey !== currentWk) {
+        if (bannerIdx !== -1) {
+          const wkEndExcelRow = aoa.length;
+          aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+        }
+        currentWk = srv.weekKey;
+        prevLabel = srv.weekLabel;
+        bannerIdx = aoa.length;
+        aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
+        rowMeta.push({ type: 'banner', height: 25 });
+        merges.push({ s: { r: bannerIdx, c: 0 }, e: { r: bannerIdx, c: 11 } });
+        wkStartExcelRow = aoa.length + 1;
+      }
+
+      const rowVals = [
+        idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
+        srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
+      ];
+      const baseHex = (weekColorMap[srv.weekKey] || '#FFFFFF').replace('#', '').toUpperCase();
+      aoa.push(rowVals);
+      rowMeta.push({
+        type: 'data',
+        baseHex,
+        by: srv.by,
+        status: srv.status,
+        height: calcRowHeight(rowVals, consColWidths)
+      });
+    });
+
+    if (bannerIdx !== -1) {
+      const wkEndExcelRow = aoa.length;
+      aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+    }
+
+    const wsCons = XLSX.utils.aoa_to_sheet(aoa);
+    wsCons['!cols'] = consColWidths.map(wch => ({ wch }));
+    wsCons['!rows'] = rowMeta.map(m => ({ hpt: m.height }));
+    wsCons['!merges'] = merges;
+    wsCons['!freeze'] = { xSplit: 2, ySplit: 2, topLeftCell: 'C3', activePane: 'bottomRight', state: 'frozen' };
+
+    for (let r = 0; r < aoa.length; r++) {
+      const meta = rowMeta[r];
+      for (let c = 0; c < 12; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!wsCons[addr]) wsCons[addr] = { t: 's', v: '' };
+
+        if (meta.type === 'title') {
+          wsCons[addr].s = titleStyle;
+        } else if (meta.type === 'header') {
+          wsCons[addr].s = headerStyle;
+        } else if (meta.type === 'banner') {
+          wsCons[addr].s = weekBannerStyle;
+        } else {
+          if (c === 10) {
+            wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
+          } else if (c === 11) {
+            wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
+          } else {
+            const isCenter = (c === 0 || c === 2 || c === 7);
+            const isBoldHost = (c === 1);
+            const isMonoIp = (c === 2);
+            wsCons[addr].s = {
+              font: {
+                name: isMonoIp ? 'Consolas' : 'Calibri',
+                sz: 10,
+                bold: isBoldHost || (c === 0),
+                color: { rgb: c === 0 ? '475569' : '0F172A' }
+              },
+              fill: { fgColor: { rgb: meta.baseHex } },
+              alignment: {
+                horizontal: isCenter ? 'center' : 'left',
+                vertical: 'center',
+                wrapText: true
+              },
+              border: thinBorder
+            };
+          }
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
+
+    const sumAoa = [
+      ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
+      ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
+    ];
+    uniqueWeeks.forEach(wk => {
+      const items = enriched.filter(s => s.weekKey === wk);
+      const tot = items.length;
+      const p = items.filter(s => s.status === 'Patched').length;
+      const f = items.filter(s => s.status === 'Failed').length;
+      const pend = tot - p - f;
+      const pct = tot ? Math.round((p / tot) * 100) + '%' : '0%';
+      sumAoa.push([weekLabelMap[wk], tot, p, pend, f, pct]);
+    });
+    const totAll = enriched.length;
+    const pAll = enriched.filter(s => s.status === 'Patched').length;
+    const fAll = enriched.filter(s => s.status === 'Failed').length;
+    sumAoa.push(['TOTAL ALL BATCHES', totAll, pAll, totAll - pAll - fAll, fAll, totAll ? Math.round((pAll / totAll) * 100) + '%' : '0%']);
+
+    const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
+    wsSum['!cols'] = [{ wch: 36 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+    wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+    wsSum['!rows'] = sumAoa.map((_, i) => ({ hpt: i === 0 ? 30 : (i === 1 ? 26 : 22) }));
+
+    for (let r = 0; r < sumAoa.length; r++) {
+      const isTotalRow = (r === sumAoa.length - 1);
+      const wkKey = (r >= 2 && !isTotalRow) ? uniqueWeeks[r - 2] : null;
+      const rowHex = wkKey ? (weekColorMap[wkKey] || '#FFFFFF').replace('#', '').toUpperCase() : 'E2E8F0';
+      for (let c = 0; c < 6; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
+        if (r === 0) wsSum[addr].s = titleStyle;
+        else if (r === 1) wsSum[addr].s = headerStyle;
+        else {
+          wsSum[addr].s = {
+            font: { name: 'Calibri', sz: 10, bold: isTotalRow || c === 0 || c === 5, color: { rgb: '0F172A' } },
+            fill: { fgColor: { rgb: isTotalRow ? 'DCE6F7' : rowHex } },
+            alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+            border: isTotalRow ? bannerBorder : thinBorder
+          };
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
+
+    const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
+    const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
+    sheetOrder.forEach(sName => {
+      const sheetServers = enriched.filter(s => s.osSheet === sName);
+      const sAoa = [
+        [`${sName} — Patching Schedule (${sheetServers.length} Servers)`, '', '', '', '', '', '', '', '', ''],
+        ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks', 'By', 'Status']
+      ];
+      const sRowHeights = [{ hpt: 30 }, { hpt: 26 }];
+      sheetServers.forEach((srv, i) => {
+        const rVals = [i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1, srv.by, srv.status];
+        sAoa.push(rVals);
+        sRowHeights.push({ hpt: calcRowHeight(rVals, subColWidths) });
+      });
+
+      const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
+      wsSub['!cols'] = subColWidths.map(wch => ({ wch }));
+      wsSub['!rows'] = sRowHeights;
+      wsSub['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+      for (let r = 0; r < sAoa.length; r++) {
+        const zebraHex = (r % 2 === 0) ? 'FFFFFF' : 'F8FAFC';
+        const srvObj = r >= 2 ? sheetServers[r - 2] : null;
+        for (let c = 0; c < 10; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          if (!wsSub[addr]) wsSub[addr] = { t: 's', v: '' };
+          if (r === 0) wsSub[addr].s = titleStyle;
+          else if (r === 1) wsSub[addr].s = headerStyle;
+          else if (c === 8) wsSub[addr].s = getEngineerCellStyle(srvObj.by, zebraHex);
+          else if (c === 9) wsSub[addr].s = getStatusCellStyle(srvObj.status, zebraHex);
+          else {
+            const isCenter = (c === 0 || c === 2);
+            wsSub[addr].s = {
+              font: {
+                name: c === 2 ? 'Consolas' : 'Calibri',
+                sz: 10,
+                bold: (c === 0 || c === 1),
+                color: { rgb: c === 0 ? '475569' : '0F172A' }
+              },
+              fill: { fgColor: { rgb: zebraHex } },
+              alignment: { horizontal: isCenter ? 'center' : 'left', vertical: 'center', wrapText: true },
+              border: thinBorder
+            };
+          }
+        }
+      }
+      XLSX.utils.book_append_sheet(wb, wsSub, sName);
+    });
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
+    showToast(`⬇ Exported styled Windows_Patching_Schedule_${dateStamp}.xlsx`);
+  });
+}
+
+/* Column Drag-Resizing + Sticky Offset Sync */
+const DEFAULT_COL_WIDTHS = [34, 36, 128, 108, 185, 82, 185, 222, 112, 262, 135, 70, 84, 30];
+const COL_WIDTHS_KEY = 'patching_schedule_v40_col_widths';
+
+function syncStickyOffsets() {
+  const widths = window._currentColWidths || DEFAULT_COL_WIDTHS;
+  const col1W = widths[0] || 34;
+  const col2W = widths[1] || 36;
+  document.querySelectorAll('thead th.sticky-col-2, tbody td.sticky-col-2').forEach(el => {
+    el.style.left = col1W + 'px';
+  });
+  document.querySelectorAll('thead th.sticky-col-3, tbody td.sticky-col-3').forEach(el => {
+    el.style.left = (col1W + col2W) + 'px';
+  });
+}
+
+function applyColumnWidths(widths) {
+  const cols = document.querySelectorAll('#scheduleColGroup col');
+  widths.forEach((w, idx) => {
+    if (cols[idx]) cols[idx].style.width = w + 'px';
+  });
+  window._currentColWidths = widths;
+  syncStickyOffsets();
+}
+
+function initColumnResizers() {
+  let saved = null;
+  try {
+    const raw = localStorage.getItem(COL_WIDTHS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length === DEFAULT_COL_WIDTHS.length) saved = parsed;
+    }
+  } catch (e) {}
+  applyColumnWidths(saved || [...DEFAULT_COL_WIDTHS]);
+
+  const ths = document.querySelectorAll('thead th');
+  const cols = document.querySelectorAll('#scheduleColGroup col');
+
+  ths.forEach((th, idx) => {
+    if (idx === 0 || idx === ths.length - 1) return;
+    const handle = document.createElement('div');
+    handle.className = 'col-resizer';
+    handle.title = 'Drag to resize column width';
+    th.appendChild(handle);
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.pageX;
+      const startWidth = cols[idx].offsetWidth || parseInt(cols[idx].style.width, 10) || DEFAULT_COL_WIDTHS[idx];
+      handle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+
+      const onMouseMove = (moveEvt) => {
+        const delta = moveEvt.pageX - startX;
+        const newW = Math.max(30, Math.min(600, startWidth + delta));
+        const nextWidths = [...(window._currentColWidths || DEFAULT_COL_WIDTHS)];
+        nextWidths[idx] = newW;
+        applyColumnWidths(nextWidths);
+      };
+
+      const onMouseUp = () => {
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        try { localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(window._currentColWidths)); } catch (err) {}
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
+}
+
+function resetColumnWidths() {
+  localStorage.removeItem(COL_WIDTHS_KEY);
+  applyColumnWidths([...DEFAULT_COL_WIDTHS]);
+  showToast('↔ Reset column widths to default');
+}
+
+window.addEventListener('unhandledrejection', (e) => { e.preventDefault(); });
+window.addEventListener('resize', () => { if (isExpandedMode) applyRowHeights(); });
+initColumnResizers();
+updateAuditUI();
+if (getFirebaseEndpoint()) {
+  document.getElementById('unlockOverlay').classList.add('unlocked');
+  renderTable();
+  startFirebaseRealtimeStream();
+} else {
+  renderTable();
+}
+</script>
 </body>
 </html>
