@@ -2307,8 +2307,7 @@ function copySelectedHosts() {
     .filter(s => selectedIds.has(s.id))
     .map(s => s.hostname.split('(')[0].trim());
   sharePointSafeCopy(
-    names.join('
-'),
+    names.join(String.fromCharCode(10)),
     `📋 Copied ${names.length} selected hostnames to clipboard`,
     `📋 Selected Hostnames (${names.length})`
   );
@@ -2321,8 +2320,7 @@ function copySelectedIPs() {
     .map(s => s.ip)
     .filter(Boolean);
   sharePointSafeCopy(
-    ips.join('
-'),
+    ips.join(String.fromCharCode(10)),
     `🌐 Copied ${ips.length} selected IP addresses to clipboard`,
     `🌐 Selected IP Addresses (${ips.length})`
   );
@@ -2336,8 +2334,7 @@ function copyWeekList(weekKey, field) {
     .filter(Boolean);
   const label = field === 'hostname' ? 'hostnames' : 'IP addresses';
   sharePointSafeCopy(
-    vals.join('
-'),
+    vals.join(String.fromCharCode(10)),
     `📋 Copied ${vals.length} ${label} for ${weekKey}`,
     `📋 ${weekKey} ${label}`
   );
@@ -2361,16 +2358,14 @@ function copyHandoverSummary() {
   const total = enriched.length;
   const patched = enriched.filter(s => s.status === 'Patched').length;
   const failed = enriched.filter(s => s.status === 'Failed').length;
-  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('
-');
+  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join(String.fromCharCode(10));
   const summary = [
     `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
     `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
     ``,
     `Recent Activity:`,
     recent || '- No changes recorded in this session.'
-  ].join('
-');
+  ].join(String.fromCharCode(10));
   sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
 }
 
@@ -2501,8 +2496,7 @@ function exportCSVFallback() {
   enriched.forEach((srv, idx) => {
     lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
   });
-  const blob = new Blob(['﻿' + lines.join('
-')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF' + lines.join(String.fromCharCode(13, 10))], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'Q4_2026_Patching_Schedule_Updated.csv';
@@ -2657,8 +2651,7 @@ function exportExcel() {
       const s = String(val || '');
       if (!s) return;
       const w = Math.max(8, (colWidths[idx] || 20) - 3);
-      const lines = s.split(/?
-/).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / w)), 0);
+      const lines = s.split(String.fromCharCode(10)).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(new RegExp(String.fromCharCode(13), 'g'), '').length / w)), 0);
       if (lines > maxLines) maxLines = lines;
     });
     return Math.min(180, Math.max(22, maxLines * 15 + 6));
