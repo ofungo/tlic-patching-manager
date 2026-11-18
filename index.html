@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.4 Zero-Leak Team Login & Live Sync)</title>
+<title>Windows Server Patching Schedule Manager (v5.5 4-Card Command Deck & Quarterly Rollover)</title>
 <style>
   :root {
     --bg: #F4F6F9;
@@ -85,16 +85,19 @@
     padding: 7px 12px 14px;
   }
 
-  /* Unified Command Center Dashboard (Charts Expanded + Readable 2x2 KPIs) */
+  /* 4-Column Command Center Dashboard (Balanced Proportions on 1920x1080) */
   .command-deck {
     display: grid;
-    grid-template-columns: 270px 1.65fr 1.35fr;
+    grid-template-columns: 265px 1.18fr 0.96fr 1.04fr;
     gap: 8px;
     margin-bottom: 6px;
     align-items: stretch;
   }
   .command-deck.hidden { display: none; }
-  @media (max-width: 1200px) {
+  @media (max-width: 1360px) {
+    .command-deck { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 820px) {
     .command-deck { grid-template-columns: 1fr; }
   }
 
@@ -253,7 +256,12 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+    cursor: pointer;
+    padding: 1px 3px;
+    border-radius: 4px;
+    transition: background 0.12s ease;
   }
+  .h-bar-row:hover { background: #F1F5F9; }
   .h-bar-meta {
     display: flex;
     justify-content: space-between;
@@ -842,9 +850,18 @@
 
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.4 Zero-Leak Team Login & Live Sync)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.5 4-Card Command Deck & Quarterly Rollover)</h1>
   </div>
   <div class="toolbar">
+    <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.12);padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.24);">
+      <span style="font-size:0.72rem;font-weight:700;color:#93C5FD;">📆 Cycle:</span>
+      <select id="cycleSelector" onchange="switchQuarterCycle(this.value)" style="background:#0F172A;color:#fff;border:1px solid #334155;border-radius:4px;padding:3px 6px;font-size:0.76rem;font-weight:700;cursor:pointer;">
+        <option value="2026_Q4">2026 Q4 (Active)</option>
+      </select>
+      <button type="button" class="btn btn-add" style="padding:3px 8px;font-size:0.72rem;" onclick="openRolloverModal()" title="Clone current 106 servers into a new Quarter (e.g. 2027 Q1) with auto-shifted dates">
+        🚀 Next Quarter
+      </button>
+    </div>
     <button class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
       <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
       <span id="syncStatusText">Local Mode (Setup Live Sync)</span>
@@ -862,17 +879,17 @@
 </header>
 
 <div class="container">
-  <!-- Unified Command Deck: 2x2 KPI Card + Expanded Charts Side-by-Side -->
+  <!-- 4-Card Command Deck: 2x2 KPI + Weekly Load + OS Sheet + Engineer & Env -->
   <div class="command-deck" id="analyticsPanel">
     <div class="kpi-quad-card" id="kpiGrid"></div>
 
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">📈 Weekly Patching Load &amp; Completion (Click bar to filter)</span>
+        <span class="chart-title">📈 Weekly Load (Click to Filter)</span>
         <div class="chart-legend">
-          <span><i class="legend-dot seg-patched"></i>Patched</span>
-          <span><i class="legend-dot seg-pending"></i>Pending</span>
-          <span><i class="legend-dot seg-failed"></i>Failed</span>
+          <span><i class="legend-dot seg-patched"></i>Done</span>
+          <span><i class="legend-dot seg-pending"></i>Pend</span>
+          <span><i class="legend-dot seg-failed"></i>Fail</span>
         </div>
       </div>
       <div class="weekly-bars" id="weeklyChart"></div>
@@ -880,12 +897,18 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">🖥️ OS Sheet &amp; 👷 Engineer Split</span>
+        <span class="chart-title">🖥️ OS Sheet Breakdown</span>
+        <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
       </div>
-      <div class="split-bars-grid">
-        <div class="h-bar-list" id="osEnvChart"></div>
-        <div class="h-bar-list" id="engineerChart"></div>
+      <div class="h-bar-list" id="osEnvChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">👷 Engineer &amp; Env Split</span>
+        <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
       </div>
+      <div class="h-bar-list" id="engineerChart"></div>
     </div>
   </div>
 
@@ -1173,6 +1196,51 @@
   </div>
 </div>
 
+<!-- Next Quarter Cycle Rollover Modal (e.g., 2026 Q4 -> 2027 Q1) -->
+<div class="modal-backdrop" id="rolloverModal" style="z-index:1230;" onclick="if(event.target===this) closeRolloverModal()">
+  <div class="modal" style="width:520px;">
+    <h3 style="margin-bottom:6px;">🚀 Rollover / Clone Schedule to Next Quarter</h3>
+    <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
+      Create a brand-new quarterly cycle (e.g. <strong>2027 Q1</strong>) from your current <strong><span id="rolloverSourceCount">106</span> servers</strong> while keeping <strong><span id="rolloverSourceName">2026 Q4</span></strong> archived and accessible anytime in the top dropdown.
+    </p>
+
+    <div class="form-grid" style="margin-bottom:10px;">
+      <div class="form-group">
+        <label>Target Quarter Name *</label>
+        <input type="text" id="rolloverTargetLabel" value="2027 Q1" placeholder="e.g. 2027 Q1" />
+      </div>
+      <div class="form-group">
+        <label>Date Shift Strategy</label>
+        <select id="rolloverDateMode">
+          <option value="shift13w">Auto-Shift +13 Weeks (+91 Days, keeps Sat/Sun)</option>
+          <option value="clear_tw">Clear Time Windows (Set to TBD for fresh planning)</option>
+          <option value="keep_tw">Keep Exact Same Time Windows</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:7px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:7px;font-size:0.8rem;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverResetStatus" checked />
+        <span>Reset <strong>Status</strong> to blank (Pending) for all cloned servers</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverKeepEngineers" checked />
+        <span>Keep existing <strong>Engineer (By: Andy / Don / Fung)</strong> assignments</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="rolloverClearRemarks2" checked />
+        <span>Clear temporary execution notes in <strong>Remarks ii</strong> (keep permanent SOPs in Remarks i)</span>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" style="color:#334155;border-color:#CBD5E1;" onclick="closeRolloverModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="executeQuarterRollover()">✨ Create New Quarter Cycle</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1300,7 +1368,7 @@ async function submitTeamUnlock() {
     }
 
     if (remoteData && Array.isArray(remoteData.servers)) {
-      appState.servers = remoteData.servers;
+      if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
       if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
       if (Array.isArray(remoteData.auditLogs)) {
         auditLogs = remoteData.auditLogs;
@@ -1390,7 +1458,12 @@ async function pushStateToFirebase() {
   if (!endpoint || isApplyingRemoteUpdate) return;
   setSyncIndicator('syncing', 'Syncing...');
   try {
+    ensureCyclesStructure();
+    appState.cycles[appState.activeCycle].servers = appState.servers;
+    appState.cycles[appState.activeCycle].auditLogs = auditLogs.slice(0, 80);
     const payload = {
+      activeCycle: appState.activeCycle,
+      cycles: appState.cycles,
       servers: appState.servers,
       osSheets: appState.osSheets || DEFAULT_DATA.osSheets,
       auditLogs: auditLogs.slice(0, 80),
@@ -1441,7 +1514,7 @@ function startFirebaseRealtimeStream() {
           }
           if (Array.isArray(msg.data.servers)) {
             isApplyingRemoteUpdate = true;
-            appState.servers = msg.data.servers;
+            if (msg.data.cycles) { appState.cycles = msg.data.cycles; appState.activeCycle = msg.data.activeCycle || appState.activeCycle; } appState.servers = msg.data.servers; ensureCyclesStructure();
             if (Array.isArray(msg.data.auditLogs)) {
               auditLogs = msg.data.auditLogs;
               localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
@@ -1457,7 +1530,7 @@ function startFirebaseRealtimeStream() {
           fetch(endpoint).then(r => r.json()).then(remoteData => {
             if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
               isApplyingRemoteUpdate = true;
-              appState.servers = remoteData.servers;
+              if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
               if (Array.isArray(remoteData.auditLogs)) {
                 auditLogs = remoteData.auditLogs;
                 updateAuditUI();
@@ -1537,7 +1610,7 @@ async function saveAndConnectFirebase() {
     if (res.ok) {
       const remoteData = await res.json();
       if (remoteData && Array.isArray(remoteData.servers)) {
-        appState.servers = remoteData.servers;
+        if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
         if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         renderTable();
@@ -1901,10 +1974,11 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   };
   const osHtml = Object.entries(sheetColors).map(([sh, color]) => {
     const cnt = enriched.filter(s => s.osSheet === sh).length;
+    const doneCnt = enriched.filter(s => s.osSheet === sh && s.status === 'Patched').length;
     const pct = Math.round((cnt / total) * 100);
     return `
-      <div class="h-bar-row">
-        <div class="h-bar-meta"><span>${sh}</span><span>${cnt} (${pct}%)</span></div>
+      <div class="h-bar-row" onclick="quickFilterSheet('${sh}')" title="Filter ${sh}: ${cnt} servers (${doneCnt} Patched)">
+        <div class="h-bar-meta"><span>${sh}</span><span>${cnt} <span style="color:#059669;font-weight:700;">(${doneCnt}✓)</span></span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${color};"></div></div>
       </div>
     `;
@@ -1912,21 +1986,198 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   document.getElementById('osEnvChart').innerHTML = osHtml;
 
   const engItems = [
-    { label: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, color: '#0284C7' },
-    { label: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, color: '#F97316' },
-    { label: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, color: '#8B5CF6' },
-    { label: 'Unassigned', cnt: enriched.filter(s => !s.by).length, color: '#94A3B8' },
-    { label: 'Production (PRD) Servers', cnt: enriched.filter(s => s.env === 'PRD').length, color: '#1E3A5F' }
+    { label: 'Andy', filterType: 'by', filterVal: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, done: enriched.filter(s => s.by === 'Andy' && s.status === 'Patched').length, color: '#0284C7' },
+    { label: 'Don', filterType: 'by', filterVal: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, done: enriched.filter(s => s.by === 'Don' && s.status === 'Patched').length, color: '#F97316' },
+    { label: 'Fung', filterType: 'by', filterVal: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, done: enriched.filter(s => s.by === 'Fung' && s.status === 'Patched').length, color: '#8B5CF6' },
+    { label: 'Unassigned', filterType: 'by', filterVal: '__UNASSIGNED__', cnt: enriched.filter(s => !s.by).length, done: 0, color: '#94A3B8' },
+    { label: 'Production (PRD)', filterType: 'env', filterVal: 'PRD', cnt: enriched.filter(s => s.env === 'PRD').length, done: enriched.filter(s => s.env === 'PRD' && s.status === 'Patched').length, color: '#1E3A5F' }
   ];
   document.getElementById('engineerChart').innerHTML = engItems.map(item => {
     const pct = Math.round((item.cnt / total) * 100);
+    const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
     return `
-      <div class="h-bar-row">
-        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt} (${pct}%)</span></div>
+      <div class="h-bar-row" onclick="quickFilterChart('${item.filterType}', '${item.filterVal}')" title="Click to filter ${item.label}">
+        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
       </div>
     `;
   }).join('');
+}
+
+
+function quickFilterSheet(sh) {
+  const el = document.getElementById('filterSheet');
+  el.value = (el.value === sh) ? '' : sh;
+  renderTable();
+}
+
+function quickFilterChart(type, val) {
+  const el = document.getElementById(type === 'env' ? 'filterEnv' : 'filterBy');
+  el.value = (el.value === val) ? '' : val;
+  renderTable();
+}
+
+/* Multi-Quarter Cycle Engine (2026 Q4 -> 2027 Q1 Rollover) */
+const CYCLES_META_KEY = 'patching_schedule_cycles_meta_v55';
+
+function ensureCyclesStructure() {
+  if (!appState.cycles) {
+    appState.cycles = {
+      '2026_Q4': {
+        label: '2026 Q4',
+        servers: Array.isArray(appState.servers) ? appState.servers : [],
+        auditLogs: Array.isArray(auditLogs) ? auditLogs : []
+      }
+    };
+  }
+  if (!appState.activeCycle || !appState.cycles[appState.activeCycle]) {
+    appState.activeCycle = Object.keys(appState.cycles)[0] || '2026_Q4';
+  }
+  // Keep top-level appState.servers synced with activeCycle for full backward compatibility
+  appState.servers = appState.cycles[appState.activeCycle].servers;
+  updateCycleSelectorUI();
+}
+
+function updateCycleSelectorUI() {
+  const sel = document.getElementById('cycleSelector');
+  if (!sel || !appState.cycles) return;
+  const keys = Object.keys(appState.cycles);
+  sel.innerHTML = keys.map(k => {
+    const cyc = appState.cycles[k];
+    const cnt = (cyc.servers || []).length;
+    const done = (cyc.servers || []).filter(s => s.status === 'Patched').length;
+    const pct = cnt ? Math.round((done / cnt) * 100) : 0;
+    return `<option value="${k}" ${k === appState.activeCycle ? 'selected' : ''}>${escapeHtml(cyc.label)} (${done}/${cnt} · ${pct}%)</option>`;
+  }).join('');
+}
+
+function switchQuarterCycle(cycleKey) {
+  ensureCyclesStructure();
+  if (!appState.cycles[cycleKey]) return;
+  // Save current active cycle changes first
+  appState.cycles[appState.activeCycle].servers = appState.servers;
+  appState.cycles[appState.activeCycle].auditLogs = auditLogs;
+
+  appState.activeCycle = cycleKey;
+  appState.servers = appState.cycles[cycleKey].servers || [];
+  auditLogs = appState.cycles[cycleKey].auditLogs || [];
+  selectedIds.clear();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  updateAuditUI();
+  updateCycleSelectorUI();
+  renderTable();
+  showToast(`📆 Switched to ${appState.cycles[cycleKey].label}`);
+}
+
+function openRolloverModal() {
+  ensureCyclesStructure();
+  const cur = appState.cycles[appState.activeCycle];
+  document.getElementById('rolloverSourceName').textContent = cur.label;
+  document.getElementById('rolloverSourceCount').textContent = (cur.servers || []).length;
+
+  // Smart default next quarter name (e.g. 2026 Q4 -> 2027 Q1, 2027 Q1 -> 2027 Q2)
+  const m = cur.label.match(/(\d{4})\s*Q([1-4])/i);
+  if (m) {
+    let yr = parseInt(m[1], 10);
+    let q = parseInt(m[2], 10) + 1;
+    if (q > 4) { q = 1; yr += 1; }
+    document.getElementById('rolloverTargetLabel').value = `${yr} Q${q}`;
+  }
+  document.getElementById('rolloverModal').classList.add('open');
+}
+
+function closeRolloverModal() {
+  document.getElementById('rolloverModal').classList.remove('open');
+}
+
+function shiftTimeWindowByWeeks(twStr, weeksToAdd) {
+  const s = String(twStr || '').trim();
+  if (!s) return '';
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const daysDelta = weeksToAdd * 7;
+
+  // Match patterns like "14-15 Nov 2026 ..." or "5 DEC 2026 ..." or "13 Dec 2026 ..."
+  const rx = /(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})(.*)/i;
+  const m = s.match(rx);
+  if (!m) return s + ' (Next Qtr)';
+
+  const d1 = parseInt(m[1], 10);
+  const d2 = m[2] ? parseInt(m[2], 10) : null;
+  const monKey = m[3].toLowerCase();
+  const yr = parseInt(m[4], 10);
+  const tail = m[5] || '';
+
+  if (!(monKey in MONTHS)) return s;
+  const baseDate = new Date(Date.UTC(yr, MONTHS[monKey], d1));
+  baseDate.setUTCDate(baseDate.getUTCDate() + daysDelta);
+
+  const newD1 = baseDate.getUTCDate();
+  const newMon = monthNames[baseDate.getUTCMonth()];
+  const newYr = baseDate.getUTCFullYear();
+
+  if (d2 !== null) {
+    const endDate = new Date(Date.UTC(yr, MONTHS[monKey], d2));
+    endDate.setUTCDate(endDate.getUTCDate() + daysDelta);
+    const newD2 = endDate.getUTCDate();
+    const endMon = monthNames[endDate.getUTCMonth()];
+    const endYr = endDate.getUTCFullYear();
+    if (newMon === endMon && newYr === endYr) {
+      return `${newD1}-${newD2} ${newMon} ${newYr}${tail}`;
+    }
+    return `${newD1} ${newMon}-${newD2} ${endMon} ${endYr}${tail}`;
+  }
+  return `${newD1} ${newMon} ${newYr}${tail}`;
+}
+
+function executeQuarterRollover() {
+  ensureCyclesStructure();
+  const targetLabel = document.getElementById('rolloverTargetLabel').value.trim();
+  if (!targetLabel) {
+    showToast('⚠️ Please enter a Target Quarter Name (e.g. 2027 Q1)');
+    return;
+  }
+  const targetKey = sanitizePathSegment(targetLabel.replace(/\s+/g, '_'));
+  const dateMode = document.getElementById('rolloverDateMode').value;
+  const resetStatus = document.getElementById('rolloverResetStatus').checked;
+  const keepEngineers = document.getElementById('rolloverKeepEngineers').checked;
+  const clearRem2 = document.getElementById('rolloverClearRemarks2').checked;
+
+  const sourceServers = appState.servers || [];
+  const clonedServers = sourceServers.map((srv, idx) => {
+    let nextTw = srv.timeWin;
+    if (dateMode === 'shift13w') nextTw = shiftTimeWindowByWeeks(srv.timeWin, 13);
+    else if (dateMode === 'clear_tw') nextTw = 'TBC - ' + targetLabel;
+
+    return {
+      ...JSON.parse(JSON.stringify(srv)),
+      id: idx + 1,
+      timeWin: nextTw,
+      status: resetStatus ? '' : srv.status,
+      by: keepEngineers ? srv.by : '',
+      remarks2: clearRem2 ? '' : srv.remarks2
+    };
+  });
+
+  appState.cycles[targetKey] = {
+    label: targetLabel,
+    servers: clonedServers,
+    auditLogs: [{
+      ts: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
+      msg: `Created ${targetLabel} cycle by cloning ${clonedServers.length} servers from ${appState.cycles[appState.activeCycle].label}`
+    }]
+  };
+
+  appState.activeCycle = targetKey;
+  appState.servers = clonedServers;
+  auditLogs = appState.cycles[targetKey].auditLogs;
+  selectedIds.clear();
+
+  saveState();
+  updateAuditUI();
+  updateCycleSelectorUI();
+  closeRolloverModal();
+  renderTable();
+  showToast(`✨ Created ${targetLabel} with ${clonedServers.length} servers!`);
 }
 
 function quickFilterWeek(wk) {
@@ -1942,6 +2193,7 @@ function debouncedRender() {
 }
 
 function renderTable() {
+  ensureCyclesStructure();
   const { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap } = getSortedAndGrouped();
   renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap);
 
