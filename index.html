@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.9)</title>
+<title>Windows Server Patching Schedule Manager (v6.0)</title>
 <style>
   :root {
-    --bg: #F4F6F9;
+    --bg: #F1F5F9;
     --surface: #FFFFFF;
     --primary: #1E3A5F;
     --primary-light: #2B5282;
@@ -30,62 +30,71 @@
     color: var(--text-main);
   }
 
-  /* Two-Column Structured 2-Row Top Header Bar */
+  /* Crisp High-Readability Two-Row Header Bar (v6.0) */
   header {
-    background: linear-gradient(135deg, #132A4A 0%, #1E3A5F 100%);
-    color: #fff;
-    padding: 9px 14px;
+    background: #FFFFFF;
+    color: #0F172A;
+    padding: 13px 20px;
+    border-bottom: 1px solid #CBD5E1;
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
     justify-content: space-between;
-    gap: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    gap: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
   }
   .header-left-col {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 7px;
+    gap: 9px;
   }
   .header-right-col {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 7px;
+    gap: 9px;
   }
   .header-right-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 7px;
+    gap: 8px;
   }
   .header-sub-left {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
   }
   header h1 {
     margin: 0;
-    font-size: 1.08rem;
-    font-weight: 700;
-    letter-spacing: 0.2px;
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.2px;
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     white-space: nowrap;
   }
   .ver-pill {
-    font-size: 0.68rem;
-    font-weight: 700;
-    background: rgba(56, 189, 248, 0.22);
-    color: #7DD3FC;
-    border: 1px solid rgba(56, 189, 248, 0.38);
-    padding: 1px 7px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    padding: 2px 9px;
     border-radius: 999px;
+  }
+  .subtitle-pill {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #64748B;
+    padding-left: 4px;
+    border-left: 1px solid #CBD5E1;
   }
   @keyframes pulseLive {
     0%, 100% { opacity: 1; transform: scale(1); }
@@ -94,62 +103,154 @@
   .live-dot-pulse {
     animation: pulseLive 1.8s infinite ease-in-out;
   }
-  .cycle-pill-box {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(15, 23, 42, 0.42);
-    border: 1px solid rgba(147, 197, 253, 0.3);
-    padding: 3px 6px 3px 9px;
-    border-radius: 7px;
-  }
-  .cycle-select {
-    background: #0F172A;
-    color: #F8FAFC;
-    border: 1px solid #334155;
-    border-radius: 5px;
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    min-height: 28px;
-  }
-  .cycle-select:hover { border-color: #60A5FA; }
+
+  /* High-Contrast Semantic Top Bar Buttons (36px height) */
   .btn {
-    border: none;
-    border-radius: 6px;
-    padding: 5px 11px;
-    min-height: 31px;
-    font-size: 0.79rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0 13px;
+    height: 36px;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
     white-space: nowrap;
   }
-  .btn-danger-soft {
-    background: rgba(239, 68, 68, 0.18);
-    color: #FECACA;
-    border: 1px solid rgba(248, 113, 113, 0.42);
+  .btn-live-pill {
+    background: #ECFDF5;
+    color: #065F46;
+    border-color: #10B981;
+    font-weight: 700;
   }
-  .btn-danger-soft:hover {
-    background: rgba(239, 68, 68, 0.32);
+  .btn-live-pill:hover {
+    background: #D1FAE5;
+  }
+  .btn-lock {
+    background: #F8FAFC;
+    color: #334155;
+    border-color: #CBD5E1;
+  }
+  .btn-lock:hover {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FCA5A5;
+  }
+  .btn-add {
+    background: #2563EB;
     color: #FFFFFF;
+    border-color: #1D4ED8;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
   }
+  .btn-add:hover { background: #1D4ED8; }
+  .btn-surface {
+    background: #FFFFFF;
+    color: #1E293B;
+    border-color: #CBD5E1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .btn-surface:hover {
+    background: #F8FAFC;
+    border-color: #94A3B8;
+  }
+  .btn-handover {
+    background: #EEF2FF;
+    color: #3730A3;
+    border-color: #C7D2FE;
+  }
+  .btn-handover:hover {
+    background: #E0E7FF;
+    border-color: #A5B4FC;
+  }
+  .log-badge-pill {
+    background: #3730A3;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .btn-charts {
+    background: #F0FDFA;
+    color: #0F766E;
+    border-color: #99F6E4;
+  }
+  .btn-charts:hover {
+    background: #CCFBF1;
+  }
+  .btn-charts.active {
+    background: #0F766E;
+    color: #FFFFFF;
+    border-color: #0D9488;
+  }
+
+  /* Unified Grouped Quarter Cycle Container */
+  .cycle-pill-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    padding: 0 6px 0 11px;
+    height: 36px;
+    border-radius: 8px;
+  }
+  .cycle-label-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+  }
+  .cycle-select {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 0 10px;
+    height: 28px;
+    min-width: 175px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cycle-select:hover { border-color: #2563EB; }
+  .cycle-sub-btn {
+    height: 28px;
+    padding: 0 9px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.14s ease;
+    white-space: nowrap;
+  }
+  .cycle-next-btn {
+    background: #DBEAFE;
+    color: #1E40AF;
+    border-color: #93C5FD;
+  }
+  .cycle-next-btn:hover { background: #BFDBFE; }
+  .cycle-del-btn {
+    background: #FFFFFF;
+    color: #B91C1C;
+    border-color: #FECACA;
+  }
+  .cycle-del-btn:hover { background: #FEE2E2; }
+
   .btn-primary { background: #10B981; color: #fff; }
   .btn-primary:hover { background: #059669; }
-  .btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.28); }
-  .btn-secondary:hover { background: rgba(255,255,255,0.26); }
-  .btn-secondary.active { background: #0284C7; border-color: #38BDF8; }
-  .btn-add { background: #0284C7; color: #fff; }
-  .btn-add:hover { background: #0369A1; }
-  .btn-toggle { background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1; box-shadow: none; }
+  .btn-secondary { background: #FFFFFF; color: #334155; border-color: #CBD5E1; }
+  .btn-secondary:hover { background: #F1F5F9; }
+  .btn-toggle { background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1; height: 30px; padding: 0 10px; font-size: 0.76rem; }
   .btn-toggle.active { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
 
-  @media (max-width: 960px) {
+  @media (max-width: 1080px) {
     .header-right-col { align-items: flex-start; }
     .header-right-line { justify-content: flex-start; }
   }
@@ -1000,24 +1101,21 @@
       </label>
 
       <div class="unlock-actions">
-        <button type="submit" class="btn unlock-submit">🔓 Unlock &amp; Connect Live Schedule</button>
-        <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue in Offline Mode (Demo / Import .xlsx)</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Redesigned 2-Row Top Header Bar -->
+<!-- Redesigned Crisp Two-Row Top Header Bar (v6.0) -->
 <header>
-  <!-- Left Column: Title on Row 1, Live Status + Lock directly below on Row 2 -->
+  <!-- Left Column: Identity on Row 1, High-Contrast Live Pill + Lock directly below on Row 2 -->
   <div class="header-left-col">
-    <h1>🛡️ Windows Server Patching Schedule Manager <span class="ver-pill">v5.9</span></h1>
+    <h1>
+      <span>🛡️ Windows Server Patching Schedule Manager</span>
+      <span class="ver-pill">v6.0</span>
+      <span class="subtitle-pill">TLIC Patch Operations</span>
+    </h1>
     <div class="header-sub-left">
-      <button type="button" class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
-        <span id="syncDot" class="live-dot-pulse" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;"></span>
+      <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
+        <span id="syncDot" class="live-dot-pulse" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#10B981;"></span>
         <span id="syncStatusText">Live: patching_schedule_main</span>
       </button>
-      <button type="button" class="btn btn-danger-soft" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">
+      <button type="button" class="btn btn-lock" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">
         🔒 Lock
       </button>
     </div>
@@ -1027,33 +1125,36 @@
   <div class="header-right-col">
     <div class="header-right-line">
       <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
-      <label class="btn btn-secondary" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
-        📂 Import .xlsx
+      <label class="btn btn-surface" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
+        <span style="color:#059669;font-size:0.95rem;">📂</span>
+        <span>Import .xlsx</span>
         <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
       </label>
-      <button type="button" class="btn btn-primary" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
-        ⬇ Export .xlsx
+      <button type="button" class="btn btn-surface" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
+        <span style="color:#2563EB;font-size:0.95rem;">⬇</span>
+        <span>Export .xlsx</span>
       </button>
-      <button type="button" class="btn btn-secondary" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
-        📋 Handover Log (<span id="logCountBadge">0</span>)
+      <button type="button" class="btn btn-handover" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
+        <span>📋 Handover Log</span>
+        <span class="log-badge-pill" id="logCountBadge">0</span>
       </button>
     </div>
 
     <div class="header-right-line">
       <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
-        <span style="font-size:0.75rem;font-weight:700;color:#93C5FD;">📆 Quarter:</span>
+        <span class="cycle-label-text">📆 Quarter:</span>
         <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
           <option value="2026_Q4">2026 Q4 (Active)</option>
         </select>
-        <button type="button" class="btn btn-add" style="padding:3px 9px;min-height:28px;" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
-          🚀 Next Quarter
+        <button type="button" class="cycle-sub-btn cycle-next-btn" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
+          + Next
         </button>
-        <button type="button" class="btn btn-danger-soft" style="padding:3px 8px;min-height:28px;" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
-          🗑️ Del Cycle
+        <button type="button" class="cycle-sub-btn cycle-del-btn" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
+          🗑️ Del
         </button>
       </div>
 
-      <button type="button" class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the top KPI & chart deck">
+      <button type="button" class="btn btn-charts active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the KPI & weekly workload charts">
         📊 Charts
       </button>
     </div>
