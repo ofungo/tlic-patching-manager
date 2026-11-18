@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.2 Styled Excel & Live Sync)</title>
+<title>Windows Server Patching Schedule Manager (v5.3 Zero-Leak Team Login & Live Sync)</title>
 <!-- SheetJS loaded on-demand only when Import/Export is clicked to prevent SharePoint CSP/network lag -->
 <style>
   :root {
@@ -737,13 +737,168 @@
     justify-content: flex-end;
     gap: 8px;
   }
+
+  /* Team Workspace Unlock Overlay */
+  .unlock-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 55%, #0F172A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  .unlock-overlay.unlocked {
+    display: none;
+  }
+  .unlock-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    width: 460px;
+    max-width: 96vw;
+    padding: 28px 26px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    border: 1px solid #CBD5E1;
+  }
+  .unlock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    font-size: 0.73rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .unlock-card h2 {
+    margin: 0 0 6px;
+    font-size: 1.25rem;
+    color: #0F172A;
+  }
+  .unlock-card p.sub {
+    margin: 0 0 18px;
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.45;
+  }
+  .unlock-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 13px;
+  }
+  .unlock-field label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+  }
+  .unlock-field input {
+    padding: 9px 11px;
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: #F8FAFC;
+  }
+  .unlock-field input:focus {
+    outline: none;
+    border-color: #0284C7;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.16);
+  }
+  .unlock-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #334155;
+    margin: 6px 0 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .unlock-error {
+    background: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .unlock-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .unlock-submit {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    background: #0284C7;
+    color: #fff;
+  }
+  .unlock-submit:hover { background: #0369A1; }
+  .unlock-local-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.79rem;
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+    box-shadow: none;
+  }
+  .unlock-local-btn:hover { background: #E2E8F0; color: #0F172A; }
 </style>
 </head>
 <body>
 
+<!-- Team Workspace Unlock Overlay -->
+<div class="unlock-overlay" id="unlockOverlay">
+  <div class="unlock-card">
+    <div class="unlock-badge">🔒 Zero-Leak Protected Workspace</div>
+    <h2>Windows Patching Schedule Login</h2>
+    <p class="sub">No server hostnames, IPs, or database URLs are stored in this public page. Enter your <strong>Firebase Database URL</strong> and <strong>Team Secret Key</strong> to load your team schedule.</p>
+
+    <div class="unlock-error" id="unlockErrorMsg"></div>
+
+    <form onsubmit="event.preventDefault(); submitTeamUnlock();">
+      <div class="unlock-field">
+        <label>Firebase Realtime Database URL *</label>
+        <input type="url" id="loginFirebaseUrl" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" required />
+      </div>
+
+      <div class="unlock-field">
+        <label>Team Secret Key (Workspace Password) *</label>
+        <div style="display:flex;gap:6px;">
+          <input type="password" id="loginTeamSecret" placeholder="Enter shared team secret key..." style="flex:1;" required />
+          <button type="button" class="btn btn-toggle" style="padding:0 10px;" onclick="toggleSecretVisibility()" title="Show/Hide Secret Key">👁️</button>
+        </div>
+      </div>
+
+      <label class="unlock-remember">
+        <input type="checkbox" id="loginRememberMe" checked />
+        <span>Remember credentials on this workstation (auto-login next time)</span>
+      </label>
+
+      <div class="unlock-actions">
+        <button type="submit" class="btn unlock-submit">🔓 Unlock &amp; Connect Live Schedule</button>
+        <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue in Offline Mode (Empty / Import .xlsx)</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.2 Styled Excel & Live Sync)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.3 Zero-Leak Team Login & Live Sync)</h1>
     <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
   </div>
   <div class="toolbar">
@@ -759,7 +914,7 @@
       <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
     </label>
     <button class="btn btn-primary" onclick="exportExcel()">⬇ Export .xlsx</button>
-    <button class="btn btn-secondary" onclick="resetToDefault()" title="Reset browser cache back to original v3.4 baseline">↺ Reset</button>
+    <button class="btn btn-secondary" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">🔒 Lock</button>
   </div>
 </header>
 
@@ -1085,14 +1240,20 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const DEFAULT_DATA = {"servers": [{"id": 1, "hostname": "DEVDMCSRV02", "ip": "10.19.247.11", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "Don", "status": "Patched"}, {"id": 2, "hostname": "UATVCWSAPP11", "ip": "10.19.250.17", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata update failed", "by": "Fung", "status": "Patched"}, {"id": 3, "hostname": "UATVCWSAPP12", "ip": "10.19.250.18", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata update failed", "by": "Fung", "status": "Patched"}, {"id": 4, "hostname": "UATVCWSDBS01", "ip": "10.19.253.83", "os": "Microsoft Windows Server 2019", "app": "WeChat-UAT", "maintWin": "Saturday 00:00 - Sunday 23:59 (1st Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to Website_UAT Health Check.docx", "remarks2": "Metadata updated", "by": "Fung", "status": "Patched"}, {"id": 5, "hostname": "UATVIISAPP11", "ip": "10.19.253.77", "os": "Microsoft Windows Server 2019", "app": "IIS-UAT", "maintWin": "Saturday 09:00 - Sunday 23:59 (2nd Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to UAT System Health Check Procedure (IIS, CS Log).docx\n   Section IIS-1  &  CS LOG-1", "remarks2": "Metadata update failed", "by": "Don", "status": "Patched"}, {"id": 6, "hostname": "UATVIISDBS01", "ip": "10.19.253.78", "os": "Microsoft Windows Server 2019", "app": "IIS-UAT", "maintWin": "Saturday 09:00 - Sunday 23:59 (1st Sequence)", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to UAT System Health Check Procedure (IIS, CS Log).docx\n   Section IIS-1  &  CS LOG-1", "remarks2": "Metadata update failed", "by": "Don", "status": "Patched"}, {"id": 7, "hostname": "UATVMEGRDS01", "ip": "10.19.253.47", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 8, "hostname": "UATVMEGSTG01", "ip": "10.19.140.250", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 9, "hostname": "UATVMEGSTG02", "ip": "10.19.140.251", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata update failed", "by": "Andy", "status": "Patched"}, {"id": 10, "hostname": "UATVAWSDMC02", "ip": "10.19.248.11", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SRV 2022", "remarks1": "Domain Controller server - Tahoelifeagents UAT", "remarks2": "", "by": "", "status": ""}, {"id": 11, "hostname": "UATVMEGFPS01", "ip": "10.19.253.54", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 12, "hostname": "UATVSVNSRV02", "ip": "10.19.253.69", "os": "Windows 2016", "app": "SVN", "maintWin": "Saturday 10:00 - Sunday 23:59", "timeWin": "28-29 Nov 2026 - Saturday 10:00 - Sunday 23:59", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 13, "hostname": "UATVC21APP12", "ip": "10.19.253.94", "os": "Windows 2016", "app": "C21", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 14, "hostname": "UATVL21FPS02", "ip": "10.19.253.56", "os": "Microsoft Windows Server 2019", "app": "Life21-UAT", "maintWin": "Saturday 13:00 to Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 15, "hostname": "UATVL21PRT03", "ip": "10.19.253.53", "os": "Windows 2016", "app": "Life 21", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2016", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 16, "hostname": "UATVLGHSRV02", "ip": "10.19.253.45", "os": "Microsoft Windows Server 2022", "app": "LGH", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "", "by": "", "status": ""}, {"id": 17, "hostname": "UATVSCPSRV01", "ip": "10.19.253.43", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 18, "hostname": "UATVSCPSRV02", "ip": "10.19.249.12", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 19, "hostname": "UATVSCPSRV03", "ip": "10.19.249.13", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SVR 2019", "remarks1": "Nov 28-29 follow Maintenance Windows", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 20, "hostname": "UATVSGLQAS02", "ip": "10.19.253.73", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows\n** Shutdown sequence: 1-UATVLSGLQAS02, 2-UATVSGLDBS02\n** Startup sequence: 1-UATVSGLDBS02, 2-UATVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 21, "hostname": "UATVSGLSDBS02", "ip": "10.19.253.72", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Saturday 13:00 - Monday 08:30", "timeWin": "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00", "osSheet": "Win SRV 2022", "remarks1": "Nov 28-29 follow Maintenance Windows\n** Shutdown sequence: 1-UATVLSGLQAS02, 2-UATVSGLDBS02\n** Startup sequence: 1-UATVSGLDBS02, 2-UATVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 22, "hostname": "PRDVCWSAPP11", "ip": "10.19.2.17", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 23, "hostname": "PRDVCWSAPP12", "ip": "10.19.2.18", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 24, "hostname": "PRDVCWSDBS01", "ip": "10.19.32.83", "os": "Windows Server 2012 R2 Standard -> 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (1st Sequence)", "timeWin": "5 DEC 2026 - Saturday 10:00 – 14:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will be upgrade to Win2019 on or before Jan 2027.\nMove to Win SVR 2019 worksheet", "remarks2": "", "by": "", "status": ""}, {"id": 25, "hostname": "PRDVCTTBCK01", "ip": "10.19.32.38", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 26, "hostname": "PRDVCTTBCK11", "ip": "10.19.32.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 27, "hostname": "PRDVCTTBCK12", "ip": "10.19.32.40", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 28, "hostname": "PRDVCTTBCK31", "ip": "10.19.1.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 29, "hostname": "PRDVCTTBCK32", "ip": "10.19.1.40", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 30, "hostname": "PRDVCTTBCK91", "ip": "10.19.32.42", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "13 Dec 2026 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 31, "hostname": "DRSVDMCSRV03", "ip": "10.19.132.28", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 32, "hostname": "DRSVDMCSRV04", "ip": "10.19.132.29", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 - 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 33, "hostname": "DRSVMEGBCK11", "ip": "10.19.132.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 34, "hostname": "DRSVMEGBCK31", "ip": "10.19.201.39", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 07:30", "timeWin": "13 Dec 2026 - Sunday 00:00 - 07:30", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 35, "hostname": "PRDVCDSMDB01", "ip": "10.19.40.11", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 36, "hostname": "PRDVCTTBCK92", "ip": "10.19.32.41", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 37, "hostname": "PRDVCTTBCK93", "ip": "10.19.32.172", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 38, "hostname": "PRDVCTTBCK94", "ip": "10.19.32.174", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 39, "hostname": "PRDVCTTCER02", "ip": "10.19.32.124", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 40, "hostname": "PRDVCTTDSM01", "ip": "10.19.40.10", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 41, "hostname": "PRDVCTTNES01", "ip": "10.19.40.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 42, "hostname": "PRDVCTTNTP02", "ip": "10.19.1.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 43, "hostname": "PRDVCTTSTM13", "ip": "10.19.32.102", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 44, "hostname": "PRDVMEGSTM13 (DR site)", "ip": "10.19.253.102", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "10 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 45, "hostname": "PRDVIISAPP11", "ip": "10.19.32.77", "os": "Microsoft Windows Server 2019", "app": "IIS", "maintWin": "Sunday 10:00 - Monday 07:30 (2st Sequence)", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: IIS-1  &  LOG-1", "remarks2": "", "by": "", "status": ""}, {"id": 46, "hostname": "PRDVIISDBS01", "ip": "10.19.32.78", "os": "Microsoft Windows Server 2019", "app": "IIS", "maintWin": "Sunday 10:00 - Monday 07:30 (1st Sequence)", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: IIS-1  &  LOG-1", "remarks2": "", "by": "", "status": ""}, {"id": 47, "hostname": "PRDVSCPSRV01", "ip": "10.19.32.84", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 48, "hostname": "PRDVSCPSRV02", "ip": "10.19.1.242", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 49, "hostname": "PRDVSCPSRV03", "ip": "10.19.1.243", "os": "Microsoft Windows Server 2019", "app": "Life21-SCP", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 -  07:30", "osSheet": "Win SVR 2019", "remarks1": "Dec 13 (SUN) follow Maintenance\n- Refer to Health Check Guide for Life21 SCP Server.docx", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 50, "hostname": "PRDVC21APP12", "ip": "10.19.32.122", "os": "Windows 2016", "app": "C21", "maintWin": "Sunday 09:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30", "osSheet": "Win SVR 2016", "remarks1": "- Schedule update with Life21 at the same time\n- Health check refer to Section B. Cheque21 System", "remarks2": "", "by": "", "status": ""}, {"id": 51, "hostname": "PRDVL21DOC03", "ip": "10.19.32.120", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows\n** after deployment and reboot, must perform the system restart log sheet “TAHOE-L21SYSRB.xls” by ATOS operation\n** health check of Life21 application include in the log sheet\n** reboot requirement also stated in the Health Check Procedure", "remarks2": "", "by": "", "status": ""}, {"id": 52, "hostname": "PRDVL21FPS03", "ip": "10.19.32.118", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows", "remarks2": "", "by": "", "status": ""}, {"id": 53, "hostname": "PRDVL21PRT03", "ip": "10.19.32.121", "os": "Windows 2016", "app": "Life 21", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "17 Jan 2027 - Sunday 10:00 - 13:30\n(Operator will perform TAHOE-L21SYSRB after patching)", "osSheet": "Win SVR 2016", "remarks1": "Dec 20 (SUN) follow maintenance windows\n** after deployment and reboot, must perform the system restart log sheet “TAHOE-L21SYSRB.xls” by ATOS operation\n** health check of Life21 application include in the log sheet\n** reboot requirement also stated in the Health Check Procedure", "remarks2": "", "by": "", "status": ""}, {"id": 54, "hostname": "PRDVCTTCER01", "ip": "10.19.32.123", "os": "Windows 2016", "app": "Cert Server", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 55, "hostname": "PRDVCTTFPS02", "ip": "10.19.32.54", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 56, "hostname": "PRDVCWSAPP11", "ip": "10.19.2.17", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 57, "hostname": "PRDVCWSAPP12", "ip": "10.19.2.18", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (2nd Sequence - Same Priority)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 58, "hostname": "PRDVCWSDBS01", "ip": "10.19.32.83", "os": "Microsoft Windows Server 2019", "app": "WeChat", "maintWin": "Sunday 00:00 – 03:00 (1st Sequence)", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "- Refer to HealthCheck_IIS_CSLog_Website_WeChat_v20260225.docx\n   Section: Corporate Website  &  WeChat", "remarks2": "", "by": "", "status": ""}, {"id": 59, "hostname": "PRDVDMCSRV07", "ip": "10.19.32.28", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Migrated from PRDVDMCSRV03 to 07", "remarks2": "", "by": "", "status": ""}, {"id": 60, "hostname": "PRDVDMCSRV08", "ip": "10.19.32.29", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Migrated from PRDVDMCSRV04 to 08", "remarks2": "", "by": "", "status": ""}, {"id": 61, "hostname": "PRDVHRSDBS01", "ip": "10.19.32.70", "os": "Microsoft Windows Server 2019", "app": "HR", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "Dec 20 (Sun) follow Maintenance Windows\n- Refer to HR_HealthCheck.docx - HR Page", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 62, "hostname": "PRDVMEGNES01 (DR site)", "ip": "10.19.140.2", "os": "Windows 2016", "app": "Nessus", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 63, "hostname": "PRDVMEMSRV01", "ip": "10.19.32.92", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "24 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 64, "hostname": "DRSVMEGCCI01", "ip": "192.168.254.22", "os": "Microsoft Windows Server 2019", "app": "Storage", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "30 Jan 2027 - Sunday 00:00 - 03.00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 65, "hostname": "DRSVMEGLOG01", "ip": "10.19.132.39", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "30 Jan 2027 - Sunday 00:00 - 03.00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 66, "hostname": "DRSVCTTFPO11", "ip": "10.19.132.161", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 67, "hostname": "PRDVMEGNTP01 (DR site)", "ip": "10.19.201.2", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 68, "hostname": "PRDVMEGSEP01 (DR site)", "ip": "10.19.253.44", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 69, "hostname": "PRDVMEGSPC02 (DR site)", "ip": "10.19.204.67", "os": "Windows 2016", "app": "VE", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 70, "hostname": "PRDVMEGSTM03 (DR site)", "ip": "10.19.253.103", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 71, "hostname": "PRDVMEGSTM04 (DR site)", "ip": "10.19.249.14", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 72, "hostname": "PRDVMEGVEM01 (DR site)", "ip": "10.19.132.101", "os": "Windows 2016", "app": "VE", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "31 Jan 2027 - Sunday 00:00 - 03:00", "osSheet": "Win SVR 2016", "remarks1": "in DR vCenter", "remarks2": "", "by": "", "status": ""}, {"id": 73, "hostname": "DRSVDMCAAD01", "ip": "10.19.132.33", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 14:00 - 18:00", "timeWin": "31 Jan 2027 - Sunday 14:00 - 18:00", "osSheet": "Win SRV 2022", "remarks1": "Entra ID Sync", "remarks2": "", "by": "", "status": ""}, {"id": 74, "hostname": "DRSVMEGOPC01", "ip": "10.19.132.192", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 75, "hostname": "DRSVMEGOPM01", "ip": "10.19.132.191", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 76, "hostname": "DRSVMEGPMP01", "ip": "10.19.132.35, 10.254.132.35", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 77, "hostname": "DRSVMEGSTG03", "ip": "10.250.1.193", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 78, "hostname": "PRDVCTTCCI01", "ip": "192.168.255.22", "os": "Microsoft Windows Server 2019", "app": "Storage", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 79, "hostname": "PRDVAWSAAD01", "ip": "10.19.34.21", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 80, "hostname": "PRDVAWSDMC02", "ip": "10.19.34.11", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Domain Controller server - Tahoelifeagents", "remarks2": "", "by": "", "status": ""}, {"id": 81, "hostname": "PRDVCTTBJA02", "ip": "192.168.255.226", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 82, "hostname": "PRDVCTTBJC02", "ip": "10.19.32.164", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 83, "hostname": "PRDVCTTBJR02", "ip": "10.19.32.163", "os": "Microsoft Windows Server 2022", "app": "BJ", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "14 Feb 2027 - Sunday - 00:00 - Sunday 03:00", "osSheet": "Win SRV 2022", "remarks1": "Boldon James", "remarks2": "", "by": "", "status": ""}, {"id": 84, "hostname": "PRDVCTTEVS01", "ip": "10.19.32.31", "os": "Windows Server 2012 R2 Standard", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2012R2", "remarks1": "Will try to upgrade to Win2019", "remarks2": "", "by": "", "status": ""}, {"id": 85, "hostname": "PRDVCTTFPO13", "ip": "10.19.32.107", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 86, "hostname": "PRDVCTTFPO14", "ip": "10.19.32.108", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint OCR", "remarks2": "", "by": "", "status": ""}, {"id": 87, "hostname": "PRDVCTTFPS12", "ip": "192.168.255.209", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint Database", "remarks2": "", "by": "", "status": ""}, {"id": 88, "hostname": "PRDVCTTFSM11", "ip": "192.168.255.206", "os": "Microsoft Windows Server 2022", "app": "DLP", "maintWin": "Sunday 00:00 - 04:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Forcepoint  Security Management", "remarks2": "", "by": "", "status": ""}, {"id": 89, "hostname": "PRDVCTTKMS01", "ip": "10.19.32.49", "os": "Microsoft Windows Server 2022", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 90, "hostname": "PRDVCTTSPC01", "ip": "10.19.4.66", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 91, "hostname": "PRDVCTTSTG01", "ip": "10.19.40.250", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 92, "hostname": "PRDVCTTSTG02", "ip": "10.19.40.251", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "21 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 93, "hostname": "PRDVLGHSRV02", "ip": "10.19.32.129", "os": "Microsoft Windows Server 2022", "app": "LGH", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n- Refer to Investment_HealthCheck.docx - Investment System", "remarks2": "", "by": "", "status": ""}, {"id": 94, "hostname": "PRDVSGLDBS02", "ip": "10.19.32.72", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n** Shutdown sequence: 1-PRDVLSGLQAS02, 2-PRDVSGLDBS02\n** Startup sequence: 1-PRDVSGLDBS02, 2-PRDVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 95, "hostname": "PRDVSGLQAS02", "ip": "10.19.32.73", "os": "Microsoft Windows Server 2022", "app": "SUN GL", "maintWin": "Sunday 10:00 - Monday 07:30", "timeWin": "21 Feb 2027 - Sunday - 10:00 - 07:00", "osSheet": "Win SRV 2022", "remarks1": "Jan 17 (SUN) follow Maintenance Windows\n** Shutdown sequence: 1-PRDVLSGLQAS02, 2-PRDVSGLDBS02\n** Startup sequence: 1-PRDVSGLDBS02, 2-PRDVLSGLQAS02", "remarks2": "", "by": "", "status": ""}, {"id": 96, "hostname": "PRDVCTTLOG01", "ip": "10.19.32.194", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 97, "hostname": "PRDVCTTOPC01", "ip": "10.19.32.192", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 98, "hostname": "PRDVCTTOPM01", "ip": "10.19.32.191", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 99, "hostname": "PRDVCTTPMP01", "ip": "10.254.32.35, 10.19.32.35", "os": "Microsoft Windows Server 2022", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 100, "hostname": "PRDVCTTSEN01", "ip": "10.254.32.33, 10.19.32.33", "os": "Microsoft Windows Server 2019", "app": "Security", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "Symantec Endpoint Manager", "remarks2": "Metadata Update", "by": "", "status": ""}, {"id": 101, "hostname": "PRDVCTTSTG03", "ip": "10.250.1.93", "os": "Microsoft Windows Server 2022", "app": "WinTel", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 102, "hostname": "PRDVCTTSTG04", "ip": "10.250.1.94", "os": "Microsoft Windows Server 2022", "app": "WinTel", "maintWin": "Saturday - 10:00 - Sunday 03:00", "timeWin": "27 Feb 2027 - Saturday - 10:00 - Sunday 03:00", "osSheet": "Ripen Infra SVR", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 103, "hostname": "PRDVCTTSTM04", "ip": "10.19.32.103", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 104, "hostname": "PRDVCTTSTM05", "ip": "10.19.1.14", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 105, "hostname": "PRDVCTTSTM06", "ip": "10.19.1.15", "os": "Microsoft Windows Server 2019", "app": "", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SVR 2019", "remarks1": "", "remarks2": "", "by": "", "status": ""}, {"id": 106, "hostname": "PRDVDMCAAD01", "ip": "10.19.32.127", "os": "Microsoft Windows Server 2022", "app": "DMC", "maintWin": "Sunday 00:00 – 03:00", "timeWin": "27 Feb 2027 - Sunday - 00:00 - 03:00", "osSheet": "Win SRV 2022", "remarks1": "Upgraded to server2022 from 2016", "remarks2": "Metadata Update", "by": "", "status": ""}], "osSheets": {"Win SVR 2012R2": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "PRDVCTTEVS01"}, {"no": 2, "hostname": "PRDVCWSAPP11"}, {"no": 3, "hostname": "PRDVCWSAPP12"}, {"no": 4, "hostname": "PRDVCWSDBS01"}]}, "Win SVR 2016": {"headers": ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVL21PRT03"}, {"no": 2, "hostname": "UATVC21APP12"}, {"no": 3, "hostname": "UATVSVNSRV02"}, {"no": 4, "hostname": "PRDVMEGNES01 (DR site)"}, {"no": 5, "hostname": "PRDVMEGSPC02 (DR site)"}, {"no": 6, "hostname": "PRDVCTTCER01"}, {"no": 7, "hostname": "PRDVC21APP12"}, {"no": 8, "hostname": "PRDVMEGVEM01 (DR site)"}, {"no": 9, "hostname": "PRDVL21PRT03"}, {"no": 10, "hostname": "PRDVL21FPS03"}, {"no": 11, "hostname": "PRDVL21DOC03"}]}, "Win SVR 2019": {"headers": ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVMEGRDS01"}, {"no": 2, "hostname": "UATVMEGSTG01"}, {"no": 3, "hostname": "UATVMEGSTG02"}, {"no": 4, "hostname": "DRSVMEGBCK11"}, {"no": 5, "hostname": "DRSVMEGBCK31"}, {"no": 6, "hostname": "UATVCWSAPP11"}, {"no": 7, "hostname": "UATVCWSAPP12"}, {"no": 8, "hostname": "UATVCWSDBS01"}, {"no": 9, "hostname": "UATVIISAPP11"}, {"no": 10, "hostname": "UATVIISDBS01"}, {"no": 11, "hostname": "UATVL21FPS02"}, {"no": 12, "hostname": "UATVSCPSRV01"}, {"no": 13, "hostname": "UATVSCPSRV02"}, {"no": 14, "hostname": "UATVSCPSRV03"}, {"no": 15, "hostname": "PRDVCTTBCK01"}, {"no": 16, "hostname": "PRDVCTTBCK11"}, {"no": 17, "hostname": "PRDVCTTBCK12"}, {"no": 18, "hostname": "PRDVCTTBCK31"}, {"no": 19, "hostname": "PRDVCTTBCK32"}, {"no": 20, "hostname": "PRDVCTTBCK91"}, {"no": 21, "hostname": "PRDVCTTBCK92"}, {"no": 22, "hostname": "PRDVCTTNES01"}, {"no": 23, "hostname": "PRDVCTTSPC01"}, {"no": 24, "hostname": "PRDVCTTSTG01"}, {"no": 25, "hostname": "PRDVCTTSTG02"}, {"no": 26, "hostname": "PRDVCTTSTM04"}, {"no": 27, "hostname": "PRDVCTTSTM05"}, {"no": 28, "hostname": "PRDVCTTSTM06"}, {"no": 29, "hostname": "PRDVMEGNTP01 (DR site)"}, {"no": 30, "hostname": "PRDVMEGSTM03 (DR site)"}, {"no": 31, "hostname": "PRDVMEGSTM04 (DR site)"}, {"no": 32, "hostname": "PRDVMEGSEP01 (DR site)"}, {"no": 33, "hostname": "PRDVMEMSRV01"}, {"no": 34, "hostname": "UATVMEGFPS01"}, {"no": 35, "hostname": "DEVDMCSRV02"}, {"no": 36, "hostname": "DRSVDMCSRV03"}, {"no": 37, "hostname": "DRSVDMCSRV04"}, {"no": 38, "hostname": "PRDVCTTFPS02"}, {"no": 39, "hostname": "PRDVDMCSRV07"}, {"no": 40, "hostname": "PRDVDMCSRV08"}, {"no": 41, "hostname": "PRDVHRSDBS01"}, {"no": 42, "hostname": "PRDVMEGSTM13 (DR site)"}, {"no": 43, "hostname": "PRDVCTTNTP02"}, {"no": 44, "hostname": "PRDVCTTSTM13"}, {"no": 45, "hostname": "PRDVCDSMDB01"}, {"no": 46, "hostname": "PRDVCTTDSM01"}, {"no": 47, "hostname": "PRDVIISAPP11"}, {"no": 48, "hostname": "PRDVIISDBS01"}, {"no": 49, "hostname": "PRDVSCPSRV01"}, {"no": 50, "hostname": "PRDVSCPSRV02"}, {"no": 51, "hostname": "PRDVSCPSRV03"}, {"no": 52, "hostname": "PRDVCWSAPP11"}, {"no": 53, "hostname": "PRDVCWSAPP12"}, {"no": 54, "hostname": "PRDVCWSDBS01"}]}, "Win SRV 2022": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "UATVAWSDMC02"}, {"no": 2, "hostname": "UATVLGHSRV02"}, {"no": 3, "hostname": "UATVSGLSDBS02"}, {"no": 4, "hostname": "UATVSGLQAS02"}, {"no": 5, "hostname": "PRDVAWSDMC02"}, {"no": 6, "hostname": "PRDVAWSAAD01"}, {"no": 7, "hostname": "PRDVCTTKMS01"}, {"no": 8, "hostname": "PRDVDMCAAD01"}, {"no": 9, "hostname": "PRDVCTTFPO13"}, {"no": 10, "hostname": "PRDVCTTFPO14"}, {"no": 11, "hostname": "PRDVCTTBJA02"}, {"no": 12, "hostname": "PRDVCTTBJR02"}, {"no": 13, "hostname": "PRDVCTTBJC02"}, {"no": 14, "hostname": "PRDVCTTFSM11"}, {"no": 15, "hostname": "PRDVCTTFPS12"}, {"no": 16, "hostname": "DRSVCTTFPO11"}, {"no": 17, "hostname": "PRDVCTTBCK93"}, {"no": 18, "hostname": "PRDVCTTBCK94"}, {"no": 19, "hostname": "PRDVCTTCER02"}, {"no": 20, "hostname": "PRDVLGHSRV02"}, {"no": 21, "hostname": "PRDVSGLDBS02"}, {"no": 22, "hostname": "PRDVSGLQAS02"}, {"no": 23, "hostname": "DRSVDMCAAD01"}]}, "Ripen Infra SVR": {"headers": ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], "rows": [{"no": 1, "hostname": "DRSVMEGCCI01"}, {"no": 2, "hostname": "PRDVCTTCCI01"}, {"no": 3, "hostname": "DRSVMEGPMP01"}, {"no": 4, "hostname": "PRDVCTTPMP01"}, {"no": 5, "hostname": "PRDVCTTSEN01"}, {"no": 6, "hostname": "PRDVCTTSTG03"}, {"no": 7, "hostname": "PRDVCTTSTG04"}, {"no": 8, "hostname": "PRDVCTTLOG01"}, {"no": 9, "hostname": "PRDVCTTOPC01"}, {"no": 10, "hostname": "PRDVCTTOPM01"}, {"no": 11, "hostname": "DRSVMEGSTG03"}, {"no": 12, "hostname": "DRSVMEGLOG01"}, {"no": 13, "hostname": "DRSVMEGOPC01"}, {"no": 14, "hostname": "DRSVMEGOPM01"}]}}};
-// ============================================================================
-// FIREBASE REALTIME DATABASE CONFIG (Optional: hardcode URL here so everyone
-// connects automatically without pasting anything!)
-// Example: 'https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app'
-// ============================================================================
-const HARDCODED_FIREBASE_URL = 'https://tlic-windows-patching-sync-default-rtdb.asia-southeast1.firebasedatabase.app';
-const HARDCODED_FIREBASE_ROOM = 'patching_schedule_main';
+const DEFAULT_DATA = {
+  servers: [],
+  osSheets: {
+    "Win SVR 2012R2": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SVR 2016": { headers: ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SVR 2019": { headers: ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Win SRV 2022": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
+    "Ripen Infra SVR": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] }
+  }
+};
+
+// Zero hardcoded credentials or server inventory in public GitHub source
+const HARDCODED_FIREBASE_URL = '';
+const HARDCODED_FIREBASE_ROOM = '';
 
 const STORAGE_KEY = 'patching_schedule_v40_state';
 const AUDIT_KEY = 'patching_schedule_v40_audit';
@@ -1110,13 +1271,13 @@ let isApplyingRemoteUpdate = false;
 let clientSessionId = 'client_' + Math.random().toString(36).slice(2, 10);
 
 function loadFirebaseConfig() {
-  // 1. Check URL hash (#fb=BASE64_JSON) so shared links auto-configure teammates
+  // 1. Check URL hash (#fb=BASE64_JSON) if teammate opens an invite link
   try {
     if (window.location.hash && window.location.hash.includes('fb=')) {
       const m = window.location.hash.match(/fb=([^&]+)/);
       if (m && m[1]) {
         const decoded = JSON.parse(atob(decodeURIComponent(m[1])));
-        if (decoded && decoded.url) {
+        if (decoded && decoded.url && decoded.room) {
           localStorage.setItem(FB_CFG_KEY, JSON.stringify(decoded));
           return decoded;
         }
@@ -1124,23 +1285,142 @@ function loadFirebaseConfig() {
     }
   } catch (e) {}
 
-  // 2. Check hardcoded URL in file
-  if (HARDCODED_FIREBASE_URL && HARDCODED_FIREBASE_URL.trim()) {
-    return {
-      url: HARDCODED_FIREBASE_URL.trim().replace(/\/$/, ''),
-      room: (HARDCODED_FIREBASE_ROOM || 'patching_schedule_main').trim()
-    };
-  }
+  // 2. Check sessionStorage (current tab session if Remember Me was unchecked)
+  try {
+    const sessRaw = sessionStorage.getItem(FB_CFG_KEY);
+    if (sessRaw) {
+      const parsed = JSON.parse(sessRaw);
+      if (parsed && parsed.url && parsed.room) return parsed;
+    }
+  } catch (e) {}
 
-  // 3. Check localStorage
+  // 3. Check localStorage ("Remember credentials" checked)
   try {
     const raw = localStorage.getItem(FB_CFG_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.url) return parsed;
+      if (parsed && parsed.url && parsed.room) return parsed;
     }
   } catch (e) {}
-  return { url: '', room: 'patching_schedule_main' };
+
+  return { url: '', room: '' };
+}
+
+function toggleSecretVisibility() {
+  const inp = document.getElementById('loginTeamSecret');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function showUnlockError(msg) {
+  const box = document.getElementById('unlockErrorMsg');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+async function submitTeamUnlock() {
+  const url = document.getElementById('loginFirebaseUrl').value.trim().replace(/\/$/, '');
+  const rawSecret = document.getElementById('loginTeamSecret').value.trim();
+  const remember = document.getElementById('loginRememberMe').checked;
+  const errBox = document.getElementById('unlockErrorMsg');
+  errBox.style.display = 'none';
+
+  if (!url.startsWith('https://')) {
+    showUnlockError('Please enter a valid https:// Firebase Realtime Database URL.');
+    return;
+  }
+  if (rawSecret.length < 4) {
+    showUnlockError('Team Secret Key must be at least 4 characters.');
+    return;
+  }
+
+  // Sanitize secret key into a safe Firebase child node path
+  const roomPath = rawSecret.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const testEndpoint = `${url}/${roomPath}.json`;
+
+  const submitBtn = document.querySelector('.unlock-submit');
+  const origText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Verifying & Connecting...';
+
+  try {
+    const res = await fetch(testEndpoint);
+    if (!res.ok) {
+      throw new Error(res.status === 401 || res.status === 403
+        ? 'Access Denied (HTTP ' + res.status + ') — Check your Team Secret Key or Firebase Rules.'
+        : 'Connection failed (HTTP ' + res.status + ') — Verify your Firebase URL.');
+    }
+    const remoteData = await res.json();
+
+    fbConfig = { url, room: roomPath };
+    if (remember) {
+      localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+      sessionStorage.removeItem(FB_CFG_KEY);
+    } else {
+      sessionStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
+      localStorage.removeItem(FB_CFG_KEY);
+    }
+
+    if (remoteData && Array.isArray(remoteData.servers)) {
+      appState.servers = remoteData.servers;
+      if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+      if (Array.isArray(remoteData.auditLogs)) {
+        auditLogs = remoteData.auditLogs;
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
+        updateAuditUI();
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    document.getElementById('unlockOverlay').classList.add('unlocked');
+    renderTable();
+    startFirebaseRealtimeStream();
+    showToast('🔓 Workspace unlocked & synced live!');
+  } catch (err) {
+    showUnlockError(err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = origText;
+  }
+}
+
+function enterOfflineEmptyMode() {
+  document.getElementById('unlockOverlay').classList.add('unlocked');
+  renderTable();
+  showToast('Opened in Offline Mode — import an .xlsx file or add servers');
+}
+
+function lockAndForgetWorkspace() {
+  showCustomConfirm(
+    'Lock & Clear Credentials',
+    'Lock the workspace and clear saved Firebase URL, Team Secret Key, and cached server data from this browser?',
+    'Lock & Clear',
+    '#DC2626',
+    () => {
+      if (fbEventSource) {
+        fbEventSource.close();
+        fbEventSource = null;
+      }
+      localStorage.removeItem(FB_CFG_KEY);
+      sessionStorage.removeItem(FB_CFG_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('patching_schedule_v34_state');
+      localStorage.removeItem(AUDIT_KEY);
+      fbConfig = { url: '', room: '' };
+      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      auditLogs = [];
+      selectedIds.clear();
+      if (window.location.hash.includes('fb=')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      document.getElementById('loginFirebaseUrl').value = '';
+      document.getElementById('loginTeamSecret').value = '';
+      document.getElementById('unlockErrorMsg').style.display = 'none';
+      document.getElementById('unlockOverlay').classList.remove('unlocked');
+      setSyncIndicator('local', 'Locked');
+      renderTable();
+      showToast('🔒 Workspace locked & local credentials cleared');
+    }
+  );
 }
 
 function setSyncIndicator(state, text) {
@@ -2781,9 +3061,14 @@ window.addEventListener('unhandledrejection', (e) => { e.preventDefault(); });
 window.addEventListener('resize', () => { if (isExpandedMode) applyRowHeights(); });
 initColumnResizers();
 updateAuditUI();
-renderTable();
 if (getFirebaseEndpoint()) {
+  // Saved credentials found -> auto-unlock workspace and stream live data
+  document.getElementById('unlockOverlay').classList.add('unlocked');
+  renderTable();
   startFirebaseRealtimeStream();
+} else {
+  // No saved credentials -> keep workspace locked until Team Secret Key is entered
+  renderTable();
 }
 </script>
 </body>
