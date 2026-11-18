@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.5 4-Card Command Deck & Quarterly Rollover)</title>
+<title>Windows Server Patching Schedule Manager (v5.6 Command Deck & Cycle Manager)</title>
 <style>
   :root {
     --bg: #F4F6F9;
@@ -101,30 +101,36 @@
     .command-deck { grid-template-columns: 1fr; }
   }
 
-  /* 2x2 Readable KPI Card */
+  /* 2x2 Readable KPI Card (Full-Height Stretch) */
   .kpi-quad-card {
     background: var(--surface);
     border: 1px solid var(--border-light);
     border-radius: 7px;
-    padding: 8px 10px;
+    padding: 9px 10px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 6px;
+    gap: 8px;
+    height: 100%;
   }
   .kpi-quad-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    grid-template-rows: 1fr 1fr;
+    gap: 7px;
+    flex: 1;
   }
   .kpi-box {
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
     border-left: 3.5px solid var(--primary);
     border-radius: 5px;
-    padding: 4px 8px;
+    padding: 7px 9px;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     transition: all 0.12s ease;
   }
   .kpi-box:hover { background: #EFF6FF; border-color: #93C5FD; }
@@ -850,7 +856,7 @@
 
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.5 4-Card Command Deck & Quarterly Rollover)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.6 Command Deck & Cycle Manager)</h1>
   </div>
   <div class="toolbar">
     <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.12);padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.24);">
@@ -858,8 +864,11 @@
       <select id="cycleSelector" onchange="switchQuarterCycle(this.value)" style="background:#0F172A;color:#fff;border:1px solid #334155;border-radius:4px;padding:3px 6px;font-size:0.76rem;font-weight:700;cursor:pointer;">
         <option value="2026_Q4">2026 Q4 (Active)</option>
       </select>
-      <button type="button" class="btn btn-add" style="padding:3px 8px;font-size:0.72rem;" onclick="openRolloverModal()" title="Clone current 106 servers into a new Quarter (e.g. 2027 Q1) with auto-shifted dates">
+      <button type="button" class="btn btn-add" style="padding:3px 8px;font-size:0.72rem;" onclick="openRolloverModal()" title="Clone current servers into a new Quarter (e.g. 2027 Q1) with auto-shifted dates">
         🚀 Next Quarter
+      </button>
+      <button type="button" class="btn btn-secondary" style="padding:3px 7px;font-size:0.72rem;background:rgba(239,68,68,0.22);border-color:rgba(248,113,113,0.45);color:#FECACA;" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers in it">
+        🗑️ Del Cycle
       </button>
     </div>
     <button class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
@@ -989,8 +998,8 @@
             <th>Maintenance Windows</th>
             <th>Time Windows (Auto-Sorts)</th>
             <th>OS Sheet</th>
-            <th>Remarks i</th>
-            <th>Remarks ii</th>
+            <th>SOP Notes</th>
+            <th>Remarks</th>
             <th>By</th>
             <th>Status</th>
             <th></th>
@@ -1102,7 +1111,7 @@
         </select>
       </div>
       <div class="form-group full">
-        <label>Remarks i (Supports multiple lines)</label>
+        <label>SOP Notes (Supports multiple lines)</label>
         <textarea id="newRem1" rows="3" placeholder="Optional multi-line notes..."></textarea>
       </div>
     </div>
@@ -1230,7 +1239,7 @@
       </label>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="rolloverClearRemarks2" checked />
-        <span>Clear temporary execution notes in <strong>Remarks ii</strong> (keep permanent SOPs in Remarks i)</span>
+        <span>Clear temporary execution notes in <strong>Remarks</strong> (keep permanent notes in SOP Notes)</span>
       </label>
     </div>
 
@@ -2180,6 +2189,55 @@ function executeQuarterRollover() {
   showToast(`✨ Created ${targetLabel} with ${clonedServers.length} servers!`);
 }
 
+
+function deleteOrClearCurrentCycle() {
+  ensureCyclesStructure();
+  const keys = Object.keys(appState.cycles);
+  const curKey = appState.activeCycle;
+  const curObj = appState.cycles[curKey];
+  const curLabel = curObj ? curObj.label : curKey;
+  const srvCount = (curObj && Array.isArray(curObj.servers)) ? curObj.servers.length : 0;
+
+  if (keys.length > 1) {
+    showCustomConfirm(
+      `Delete Quarter Cycle "${curLabel}"?`,
+      `Permanently remove "${curLabel}" (${srvCount} servers) and switch back to another saved quarter cycle? This cannot be undone.`,
+      `Delete "${curLabel}"`,
+      '#DC2626',
+      () => {
+        delete appState.cycles[curKey];
+        const nextKey = Object.keys(appState.cycles)[0];
+        appState.activeCycle = nextKey;
+        appState.servers = appState.cycles[nextKey].servers || [];
+        auditLogs = appState.cycles[nextKey].auditLogs || [];
+        selectedIds.clear();
+        saveState();
+        updateAuditUI();
+        updateCycleSelectorUI();
+        renderTable();
+        showToast(`🗑️ Deleted cycle "${curLabel}" → Switched to ${appState.cycles[nextKey].label}`);
+      }
+    );
+  } else {
+    showCustomConfirm(
+      `Clear All Servers in "${curLabel}"?`,
+      `"${curLabel}" is your only quarter cycle. Clear all ${srvCount} servers from "${curLabel}" so you can import a fresh .xlsx or start clean?`,
+      `Clear ${srvCount} Servers`,
+      '#DC2626',
+      () => {
+        appState.cycles[curKey].servers = [];
+        appState.servers = [];
+        selectedIds.clear();
+        addAuditEntry(`Cleared all ${srvCount} servers from ${curLabel}`);
+        saveState();
+        updateCycleSelectorUI();
+        renderTable();
+        showToast(`🗑️ Cleared all servers in "${curLabel}"`);
+      }
+    );
+  }
+}
+
 function quickFilterWeek(wk) {
   const el = document.getElementById('filterWeek');
   el.value = (el.value === wk) ? '' : wk;
@@ -2335,7 +2393,7 @@ function renderTable() {
           <div class="tag-row">${tagsHtml}</div>
         </td>
         <td><input class="editable-cell center mono" value="${escapeHtml(srv.ip)}" onchange="updateField(${srv.id}, 'ip', this.value)" /></td>
-        <td><input class="editable-cell" value="${escapeHtml(srv.os)}" onchange="updateField(${srv.id}, 'os', this.value)" /></td>
+        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'os', this.value)">${escapeHtml(srv.os)}</textarea></td>
         <td><input class="editable-cell" value="${escapeHtml(srv.app)}" onchange="updateField(${srv.id}, 'app', this.value)" /></td>
         <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
         <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea></td>
@@ -2795,7 +2853,7 @@ function ensureXLSX(callback) {
 
 function exportCSVFallback() {
   const { enriched } = getSortedAndGrouped();
-  const headers = ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'Remarks i', 'Remarks ii', 'By', 'Status'];
+  const headers = ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status'];
   const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
   const lines = [headers.map(esc).join(',')];
   enriched.forEach((srv, idx) => {
@@ -2965,7 +3023,7 @@ function exportExcel() {
   const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
   const aoa = [
     ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
-    ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'Remarks i', 'Remarks ii', 'By', 'Status']
+    ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status']
   ];
   const rowMeta = [
     { type: 'title', height: 32 },
