@@ -85,77 +85,96 @@
     padding: 7px 12px 14px;
   }
 
-  /* Compact Inline Telemetry Ribbon (High-Density 1080p Layout) */
-  .kpi-grid {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 7px;
+  /* Unified Command Center Dashboard (Charts Expanded + Readable 2x2 KPIs) */
+  .command-deck {
+    display: grid;
+    grid-template-columns: 270px 1.65fr 1.35fr;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: stretch;
+  }
+  .command-deck.hidden { display: none; }
+  @media (max-width: 1200px) {
+    .command-deck { grid-template-columns: 1fr; }
+  }
+
+  /* 2x2 Readable KPI Card */
+  .kpi-quad-card {
     background: var(--surface);
     border: 1px solid var(--border-light);
     border-radius: 7px;
-    padding: 5px 11px;
-    margin-bottom: 5px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    padding: 8px 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
   }
-  .kpi-chip {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 5px;
-    padding: 2px 9px;
-    border-radius: 5px;
+  .kpi-quad-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .kpi-box {
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
-    border-left: 3px solid var(--primary);
+    border-left: 3.5px solid var(--primary);
+    border-radius: 5px;
+    padding: 4px 8px;
     cursor: pointer;
-    transition: background 0.12s ease;
+    transition: all 0.12s ease;
   }
-  .kpi-chip:hover { background: #EFF6FF; }
-  .kpi-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
-  .kpi-value { font-size: 0.96rem; font-weight: 800; color: var(--text-main); }
-  .kpi-sub { font-size: 0.67rem; color: var(--text-muted); }
-  .kpi-progress-wrap {
-    margin-left: auto;
+  .kpi-box:hover { background: #EFF6FF; border-color: #93C5FD; }
+  .kpi-box-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+  .kpi-box-val {
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text-main);
+  }
+  .kpi-box-sub {
+    font-size: 0.64rem;
+    color: var(--text-muted);
+  }
+  .kpi-bar-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 200px;
+    padding-top: 2px;
   }
-  .kpi-progress-bar {
+  .kpi-bar-track {
     flex: 1;
-    height: 8px;
+    height: 7px;
     background: #E2E8F0;
     border-radius: 999px;
     overflow: hidden;
     display: flex;
   }
 
-  /* Visual Analytics Charts Panel */
-  .analytics-panel {
-    display: grid;
-    grid-template-columns: 2fr 1.2fr 1.2fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .analytics-panel.hidden { display: none; }
-  @media (max-width: 1100px) {
-    .analytics-panel { grid-template-columns: 1fr; }
-  }
   .chart-card {
     background: #fff;
     border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 10px 13px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border-radius: 7px;
+    padding: 8px 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
   .chart-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
   }
   .chart-title {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--primary);
     text-transform: uppercase;
@@ -164,7 +183,7 @@
   .chart-legend {
     display: flex;
     gap: 8px;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     color: var(--text-muted);
   }
   .legend-dot {
@@ -179,9 +198,9 @@
   .weekly-bars {
     display: flex;
     align-items: flex-end;
-    gap: 6px;
-    height: 115px;
-    padding-top: 14px;
+    gap: 5px;
+    height: 92px;
+    padding-top: 12px;
     border-bottom: 1px solid #CBD5E1;
   }
   .w-bar-col {
@@ -190,18 +209,18 @@
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    min-width: 24px;
+    min-width: 22px;
   }
   .w-bar-col:hover .w-bar-stack { transform: scaleY(1.04); filter: brightness(0.95); }
   .w-bar-count {
-    font-size: 0.66rem;
+    font-size: 0.64rem;
     font-weight: 700;
     color: #334155;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .w-bar-stack {
     width: 100%;
-    max-width: 30px;
+    max-width: 28px;
     display: flex;
     flex-direction: column-reverse;
     border-radius: 3px 3px 0 0;
@@ -213,32 +232,37 @@
   .seg-pending { background: #3B82F6; }
   .seg-failed  { background: #EF4444; }
   .w-bar-label {
-    font-size: 0.64rem;
+    font-size: 0.62rem;
     font-weight: 700;
     color: var(--text-muted);
-    margin-top: 4px;
+    margin-top: 3px;
   }
 
-  /* Horizontal Progress Bars (OS & Engineer) */
+  /* Side-by-Side Breakdown inside Right Chart Card */
+  .split-bars-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
   .h-bar-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
   .h-bar-row {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
   }
   .h-bar-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.71rem;
+    font-size: 0.67rem;
     font-weight: 600;
     color: #334155;
   }
   .h-bar-track {
-    height: 7px;
+    height: 5px;
     background: #E2E8F0;
     border-radius: 999px;
     overflow: hidden;
@@ -249,20 +273,43 @@
     transition: width 0.25s ease;
   }
 
-  /* Weekly Quick-Count Pills (Compact Single-Strip) */
+  /* Unified Control Strip: Filter Bar + Weekly Jump Pills */
+  .controls-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+    padding: 5px 9px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 4px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.75rem;
+    background: #fff;
+    color: var(--text-main);
+  }
+  .filter-bar input { min-width: 210px; flex: 1; }
+
   .week-pills {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 4px;
-    background: var(--surface);
-    padding: 4px 9px;
-    border-radius: 7px;
-    border: 1px solid var(--border-light);
-    margin-bottom: 5px;
+    padding-top: 4px;
+    border-top: 1px dashed #E2E8F0;
   }
   .week-pills-label {
-    font-size: 0.7rem;
+    font-size: 0.69rem;
     font-weight: 700;
     color: var(--text-muted);
     margin-right: 3px;
@@ -270,8 +317,8 @@
   .week-pill {
     border: 1px solid #CBD5E1;
     border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 0.68rem;
+    padding: 1px 8px;
+    font-size: 0.67rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -291,31 +338,9 @@
     padding: 0px 5px;
     border-radius: 999px;
     font-weight: 800;
-    font-size: 0.66rem;
+    font-size: 0.65rem;
   }
   .week-pill.active .badge { background: rgba(255,255,255,0.22); }
-
-  /* Filter & Control Bar */
-  .filter-bar {
-    background: var(--surface);
-    padding: 5px 9px;
-    border-radius: 7px;
-    border: 1px solid var(--border-light);
-    margin-bottom: 6px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-  }
-  .filter-bar input, .filter-bar select {
-    padding: 4px 7px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    font-size: 0.75rem;
-    background: #fff;
-    color: var(--text-main);
-  }
-  .filter-bar input { min-width: 210px; flex: 1; }
 
   /* Table Wrapper - Maximized Viewport Height for 1920x1080 */
   .table-card {
@@ -327,8 +352,8 @@
   }
   .table-scroll {
     overflow-x: auto;
-    max-height: calc(100vh - 170px);
-    min-height: 480px;
+    max-height: calc(100vh - 255px);
+    min-height: 440px;
   }
   table {
     width: 100%;
@@ -824,7 +849,7 @@
       <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
       <span id="syncStatusText">Local Mode (Setup Live Sync)</span>
     </button>
-    <button class="btn btn-secondary" id="toggleChartsBtn" onclick="toggleAnalytics()">📊 Charts</button>
+    <button class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()">📊 Charts</button>
     <button class="btn btn-secondary" onclick="openAuditDrawer()">📋 Handover Log (<span id="logCountBadge">0</span>)</button>
     <button class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
     <label class="btn btn-secondary" style="cursor:pointer;">
@@ -837,11 +862,10 @@
 </header>
 
 <div class="container">
-  <!-- KPI Cards -->
-  <div class="kpi-grid" id="kpiGrid"></div>
+  <!-- Unified Command Deck: 2x2 KPI Card + Expanded Charts Side-by-Side -->
+  <div class="command-deck" id="analyticsPanel">
+    <div class="kpi-quad-card" id="kpiGrid"></div>
 
-  <!-- Visual Charts Dashboard -->
-  <div class="analytics-panel hidden" id="analyticsPanel">
     <div class="chart-card">
       <div class="chart-header">
         <span class="chart-title">📈 Weekly Patching Load &amp; Completion (Click bar to filter)</span>
@@ -856,24 +880,18 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">🖥️ OS Worksheet &amp; Environment Split</span>
+        <span class="chart-title">🖥️ OS Sheet &amp; 👷 Engineer Split</span>
       </div>
-      <div class="h-bar-list" id="osEnvChart"></div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <span class="chart-title">👷 Engineer Assignment &amp; Readiness</span>
+      <div class="split-bars-grid">
+        <div class="h-bar-list" id="osEnvChart"></div>
+        <div class="h-bar-list" id="engineerChart"></div>
       </div>
-      <div class="h-bar-list" id="engineerChart"></div>
     </div>
   </div>
 
-  <!-- Weekly Interactive Count Bar -->
-  <div class="week-pills" id="weekPills"></div>
-
-  <!-- Filter & Display Controls -->
-  <div class="filter-bar">
+  <!-- Unified Filter & Weekly Batch Strip -->
+  <div class="controls-wrapper">
+    <div class="filter-bar">
     <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
     <select id="filterWeek" onchange="renderTable()">
       <option value="">All Weeks</option>
@@ -913,6 +931,8 @@
     <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
       ↔ Reset Widths
     </button>
+    </div>
+    <div class="week-pills" id="weekPills"></div>
   </div>
 
   <!-- Schedule Table -->
@@ -1180,7 +1200,7 @@ let appState = loadState();
 let auditLogs = loadAuditLogs();
 let selectedIds = new Set();
 let isExpandedMode = false;
-let chartsVisible = false;
+let chartsVisible = true;
 
 let fbConfig = loadFirebaseConfig();
 let fbEventSource = null;
@@ -1854,7 +1874,7 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
     const p = items.filter(s => s.status === 'Patched').length;
     const f = items.filter(s => s.status === 'Failed').length;
     const pend = tot - p - f;
-    const heightPct = Math.round((tot / maxWeekTotal) * 86);
+    const heightPct = Math.round((tot / maxWeekTotal) * 66);
     const pPct = tot ? (p / tot) * 100 : 0;
     const pendPct = tot ? (pend / tot) * 100 : 0;
     const fPct = tot ? (f / tot) * 100 : 0;
@@ -1957,34 +1977,30 @@ function renderTable() {
   const pctDone = total ? Math.round((patched / total) * 100) : 0;
   const pctFail = total ? Math.round((failed / total) * 100) : 0;
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-chip" onclick="document.getElementById('filterStatus').value='';renderTable();" title="Show all scheduled rows">
-      <span class="kpi-title">Total:</span>
-      <span class="kpi-value">${total}</span>
-      <span class="kpi-sub">(${uniqueWeeks.length} wks · ${enriched.filter(s=>s.env==='PRD').length} PRD)</span>
+    <div class="kpi-quad-grid">
+      <div class="kpi-box" onclick="document.getElementById('filterStatus').value='';renderTable();" title="Show all scheduled rows">
+        <div class="kpi-box-label">Total Rows</div>
+        <div class="kpi-box-val">${total} <span class="kpi-box-sub">(${uniqueWeeks.length} wks)</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();" title="Filter Patched servers">
+        <div class="kpi-box-label">Patched</div>
+        <div class="kpi-box-val" style="color:#059669;">${patched} <span class="kpi-box-sub">(${pctDone}%)</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();" title="Filter Pending servers">
+        <div class="kpi-box-label">Pending</div>
+        <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${failed > 0 ? '· ' + failed + ' Fail' : ''}</span></div>
+      </div>
+      <div class="kpi-box" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();" title="Filter Sequence / Window Flags">
+        <div class="kpi-box-label">⚠️ Flags</div>
+        <div class="kpi-box-val" style="color:#B45309;">${alertCnt} <span class="kpi-box-sub">alerts</span></div>
+      </div>
     </div>
-    <div class="kpi-chip" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();" title="Filter Patched servers">
-      <span class="kpi-title">Patched:</span>
-      <span class="kpi-value" style="color:#059669;">${patched}</span>
-      <span class="kpi-sub">(${pctDone}%)</span>
-    </div>
-    <div class="kpi-chip" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();" title="Filter Pending servers">
-      <span class="kpi-title">Pending:</span>
-      <span class="kpi-value" style="color:#2563EB;">${pending}</span>
-    </div>
-    <div class="kpi-chip" style="border-left-color:#EF4444;" onclick="document.getElementById('filterStatus').value='Failed';renderTable();" title="Filter Failed servers">
-      <span class="kpi-title">Failed:</span>
-      <span class="kpi-value" style="color:#DC2626;">${failed}</span>
-    </div>
-    <div class="kpi-chip" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();" title="Filter Sequence / Window Alerts">
-      <span class="kpi-title">⚠️ Flags:</span>
-      <span class="kpi-value" style="color:#B45309;">${alertCnt}</span>
-    </div>
-    <div class="kpi-progress-wrap" title="Overall Completion: ${pctDone}% Patched, ${pctFail}% Failed">
-      <div class="kpi-progress-bar">
+    <div class="kpi-bar-row" title="Overall Completion: ${pctDone}% Patched, ${pctFail}% Failed">
+      <div class="kpi-bar-track">
         <div style="width:${pctDone}%;background:#10B981;"></div>
         <div style="width:${pctFail}%;background:#EF4444;"></div>
       </div>
-      <span style="font-size:0.74rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
+      <span style="font-size:0.71rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
     </div>
   `;
 
