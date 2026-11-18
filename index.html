@@ -3,56 +3,52 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.3 Zero-Leak Team Login & Live Sync)</title>
-<!-- SheetJS loaded on-demand only when Import/Export is clicked to prevent SharePoint CSP/network lag -->
+<title>Windows Server Patching Schedule Manager (v5.4 Zero-Leak Team Login & Live Sync)</title>
 <style>
   :root {
-    --primary: #1B365D;
-    --primary-mid: #274C77;
+    --bg: #F4F6F9;
+    --surface: #FFFFFF;
+    --primary: #1E3A5F;
+    --primary-light: #2B5282;
     --accent: #0284C7;
-    --banner-bg: #E0E8F5;
-    --banner-border: #94B0DA;
-    --bg: #F1F5F9;
-    --card-bg: #FFFFFF;
-    --border: #CBD5E1;
-    --cell-border: #DCE4EE;
-    --text: #0F172A;
+    --text-main: #0F172A;
     --text-muted: #475569;
+    --border: #CBD5E1;
+    --border-light: #E2E8F0;
+    --banner-bg: #DCE6F7;
+    --banner-text: #16325C;
+    --patched-bg: #DCFCE7;
+    --patched-text: #166534;
+    --failed-bg: #FEE2E2;
+    --failed-text: #991B1B;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: 'Inter', 'Segoe UI', Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
     background: var(--bg);
-    color: var(--text);
-    -webkit-font-smoothing: antialiased;
-    padding-bottom: 64px;
+    color: var(--text-main);
   }
-
-  /* Header */
   header {
-    background: linear-gradient(135deg, #132A4A 0%, #244B7A 100%);
+    background: linear-gradient(135deg, #132A4A 0%, #1E3A5F 100%);
     color: #fff;
-    padding: 14px 20px;
+    padding: 12px 16px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+    gap: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   }
   header h1 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    letter-spacing: 0.15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    letter-spacing: 0.2px;
   }
   header p {
-    margin: 3px 0 0;
-    font-size: 0.79rem;
+    margin: 2px 0 0;
+    font-size: 0.76rem;
     color: #CBD5E1;
   }
   .toolbar {
@@ -63,9 +59,9 @@
   }
   .btn {
     border: none;
-    border-radius: 7px;
-    padding: 7px 12px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -75,102 +71,81 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
   .btn-primary { background: #10B981; color: #fff; }
-  .btn-primary:hover { background: #059669; transform: translateY(-1px); }
-  .btn-secondary { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.28); }
-  .btn-secondary:hover { background: rgba(255,255,255,0.24); }
-  .btn-secondary.active { background: #38BDF8; color: #0F172A; border-color: #7DD3FC; }
-  .btn-add { background: #0EA5E9; color: #fff; }
-  .btn-add:hover { background: #0284C7; transform: translateY(-1px); }
-  .btn-toggle { background: #FFFFFF; color: var(--primary); border: 1px solid #CBD5E1; }
-  .btn-toggle:hover { background: #F8FAFC; }
-  .btn-toggle.active { background: #EFF6FF; color: #1D4ED8; border-color: #93C5FD; }
+  .btn-primary:hover { background: #059669; }
+  .btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.28); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.26); }
+  .btn-secondary.active { background: #0284C7; border-color: #38BDF8; }
+  .btn-add { background: #0284C7; color: #fff; }
+  .btn-add:hover { background: #0369A1; }
+  .btn-toggle { background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1; box-shadow: none; }
+  .btn-toggle.active { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
 
   .container {
     max-width: 100%;
-    margin: 12px auto;
-    padding: 0 12px 24px;
+    padding: 12px 14px 48px;
   }
 
-  /* KPI Summary Grid */
+  /* KPI Summary Cards */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .kpi-card {
-    background: var(--card-bg);
-    border-radius: 9px;
-    padding: 11px 14px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    border-left: 4px solid var(--primary-mid);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px 13px;
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .kpi-title {
-    font-size: 0.71rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-muted);
-    margin-bottom: 3px;
-  }
-  .kpi-value {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--primary);
-  }
-  .kpi-sub {
-    font-size: 0.74rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
+  .kpi-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+  .kpi-value { font-size: 1.35rem; font-weight: 800; margin-top: 2px; color: var(--text-main); }
+  .kpi-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
 
-  /* Analytics Dashboard Panel */
+  /* Visual Analytics Charts Panel */
   .analytics-panel {
     display: grid;
-    grid-template-columns: 1.6fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
+    grid-template-columns: 2fr 1.2fr 1.2fr;
+    gap: 10px;
+    margin-bottom: 10px;
   }
   .analytics-panel.hidden { display: none; }
-  @media (max-width: 1200px) {
+  @media (max-width: 1100px) {
     .analytics-panel { grid-template-columns: 1fr; }
   }
   .chart-card {
-    background: var(--card-bg);
-    border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px 13px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .chart-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    align-items: center;
+    margin-bottom: 8px;
   }
   .chart-title {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 700;
     color: var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
   .chart-legend {
     display: flex;
-    gap: 10px;
-    font-size: 0.71rem;
+    gap: 8px;
+    font-size: 0.68rem;
     color: var(--text-muted);
   }
   .legend-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 2px;
     display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
     margin-right: 3px;
   }
 
@@ -178,58 +153,51 @@
   .weekly-bars {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    height: 125px;
-    padding-top: 16px;
-    border-bottom: 1px solid #E2E8F0;
+    gap: 6px;
+    height: 115px;
+    padding-top: 14px;
+    border-bottom: 1px solid #CBD5E1;
   }
   .w-bar-col {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    height: 100%;
-    justify-content: flex-end;
     cursor: pointer;
-    position: relative;
+    min-width: 24px;
   }
-  .w-bar-col:hover .w-bar-stack {
-    transform: scaleY(1.03);
-    filter: brightness(0.95);
-  }
+  .w-bar-col:hover .w-bar-stack { transform: scaleY(1.04); filter: brightness(0.95); }
   .w-bar-count {
-    font-size: 0.69rem;
+    font-size: 0.66rem;
     font-weight: 700;
     color: #334155;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
   .w-bar-stack {
     width: 100%;
-    max-width: 34px;
-    border-radius: 4px 4px 0 0;
-    overflow: hidden;
+    max-width: 30px;
     display: flex;
     flex-direction: column-reverse;
-    transition: transform 0.15s;
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+    transition: transform 0.15s ease;
     background: #E2E8F0;
   }
   .seg-patched { background: #10B981; }
   .seg-pending { background: #3B82F6; }
   .seg-failed  { background: #EF4444; }
   .w-bar-label {
-    font-size: 0.67rem;
-    font-weight: 600;
-    color: #475569;
-    margin-top: 5px;
-    text-align: center;
-    white-space: nowrap;
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 4px;
   }
 
-  /* Horizontal Progress Bars (OS / Env / Engineers) */
+  /* Horizontal Progress Bars (OS & Engineer) */
   .h-bar-list {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 6px;
   }
   .h-bar-row {
     display: flex;
@@ -239,13 +207,12 @@
   .h-bar-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.74rem;
+    font-size: 0.71rem;
     font-weight: 600;
     color: #334155;
   }
   .h-bar-track {
-    width: 100%;
-    height: 8px;
+    height: 7px;
     background: #E2E8F0;
     border-radius: 999px;
     overflow: hidden;
@@ -256,259 +223,217 @@
     transition: width 0.25s ease;
   }
 
-  /* Weekly Summary Chips */
+  /* Weekly Quick-Count Pills */
   .week-pills {
-    background: var(--card-bg);
-    border: 1px solid #E2E8F0;
-    border-radius: 9px;
-    padding: 8px 12px;
-    margin-bottom: 12px;
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    gap: 5px;
+    background: var(--surface);
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 9px;
   }
   .week-pills-label {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--text-muted);
     margin-right: 4px;
   }
   .week-pill {
-    padding: 4px 10px;
+    border: 1px solid #CBD5E1;
     border-radius: 999px;
-    font-size: 0.75rem;
+    padding: 3px 9px;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: #1E293B;
-    border: 1px solid rgba(15, 23, 42, 0.12);
     cursor: pointer;
-    transition: all 0.14s ease;
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    color: #1E293B;
+    transition: all 0.12s ease;
   }
-  .week-pill:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
-  .week-pill.active { outline: 2px solid var(--primary); font-weight: 700; }
+  .week-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .week-pill.active {
+    background: #1E3A5F !important;
+    color: #FFFFFF !important;
+    border-color: #1E3A5F;
+  }
   .week-pill .badge {
-    background: rgba(27, 54, 93, 0.14);
-    color: var(--primary);
+    background: rgba(15, 23, 42, 0.12);
     padding: 1px 6px;
     border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.71rem;
+    font-weight: 800;
+    font-size: 0.68rem;
   }
+  .week-pill.active .badge { background: rgba(255,255,255,0.22); }
 
-  /* Filter Bar */
+  /* Filter & Control Bar */
   .filter-bar {
-    background: var(--card-bg);
-    border: 1px solid #E2E8F0;
-    border-radius: 9px;
-    padding: 9px 12px;
-    margin-bottom: 12px;
+    background: var(--surface);
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 10px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 7px;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   }
   .filter-bar input, .filter-bar select {
-    padding: 6px 10px;
-    border: 1px solid #CBD5E1;
-    border-radius: 7px;
-    font-size: 0.81rem;
-    background: #F8FAFC;
-    color: var(--text);
-  }
-  .filter-bar input:focus, .filter-bar select:focus {
-    outline: none;
-    border-color: var(--accent);
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.76rem;
     background: #fff;
+    color: var(--text-main);
   }
   .filter-bar input { min-width: 210px; flex: 1; }
 
-  /* Table Card */
+  /* Table Wrapper - Optimized for 1920x1080 zero horizontal scroll */
   .table-card {
-    background: var(--card-bg);
-    border-radius: 10px;
-    border: 1px solid #CBD5E1;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     overflow: hidden;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
   }
   .table-scroll {
     overflow-x: auto;
-    overflow-y: auto;
     max-height: 70vh;
   }
   table {
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
     table-layout: fixed;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.8rem;
+    border-collapse: collapse;
+    font-size: 0.76rem;
   }
   thead th {
     position: sticky;
     top: 0;
-    z-index: 20;
-    background: #1E3A5F;
-    color: #F8FAFC;
-    font-weight: 600;
-    font-size: 0.76rem;
-    letter-spacing: 0.15px;
-    padding: 8px 5px;
+    z-index: 10;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
     text-align: center;
-    border-right: 1px solid #2F527D;
-    border-bottom: 2px solid #132640;
-    white-space: nowrap;
+    padding: 7px 4px;
+    border: 1px solid #2F527D;
+    white-space: normal;
+    line-height: 1.2;
+    font-size: 0.73rem;
     user-select: none;
   }
+  /* Column Drag-Resize Handle */
   .col-resizer {
     position: absolute;
     top: 0;
     right: -3px;
-    width: 7px;
+    width: 6px;
     height: 100%;
     cursor: col-resize;
-    z-index: 40;
-    background: transparent;
+    z-index: 25;
   }
   .col-resizer:hover, .col-resizer.resizing {
-    background: rgba(56, 189, 248, 0.8);
+    background: #38BDF8;
+    opacity: 0.85;
   }
-  thead th.sticky-col-1 {
-    position: sticky;
-    left: 0;
-    z-index: 30;
-    background: #172E4D;
-  }
-  thead th.sticky-col-2 {
-    position: sticky;
-    left: 34px;
-    z-index: 30;
-    background: #172E4D;
-  }
-  thead th.sticky-col-3 {
-    position: sticky;
-    left: 70px;
-    z-index: 30;
-    background: #172E4D;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.12);
-  }
-  tbody td {
-    border-right: 1px solid var(--cell-border);
-    border-bottom: 1px solid var(--cell-border);
-    padding: 4px 5px;
-    vertical-align: middle;
-  }
-  tbody td.sticky-col-1 {
-    position: sticky;
-    left: 0;
-    z-index: 10;
-    background: inherit;
-  }
-  tbody td.sticky-col-2 {
-    position: sticky;
-    left: 34px;
-    z-index: 10;
-    background: inherit;
-  }
-  tbody td.sticky-col-3 {
-    position: sticky;
-    left: 70px;
-    z-index: 10;
-    background: inherit;
-    box-shadow: 2px 0 5px rgba(15, 23, 42, 0.06);
-  }
-  tbody tr.data-row:hover td {
-    filter: brightness(0.975);
-  }
-  tbody tr.data-row.selected-row td {
-    background-color: #DBEAFE !important;
-  }
+  /* Sticky Left Columns */
+  thead th.sticky-col-1, tbody td.sticky-col-1 { position: sticky; left: 0; z-index: 12; }
+  thead th.sticky-col-2, tbody td.sticky-col-2 { position: sticky; left: 34px; z-index: 12; }
+  thead th.sticky-col-3, tbody td.sticky-col-3 { position: sticky; left: 70px; z-index: 12; box-shadow: 2px 0 4px rgba(15,23,42,0.06); }
+  thead th.sticky-col-1, thead th.sticky-col-2, thead th.sticky-col-3 { z-index: 20; background: var(--primary); }
 
-  /* Weekly Group Banner */
-  tr.week-banner td {
-    background: linear-gradient(90deg, #DCE6F7 0%, #EBF1FA 100%) !important;
-    color: #16325C;
-    font-weight: 700;
-    font-size: 0.84rem;
-    padding: 7px 12px;
-    border-top: 2px solid var(--banner-border);
-    border-bottom: 2px solid var(--banner-border);
+  tbody tr.week-banner td {
+    background: var(--banner-bg) !important;
+    color: var(--banner-text);
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 7px 10px;
+    border-top: 2px solid #94B0DA;
+    border-bottom: 2px solid #94B0DA;
+    position: sticky;
+    left: 0;
   }
   .banner-inner {
-    position: sticky;
-    left: 12px;
-    display: inline-flex;
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
   .banner-count-pill {
     background: #1E3A5F;
     color: #fff;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     padding: 2px 8px;
     border-radius: 999px;
-    font-weight: 600;
+    font-weight: 700;
   }
   .banner-mini-btn {
-    background: #FFFFFF;
-    color: #1E3A5F;
+    background: rgba(255,255,255,0.75);
     border: 1px solid #94B0DA;
-    border-radius: 5px;
-    padding: 2px 8px;
-    font-size: 0.71rem;
-    font-weight: 600;
+    color: #1E3A5F;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.69rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.12s;
   }
-  .banner-mini-btn:hover {
-    background: #1E3A5F;
-    color: #FFFFFF;
-  }
+  .banner-mini-btn:hover { background: #fff; }
 
-  /* Smart Badges inside Hostname / Maint cells */
+  tbody tr.data-row td {
+    border: 1px solid var(--border);
+    padding: 3px 4px;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  tbody tr.data-row:hover td {
+    filter: brightness(0.97);
+  }
+  tbody tr.data-row.selected-row td {
+    box-shadow: inset 0 0 0 1px #0284C7;
+  }
+  td.center { text-align: center; vertical-align: middle !important; }
+  td.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.74rem; }
+
+  /* Smart Badges under Hostname */
   .tag-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: 2px;
     margin-top: 2px;
-    padding-left: 5px;
   }
   .smart-tag {
-    font-size: 0.63rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 4px;
-    letter-spacing: 0.2px;
+    padding: 0px 4px;
+    border-radius: 3px;
+    line-height: 1.35;
     display: inline-block;
   }
-  .tag-seq1 { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-  .tag-seq2 { background: #E0E7FF; color: #3730A3; border: 1px solid #A5B4FC; }
-  .tag-dup  { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
-  .tag-warn { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-  .tag-env-prd { background: #DBEAFE; color: #1E40AF; }
-  .tag-env-uat { background: #CCFBF1; color: #115E59; }
-  .tag-env-dr  { background: #FFEDD5; color: #9A3412; }
+  .tag-env-prd { background: #FEE2E2; color: #991B1B; }
+  .tag-env-uat { background: #FEF3C7; color: #92400E; }
+  .tag-env-dr  { background: #E0E7FF; color: #3730A3; }
+  .tag-seq1    { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+  .tag-seq2    { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
+  .tag-warn    { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
 
-  /* Editable Inputs & Compact Scrollable Multi-Line Boxes */
+  /* Editable Inputs & Compact Scrollable Textareas */
   .editable-cell {
     width: 100%;
     border: 1px solid transparent;
     background: transparent;
     font-family: inherit;
-    font-size: 0.8rem;
-    color: #0F172A;
-    padding: 3px 5px;
+    font-size: inherit;
+    color: inherit;
+    padding: 2px 3px;
     border-radius: 4px;
     transition: border-color 0.15s, background 0.15s;
   }
   .editable-cell:hover {
-    border-color: rgba(30, 58, 95, 0.35);
-    background: rgba(255, 255, 255, 0.75);
+    border-color: #94A3B8;
+    background: rgba(255,255,255,0.75);
   }
   .editable-cell:focus {
     outline: none;
@@ -517,77 +442,45 @@
     box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
   }
   textarea.editable-textarea {
-    width: 100%;
-    height: 40px;
-    max-height: 40px;
-    overflow-y: auto;
     resize: vertical;
-    line-height: 1.35;
+    height: 36px;
+    min-height: 32px;
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.28;
     white-space: pre-wrap;
     word-break: break-word;
     display: block;
-    scrollbar-width: thin;
-    scrollbar-color: #94A3B8 transparent;
-  }
-  textarea.editable-textarea::-webkit-scrollbar { width: 5px; }
-  textarea.editable-textarea::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 4px; }
-  textarea.editable-textarea:focus {
-    height: auto;
-    min-height: 62px;
-    max-height: 170px;
-    z-index: 15;
-    position: relative;
   }
   body.expanded-rows textarea.editable-textarea {
     height: auto;
     max-height: none;
     overflow-y: hidden;
+    resize: none;
+  }
+  select.editable-cell {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 2px 1px;
   }
 
-  select.editable-cell { cursor: pointer; height: 30px; }
-  select.status-patched {
-    background-color: #DCFCE7 !important;
-    color: #166534 !important;
-    border-color: #86EFAC;
-    font-weight: 700;
-  }
-  select.status-failed {
-    background-color: #FEE2E2 !important;
-    color: #991B1B !important;
-    border-color: #FCA5A5;
-    font-weight: 700;
-  }
-  select.by-andy {
-    background-color: #E0F2FE !important;
-    color: #0369A1 !important;
-    border-color: #7DD3FC;
-    font-weight: 700;
-  }
-  select.by-don {
-    background-color: #FFEDD5 !important;
-    color: #C2410C !important;
-    border-color: #FDBA74;
-    font-weight: 700;
-  }
-  select.by-fung {
-    background-color: #EDE9FE !important;
-    color: #5B21B6 !important;
-    border-color: #C4B5FD;
-    font-weight: 700;
-  }
-  .center { text-align: center; }
-  .mono { font-family: 'Consolas', 'SFMono-Regular', monospace; font-size: 0.78rem; }
+  /* Status & Engineer Pills */
+  .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
+  .status-failed  { background-color: var(--failed-bg) !important; color: var(--failed-text) !important; font-weight: 700; }
+  .by-andy { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
+  .by-don  { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
+  .by-fung { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
 
   .del-btn {
     background: transparent;
     border: none;
     color: #94A3B8;
     cursor: pointer;
-    font-size: 0.9rem;
-    padding: 3px 6px;
+    font-size: 0.85rem;
+    padding: 2px 4px;
     border-radius: 4px;
   }
-  .del-btn:hover { color: #EF4444; background: rgba(239,68,68,0.12); }
+  .del-btn:hover { background: #FEE2E2; color: #DC2626; }
 
   /* Floating Bulk Action Bar */
   .bulk-bar {
@@ -596,134 +489,128 @@
     left: 50%;
     transform: translateX(-50%) translateY(120%);
     background: #0F172A;
-    color: #F8FAFC;
-    padding: 10px 16px;
-    border-radius: 12px;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.3);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     z-index: 950;
-    transition: transform 0.22s ease;
+    transition: transform 0.2s ease;
     border: 1px solid #334155;
   }
-  .bulk-bar.visible {
-    transform: translateX(-50%) translateY(0);
-  }
+  .bulk-bar.visible { transform: translateX(-50%) translateY(0); }
   .bulk-bar select, .bulk-bar input {
     background: #1E293B;
-    color: #F8FAFC;
+    color: #fff;
     border: 1px solid #475569;
-    border-radius: 6px;
+    border-radius: 5px;
     padding: 5px 8px;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
   }
   .bulk-btn {
     background: #0284C7;
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     padding: 5px 10px;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
   }
   .bulk-btn:hover { background: #0369A1; }
   .bulk-btn-green { background: #10B981; }
   .bulk-btn-green:hover { background: #059669; }
-  .bulk-btn-ghost { background: transparent; color: #CBD5E1; border: 1px solid #475569; }
+  .bulk-btn-ghost { background: transparent; border: 1px solid #475569; color: #CBD5E1; }
 
-  /* Audit / Handover Side Drawer */
+  /* Shift Handover / Audit Log Drawer */
   .drawer-backdrop {
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.45);
     display: none;
     justify-content: flex-end;
-    z-index: 1000;
+    z-index: 1050;
   }
   .drawer-backdrop.open { display: flex; }
   .drawer {
-    width: 440px;
+    width: 420px;
     max-width: 95vw;
+    background: #fff;
     height: 100%;
-    background: #FFFFFF;
-    padding: 20px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    box-shadow: -8px 0 24px rgba(0,0,0,0.18);
+    box-shadow: -6px 0 24px rgba(0,0,0,0.18);
   }
-  .drawer h3 { margin: 0 0 6px; color: var(--primary); }
+  .drawer h3 { margin: 0 0 6px; color: var(--primary); font-size: 1.05rem; }
   .log-list {
     flex: 1;
     overflow-y: auto;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    padding: 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px;
     background: #F8FAFC;
-    font-size: 0.79rem;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
+    font-size: 0.78rem;
     margin: 10px 0;
   }
   .log-item {
-    background: #fff;
-    padding: 7px 9px;
-    border-radius: 6px;
-    border-left: 3px solid var(--accent);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    padding: 6px 8px;
+    border-bottom: 1px solid #E2E8F0;
+    line-height: 1.35;
   }
-  .log-time { font-size: 0.7rem; color: #64748B; font-weight: 600; }
+  .log-item:last-child { border-bottom: none; }
+  .log-time { color: #64748B; font-size: 0.7rem; font-weight: 600; }
 
-  /* Toast */
+  /* Toast Notification */
   .toast {
     position: fixed;
-    top: 18px;
-    right: 20px;
+    top: 16px;
+    right: 16px;
     background: #0F172A;
     color: #fff;
-    padding: 9px 15px;
+    padding: 9px 14px;
     border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    font-size: 0.8rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
     pointer-events: none;
-    transition: opacity 0.25s ease;
     z-index: 1100;
   }
-  .toast.show { opacity: 1; }
+  .toast.show { opacity: 1; transform: translateY(0); }
 
-  /* Modal */
+  /* Add Server Modal */
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,0.55);
+    background: rgba(15, 23, 42, 0.55);
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1050;
+    z-index: 1000;
   }
   .modal-backdrop.open { display: flex; }
   .modal {
     background: #fff;
-    border-radius: 12px;
-    width: 540px;
+    border-radius: 10px;
+    width: 560px;
     max-width: 95vw;
-    padding: 22px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+    padding: 20px 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
   }
-  .modal h3 { margin: 0 0 14px; color: var(--primary); }
+  .modal h3 { margin: 0 0 14px; font-size: 1.05rem; color: var(--primary); }
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 11px;
+    gap: 10px;
   }
   .form-group { display: flex; flex-direction: column; gap: 4px; }
   .form-group.full { grid-column: span 2; }
-  .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+  .form-group label { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
   .form-group input, .form-group select, .form-group textarea {
     padding: 8px 10px;
     border: 1px solid #CBD5E1;
@@ -755,7 +642,7 @@
   .unlock-card {
     background: #FFFFFF;
     border-radius: 14px;
-    width: 460px;
+    width: 470px;
     max-width: 96vw;
     padding: 28px 26px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
@@ -864,7 +751,7 @@
   <div class="unlock-card">
     <div class="unlock-badge">🔒 Zero-Leak Protected Workspace</div>
     <h2>Windows Patching Schedule Login</h2>
-    <p class="sub">No server hostnames, IPs, or database URLs are stored in this public page. Enter your <strong>Firebase Database URL</strong> and <strong>Team Secret Key</strong> to load your team schedule.</p>
+    <p class="sub">No server hostnames, IPs, or database URLs are stored in this public page. Enter your <strong>Firebase Database URL</strong>, <strong>Team Secret Key</strong>, and <strong>Room</strong> to load your team schedule.</p>
 
     <div class="unlock-error" id="unlockErrorMsg"></div>
 
@@ -875,11 +762,16 @@
       </div>
 
       <div class="unlock-field">
-        <label>Team Secret Key (Workspace Password) *</label>
+        <label>Team Secret Key (Firebase Rule Path) *</label>
         <div style="display:flex;gap:6px;">
-          <input type="password" id="loginTeamSecret" placeholder="Enter shared team secret key..." style="flex:1;" required />
+          <input type="password" id="loginTeamSecret" placeholder="e.g. abcd1234" style="flex:1;" required />
           <button type="button" class="btn btn-toggle" style="padding:0 10px;" onclick="toggleSecretVisibility()" title="Show/Hide Secret Key">👁️</button>
         </div>
+      </div>
+
+      <div class="unlock-field">
+        <label>Room Name *</label>
+        <input type="text" id="loginRoomName" value="patching_schedule_main" placeholder="patching_schedule_main" required />
       </div>
 
       <label class="unlock-remember">
@@ -898,7 +790,7 @@
 
 <header>
   <div>
-    <h1>🛡️ Windows Server Patching Schedule Manager (v5.3 Zero-Leak Team Login & Live Sync)</h1>
+    <h1>🛡️ Windows Server Patching Schedule Manager (v5.4 Zero-Leak Team Login & Live Sync)</h1>
     <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
   </div>
   <div class="toolbar">
@@ -1206,19 +1098,17 @@
     <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
       Connect a free <strong>Firebase Realtime Database</strong> so Andy, Don, and Fung see every status update, assignment, and schedule change live without refreshing.
     </p>
-    <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:8px;padding:10px 12px;font-size:0.78rem;color:#334155;margin-bottom:12px;line-height:1.5;">
-      <strong>Quick 2-Minute Setup:</strong><br/>
-      1. Go to <strong>console.firebase.google.com</strong> → Create a free project.<br/>
-      2. Click <strong>Build → Realtime Database → Create Database</strong> (Start in <em>Test Mode</em> or add a secret path).<br/>
-      3. Copy your Database URL (e.g. <code>https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app</code>) and paste it below.
-    </div>
     <div class="form-group full" style="margin-bottom:10px;">
       <label>Firebase Realtime Database URL *</label>
-      <input type="text" id="firebaseDbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+      <input type="text" id="firebaseDbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" oninput="updateShareLinkPreview()" />
+    </div>
+    <div class="form-group full" style="margin-bottom:10px;">
+      <label>Team Secret Key (Firebase Rule Path) *</label>
+      <input type="text" id="firebaseSecretInput" placeholder="e.g. abcd1234" oninput="updateShareLinkPreview()" />
     </div>
     <div class="form-group full" style="margin-bottom:12px;">
-      <label>Room / Secret Path Key (Acts like a team workspace password)</label>
-      <input type="text" id="firebaseRoomInput" value="patching_schedule_main" placeholder="e.g. team_patch_2026_secret99" />
+      <label>Room Name *</label>
+      <input type="text" id="firebaseRoomInput" value="patching_schedule_main" placeholder="patching_schedule_main" oninput="updateShareLinkPreview()" />
     </div>
     <div id="shareLinkBox" style="display:none;background:#EFF6FF;border:1px solid #93C5FD;border-radius:7px;padding:8px 10px;margin-bottom:12px;">
       <div style="font-size:0.74rem;font-weight:700;color:#1E40AF;margin-bottom:4px;">🔗 One-Click Team Share Link (Auto-connects teammates):</div>
@@ -1253,11 +1143,12 @@ const DEFAULT_DATA = {
 
 // Zero hardcoded credentials or server inventory in public GitHub source
 const HARDCODED_FIREBASE_URL = '';
-const HARDCODED_FIREBASE_ROOM = '';
+const HARDCODED_FIREBASE_SECRET = '';
+const HARDCODED_FIREBASE_ROOM = 'patching_schedule_main';
 
 const STORAGE_KEY = 'patching_schedule_v40_state';
 const AUDIT_KEY = 'patching_schedule_v40_audit';
-const FB_CFG_KEY = 'patching_schedule_firebase_cfg';
+const FB_CFG_KEY = 'patching_schedule_firebase_cfg_v54';
 
 let appState = loadState();
 let auditLogs = loadAuditLogs();
@@ -1270,14 +1161,17 @@ let fbEventSource = null;
 let isApplyingRemoteUpdate = false;
 let clientSessionId = 'client_' + Math.random().toString(36).slice(2, 10);
 
+function sanitizePathSegment(str) {
+  return String(str || '').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 function loadFirebaseConfig() {
-  // 1. Check URL hash (#fb=BASE64_JSON) if teammate opens an invite link
   try {
     if (window.location.hash && window.location.hash.includes('fb=')) {
       const m = window.location.hash.match(/fb=([^&]+)/);
       if (m && m[1]) {
         const decoded = JSON.parse(atob(decodeURIComponent(m[1])));
-        if (decoded && decoded.url && decoded.room) {
+        if (decoded && decoded.url && decoded.secret && decoded.room) {
           localStorage.setItem(FB_CFG_KEY, JSON.stringify(decoded));
           return decoded;
         }
@@ -1285,25 +1179,23 @@ function loadFirebaseConfig() {
     }
   } catch (e) {}
 
-  // 2. Check sessionStorage (current tab session if Remember Me was unchecked)
   try {
     const sessRaw = sessionStorage.getItem(FB_CFG_KEY);
     if (sessRaw) {
       const parsed = JSON.parse(sessRaw);
-      if (parsed && parsed.url && parsed.room) return parsed;
+      if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
     }
   } catch (e) {}
 
-  // 3. Check localStorage ("Remember credentials" checked)
   try {
     const raw = localStorage.getItem(FB_CFG_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.url && parsed.room) return parsed;
+      if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
     }
   } catch (e) {}
 
-  return { url: '', room: '' };
+  return { url: '', secret: '', room: 'patching_schedule_main' };
 }
 
 function toggleSecretVisibility() {
@@ -1320,6 +1212,7 @@ function showUnlockError(msg) {
 async function submitTeamUnlock() {
   const url = document.getElementById('loginFirebaseUrl').value.trim().replace(/\/$/, '');
   const rawSecret = document.getElementById('loginTeamSecret').value.trim();
+  const rawRoom = document.getElementById('loginRoomName').value.trim() || 'patching_schedule_main';
   const remember = document.getElementById('loginRememberMe').checked;
   const errBox = document.getElementById('unlockErrorMsg');
   errBox.style.display = 'none';
@@ -1333,9 +1226,9 @@ async function submitTeamUnlock() {
     return;
   }
 
-  // Sanitize secret key into a safe Firebase child node path
-  const roomPath = rawSecret.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const testEndpoint = `${url}/${roomPath}.json`;
+  const secretSeg = sanitizePathSegment(rawSecret);
+  const roomSeg = sanitizePathSegment(rawRoom) || 'patching_schedule_main';
+  const testEndpoint = `${url}/${secretSeg}/${roomSeg}.json`;
 
   const submitBtn = document.querySelector('.unlock-submit');
   const origText = submitBtn.textContent;
@@ -1351,7 +1244,7 @@ async function submitTeamUnlock() {
     }
     const remoteData = await res.json();
 
-    fbConfig = { url, room: roomPath };
+    fbConfig = { url, secret: secretSeg, room: roomSeg };
     if (remember) {
       localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
       sessionStorage.removeItem(FB_CFG_KEY);
@@ -1374,7 +1267,7 @@ async function submitTeamUnlock() {
     document.getElementById('unlockOverlay').classList.add('unlocked');
     renderTable();
     startFirebaseRealtimeStream();
-    showToast('🔓 Workspace unlocked & synced live!');
+    showToast(`🔓 Connected to ${secretSeg} / ${roomSeg}`);
   } catch (err) {
     showUnlockError(err.message);
   } finally {
@@ -1392,7 +1285,7 @@ function enterOfflineEmptyMode() {
 function lockAndForgetWorkspace() {
   showCustomConfirm(
     'Lock & Clear Credentials',
-    'Lock the workspace and clear saved Firebase URL, Team Secret Key, and cached server data from this browser?',
+    'Lock the workspace and clear saved Firebase URL, Team Secret Key, Room, and cached server data from this browser?',
     'Lock & Clear',
     '#DC2626',
     () => {
@@ -1405,7 +1298,7 @@ function lockAndForgetWorkspace() {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('patching_schedule_v34_state');
       localStorage.removeItem(AUDIT_KEY);
-      fbConfig = { url: '', room: '' };
+      fbConfig = { url: '', secret: '', room: 'patching_schedule_main' };
       appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
       auditLogs = [];
       selectedIds.clear();
@@ -1414,6 +1307,7 @@ function lockAndForgetWorkspace() {
       }
       document.getElementById('loginFirebaseUrl').value = '';
       document.getElementById('loginTeamSecret').value = '';
+      document.getElementById('loginRoomName').value = 'patching_schedule_main';
       document.getElementById('unlockErrorMsg').style.display = 'none';
       document.getElementById('unlockOverlay').classList.remove('unlocked');
       setSyncIndicator('local', 'Locked');
@@ -1438,10 +1332,11 @@ function setSyncIndicator(state, text) {
 }
 
 function getFirebaseEndpoint() {
-  if (!fbConfig || !fbConfig.url) return '';
+  if (!fbConfig || !fbConfig.url || !fbConfig.secret) return '';
   const base = fbConfig.url.replace(/\/$/, '');
-  const room = (fbConfig.room || 'patching_schedule_main').replace(/[^a-zA-Z0-9_-]/g, '_');
-  return `${base}/${room}.json`;
+  const secret = sanitizePathSegment(fbConfig.secret);
+  const room = sanitizePathSegment(fbConfig.room || 'patching_schedule_main') || 'patching_schedule_main';
+  return `${base}/${secret}/${room}.json`;
 }
 
 async function pushStateToFirebase() {
@@ -1462,7 +1357,7 @@ async function pushStateToFirebase() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    setSyncIndicator('live', 'Live Sync ON');
+    setSyncIndicator('live', `Live: ${fbConfig.room}`);
   } catch (err) {
     console.error('Firebase sync error:', err);
     setSyncIndicator('error', 'Sync Error (Check Rules)');
@@ -1489,15 +1384,13 @@ function startFirebaseRealtimeStream() {
       try {
         const msg = JSON.parse(evt.data);
         if (!msg || msg.data === undefined) return;
-        // Root snapshot on initial connect or full PUT
         if (msg.path === '/') {
           if (msg.data === null) {
-            // Database room is empty -> seed it with our current schedule!
             pushStateToFirebase();
             return;
           }
           if (msg.data.updatedBy === clientSessionId) {
-            setSyncIndicator('live', 'Live Sync ON');
+            setSyncIndicator('live', `Live: ${fbConfig.room}`);
             return;
           }
           if (Array.isArray(msg.data.servers)) {
@@ -1513,9 +1406,8 @@ function startFirebaseRealtimeStream() {
             isApplyingRemoteUpdate = false;
             showToast('🔄 Live update received from teammate');
           }
-          setSyncIndicator('live', 'Live Sync ON');
+          setSyncIndicator('live', `Live: ${fbConfig.room}`);
         } else {
-          // Partial patch event -> re-fetch full state cleanly
           fetch(endpoint).then(r => r.json()).then(remoteData => {
             if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
               isApplyingRemoteUpdate = true;
@@ -1529,7 +1421,7 @@ function startFirebaseRealtimeStream() {
               isApplyingRemoteUpdate = false;
               showToast('🔄 Live update received from teammate');
             }
-            setSyncIndicator('live', 'Live Sync ON');
+            setSyncIndicator('live', `Live: ${fbConfig.room}`);
           }).catch(() => {});
         }
       } catch (parseErr) {}
@@ -1537,7 +1429,7 @@ function startFirebaseRealtimeStream() {
 
     fbEventSource.addEventListener('put', handleStreamPayload);
     fbEventSource.addEventListener('patch', handleStreamPayload);
-    fbEventSource.onopen = () => setSyncIndicator('live', 'Live Sync ON');
+    fbEventSource.onopen = () => setSyncIndicator('live', `Live: ${fbConfig.room}`);
     fbEventSource.onerror = () => {
       setSyncIndicator('error', 'Reconnecting...');
     };
@@ -1548,6 +1440,7 @@ function startFirebaseRealtimeStream() {
 
 function openSyncModal() {
   document.getElementById('firebaseDbUrlInput').value = fbConfig.url || '';
+  document.getElementById('firebaseSecretInput').value = fbConfig.secret || '';
   document.getElementById('firebaseRoomInput').value = fbConfig.room || 'patching_schedule_main';
   updateShareLinkPreview();
   document.getElementById('syncModal').classList.add('open');
@@ -1559,13 +1452,14 @@ function closeSyncModal() {
 
 function updateShareLinkPreview() {
   const url = document.getElementById('firebaseDbUrlInput').value.trim();
-  const room = document.getElementById('firebaseRoomInput').value.trim() || 'patching_schedule_main';
+  const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
+  const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
   const box = document.getElementById('shareLinkBox');
-  if (!url) {
+  if (!url || !secret) {
     box.style.display = 'none';
     return;
   }
-  const encoded = encodeURIComponent(btoa(JSON.stringify({ url: url.replace(/\/$/, ''), room })));
+  const encoded = encodeURIComponent(btoa(JSON.stringify({ url: url.replace(/\/$/, ''), secret, room })));
   const baseHref = window.location.href.split('#')[0];
   document.getElementById('shareTeamUrlOutput').value = `${baseHref}#fb=${encoded}`;
   box.style.display = 'block';
@@ -1576,18 +1470,37 @@ function copyTeamShareUrl() {
   sharePointSafeCopy(val, '🔗 Team live-sync URL copied! Share this link with Andy & Don.', '🔗 Team Share Link');
 }
 
-function saveAndConnectFirebase() {
+async function saveAndConnectFirebase() {
   const url = document.getElementById('firebaseDbUrlInput').value.trim().replace(/\/$/, '');
-  const room = (document.getElementById('firebaseRoomInput').value.trim() || 'patching_schedule_main').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
+  const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
   if (!url || !url.startsWith('https://')) {
     showToast('⚠️ Please enter a valid https:// Firebase Realtime Database URL');
     return;
   }
-  fbConfig = { url, room };
+  if (!secret) {
+    showToast('⚠️ Please enter your Team Secret Key');
+    return;
+  }
+  fbConfig = { url, secret, room };
   localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
   updateShareLinkPreview();
+
+  try {
+    const res = await fetch(`${url}/${secret}/${room}.json`);
+    if (res.ok) {
+      const remoteData = await res.json();
+      if (remoteData && Array.isArray(remoteData.servers)) {
+        appState.servers = remoteData.servers;
+        if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        renderTable();
+      }
+    }
+  } catch (e) {}
+
   startFirebaseRealtimeStream();
-  showToast('⚡ Connected to Firebase Live Sync!');
+  showToast(`⚡ Connected to ${secret} / ${room}`);
 }
 
 function disconnectFirebase() {
@@ -1595,8 +1508,9 @@ function disconnectFirebase() {
     fbEventSource.close();
     fbEventSource = null;
   }
-  fbConfig = { url: '', room: 'patching_schedule_main' };
+  fbConfig = { url: '', secret: '', room: 'patching_schedule_main' };
   localStorage.removeItem(FB_CFG_KEY);
+  sessionStorage.removeItem(FB_CFG_KEY);
   if (window.location.hash.includes('fb=')) {
     history.replaceState(null, '', window.location.pathname + window.location.search);
   }
@@ -1748,7 +1662,6 @@ function parseTimeWindowMeta(twRaw) {
   if (_twMetaCache.has(key)) return _twMetaCache.get(key);
   const clean = key.replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
 
-  // Pattern A: "28-Feb-2027", "28 Feb 2027", "6-7-Mar-2027", "14-15 Nov 2026"
   const mText = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})/i);
   if (mText) {
     const day1 = parseInt(mText[1], 10);
@@ -1761,7 +1674,6 @@ function parseTimeWindowMeta(twRaw) {
     }
   }
 
-  // Pattern B: ISO format "2027-02-28" or "2027/02/28"
   const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
   if (mIso) {
     const year = parseInt(mIso[1], 10);
@@ -1774,7 +1686,6 @@ function parseTimeWindowMeta(twRaw) {
     }
   }
 
-  // Pattern C: Numeric DD/MM/YYYY or DD-MM-YYYY (e.g. "28/02/2027" or "28-02-2027")
   const mDmy = clean.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
   if (mDmy) {
     const day1 = parseInt(mDmy[1], 10);
@@ -1811,12 +1722,11 @@ function normalizeWinStr(s) {
 
 function extractTimeTokens(str) {
   const tokens = [];
-  const rx = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi;
+  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
   let m;
   while ((m = rx.exec(str)) !== null) {
-    // Skip 4-digit years or day numbers followed by month names
     if (m[1].length > 2) continue;
-    if (!m[2] && !m[3]) continue; // require either :MM or am/pm
+    if (!m[2] && !m[3]) continue;
     let hr = parseInt(m[1], 10);
     const min = m[2] ? parseInt(m[2], 10) : 0;
     const ampm = (m[3] || '').toLowerCase();
@@ -1831,8 +1741,8 @@ function isTimeMatchingMaint(maintWin, timeWin) {
   const mw = normalizeWinStr(maintWin);
   const tw = normalizeWinStr(timeWin);
   if (!mw || !tw) return true;
-  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/\bto\b/g, '-').replace(/\s*-\s*/g, '-').trim();
-  const twCore = tw.replace(/\(.*?\)/g, '').replace(/\bto\b/g, '-').replace(/\s*-\s*/g, '-').trim();
+  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/to/g, '-').replace(/\s*-\s*/g, '-').trim();
+  const twCore = tw.replace(/\(.*?\)/g, '').replace(/to/g, '-').replace(/\s*-\s*/g, '-').trim();
   if (mwCore && twCore.includes(mwCore)) return true;
 
   const mwTimes = extractTimeTokens(mw);
@@ -2397,7 +2307,8 @@ function copySelectedHosts() {
     .filter(s => selectedIds.has(s.id))
     .map(s => s.hostname.split('(')[0].trim());
   sharePointSafeCopy(
-    names.join('\n'),
+    names.join('
+'),
     `📋 Copied ${names.length} selected hostnames to clipboard`,
     `📋 Selected Hostnames (${names.length})`
   );
@@ -2410,7 +2321,8 @@ function copySelectedIPs() {
     .map(s => s.ip)
     .filter(Boolean);
   sharePointSafeCopy(
-    ips.join('\n'),
+    ips.join('
+'),
     `🌐 Copied ${ips.length} selected IP addresses to clipboard`,
     `🌐 Selected IP Addresses (${ips.length})`
   );
@@ -2424,7 +2336,8 @@ function copyWeekList(weekKey, field) {
     .filter(Boolean);
   const label = field === 'hostname' ? 'hostnames' : 'IP addresses';
   sharePointSafeCopy(
-    vals.join('\n'),
+    vals.join('
+'),
     `📋 Copied ${vals.length} ${label} for ${weekKey}`,
     `📋 ${weekKey} ${label}`
   );
@@ -2448,14 +2361,16 @@ function copyHandoverSummary() {
   const total = enriched.length;
   const patched = enriched.filter(s => s.status === 'Patched').length;
   const failed = enriched.filter(s => s.status === 'Failed').length;
-  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('\n');
+  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('
+');
   const summary = [
     `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
     `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
     ``,
     `Recent Activity:`,
     recent || '- No changes recorded in this session.'
-  ].join('\n');
+  ].join('
+');
   sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
 }
 
@@ -2556,23 +2471,6 @@ function saveNewServer() {
   showToast(`✓ Added ${host}`);
 }
 
-function resetToDefault() {
-  showCustomConfirm(
-    'Reset Schedule',
-    'Reset all edits back to the original baseline schedule? Any unsaved local edits will be cleared.',
-    'Reset Data',
-    '#D97706',
-    () => {
-      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      selectedIds.clear();
-      saveState();
-      addAuditEntry('Reset schedule back to baseline');
-      renderTable();
-      showToast('↺ Reset to original baseline data');
-    }
-  );
-}
-
 function ensureXLSX(callback) {
   if (typeof XLSX !== 'undefined') {
     callback();
@@ -2583,7 +2481,6 @@ function ensureXLSX(callback) {
   script.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
   script.onload = () => callback();
   script.onerror = () => {
-    // Fallback to standard SheetJS if jsdelivr is blocked
     const fallbackScript = document.createElement('script');
     fallbackScript.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
     fallbackScript.onload = () => callback();
@@ -2604,7 +2501,8 @@ function exportCSVFallback() {
   enriched.forEach((srv, idx) => {
     lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
   });
-  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['﻿' + lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'Q4_2026_Patching_Schedule_Updated.csv';
@@ -2671,7 +2569,6 @@ function exportExcel() {
   const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
   const wb = XLSX.utils.book_new();
 
-  // Shared Styling Palette matching the Web UI
   const thinBorder = {
     top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
     bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
@@ -2760,15 +2657,13 @@ function exportExcel() {
       const s = String(val || '');
       if (!s) return;
       const w = Math.max(8, (colWidths[idx] || 20) - 3);
-      const lines = s.split(/\r?\n/).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / w)), 0);
+      const lines = s.split(/?
+/).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / w)), 0);
       if (lines > maxLines) maxLines = lines;
     });
     return Math.min(180, Math.max(22, maxLines * 15 + 6));
   }
 
-  // =========================================================================
-  // SHEET 1: Consolidated Schedule (Full Colors, Merged Week Banners, Badges)
-  // =========================================================================
   const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
   const aoa = [
     ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
@@ -2870,9 +2765,6 @@ function exportExcel() {
   }
   XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
 
-  // =========================================================================
-  // SHEET 2: Weekly Summary & KPI Overview
-  // =========================================================================
   const sumAoa = [
     ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
     ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
@@ -2917,9 +2809,6 @@ function exportExcel() {
   }
   XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
 
-  // =========================================================================
-  // SHEETS 3–7: Individual OS Tabs (Styled Headers, Zebra Rows & Status Badges)
-  // =========================================================================
   const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
   const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
   sheetOrder.forEach(sName => {
@@ -3062,12 +2951,10 @@ window.addEventListener('resize', () => { if (isExpandedMode) applyRowHeights();
 initColumnResizers();
 updateAuditUI();
 if (getFirebaseEndpoint()) {
-  // Saved credentials found -> auto-unlock workspace and stream live data
   document.getElementById('unlockOverlay').classList.add('unlocked');
   renderTable();
   startFirebaseRealtimeStream();
 } else {
-  // No saved credentials -> keep workspace locked until Team Secret Key is entered
   renderTable();
 }
 </script>
