@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.8)</title>
+<title>Windows Server Patching Schedule Manager (v5.9)</title>
 <style>
   :root {
     --bg: #F4F6F9;
@@ -29,26 +29,44 @@
     background: var(--bg);
     color: var(--text-main);
   }
+
+  /* Two-Column Structured 2-Row Top Header Bar */
   header {
     background: linear-gradient(135deg, #132A4A 0%, #1E3A5F 100%);
     color: #fff;
     padding: 9px 14px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   }
-  .header-top-row {
+  .header-left-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 7px;
+  }
+  .header-right-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 7px;
+  }
+  .header-right-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    justify-content: flex-end;
+    gap: 7px;
   }
-  .header-brand {
+  .header-sub-left {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
   }
   header h1 {
     margin: 0;
@@ -69,20 +87,12 @@
     padding: 1px 7px;
     border-radius: 999px;
   }
-  .header-actions-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 7px;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  @keyframes pulseLive {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(1.22); }
   }
-  .toolbar-cluster {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 7px;
+  .live-dot-pulse {
+    animation: pulseLive 1.8s infinite ease-in-out;
   }
   .cycle-pill-box {
     display: inline-flex;
@@ -102,15 +112,15 @@
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
-    min-height: 30px;
+    min-height: 28px;
   }
   .cycle-select:hover { border-color: #60A5FA; }
   .btn {
     border: none;
     border-radius: 6px;
-    padding: 6px 12px;
-    min-height: 32px;
-    font-size: 0.8rem;
+    padding: 5px 11px;
+    min-height: 31px;
+    font-size: 0.79rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -138,6 +148,11 @@
   .btn-add:hover { background: #0369A1; }
   .btn-toggle { background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1; box-shadow: none; }
   .btn-toggle.active { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
+
+  @media (max-width: 960px) {
+    .header-right-col { align-items: flex-start; }
+    .header-right-line { justify-content: flex-start; }
+  }
 
   .container {
     max-width: 100%;
@@ -307,11 +322,6 @@
   }
 
   /* Side-by-Side Breakdown inside Right Chart Card */
-  .split-bars-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
   .h-bar-list {
     display: flex;
     flex-direction: column;
@@ -346,7 +356,7 @@
     transition: width 0.25s ease;
   }
 
-  /* Unified Control Strip: Filter Bar + Weekly Jump Pills */
+  /* Unified Control Strip: Filter Bar + Weekly Batch Cards */
   .controls-wrapper {
     background: var(--surface);
     border: 1px solid var(--border-light);
@@ -629,7 +639,7 @@
   .tag-seq2    { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
   .tag-warn    { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
 
-  /* Editable Inputs & Compact Scrollable Textareas */
+  /* Editable Inputs & Textareas (Expanded Full Text by Default) */
   .editable-cell {
     width: 100%;
     border: 1px solid transparent;
@@ -954,7 +964,7 @@
   .unlock-local-btn:hover { background: #E2E8F0; color: #0F172A; }
 </style>
 </head>
-<body>
+<body class="expanded-rows">
 
 <!-- Team Workspace Unlock Overlay -->
 <div class="unlock-overlay" id="unlockOverlay">
@@ -991,48 +1001,31 @@
 
       <div class="unlock-actions">
         <button type="submit" class="btn unlock-submit">🔓 Unlock &amp; Connect Live Schedule</button>
-        <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue in Offline Mode (Empty / Import .xlsx)</button>
+        <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue in Offline Mode (Demo / Import .xlsx)</button>
       </div>
     </form>
   </div>
 </div>
 
-
+<!-- Redesigned 2-Row Top Header Bar -->
 <header>
-  <!-- Tier 1: Brand Title + Quarter Cycle Switcher + Live Sync / Lock -->
-  <div class="header-top-row">
-    <div class="header-brand">
-      <h1>🛡️ Windows Server Patching Schedule Manager <span class="ver-pill">v5.8</span></h1>
-    </div>
-
-    <div class="toolbar-cluster">
-      <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
-        <span style="font-size:0.75rem;font-weight:700;color:#93C5FD;">📆 Quarter:</span>
-        <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
-          <option value="2026_Q4">2026 Q4 (Active)</option>
-        </select>
-        <button type="button" class="btn btn-add" style="padding:4px 10px;min-height:30px;" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
-          🚀 Next Quarter
-        </button>
-        <button type="button" class="btn btn-danger-soft" style="padding:4px 9px;min-height:30px;" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
-          🗑️ Del Cycle
-        </button>
-      </div>
-
+  <!-- Left Column: Title on Row 1, Live Status + Lock directly below on Row 2 -->
+  <div class="header-left-col">
+    <h1>🛡️ Windows Server Patching Schedule Manager <span class="ver-pill">v5.9</span></h1>
+    <div class="header-sub-left">
       <button type="button" class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
-        <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
-        <span id="syncStatusText">Local Mode</span>
+        <span id="syncDot" class="live-dot-pulse" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;"></span>
+        <span id="syncStatusText">Live: patching_schedule_main</span>
       </button>
-
       <button type="button" class="btn btn-danger-soft" onclick="lockAndForgetWorkspace()" title="Lock workspace & clear saved credentials on this browser">
         🔒 Lock
       </button>
     </div>
   </div>
 
-  <!-- Tier 2: Direct One-Click Action Buttons (No Dropdowns) -->
-  <div class="header-actions-row">
-    <div class="toolbar-cluster">
+  <!-- Right Column: Row 1 (+ Add Server, Import .xlsx, Export .xlsx, Handover Log) | Row 2 (Quarter + Charts) -->
+  <div class="header-right-col">
+    <div class="header-right-line">
       <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
       <label class="btn btn-secondary" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
         📂 Import .xlsx
@@ -1041,14 +1034,27 @@
       <button type="button" class="btn btn-primary" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
         ⬇ Export .xlsx
       </button>
-    </div>
-
-    <div class="toolbar-cluster">
-      <button type="button" class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the top KPI & chart deck">
-        📊 Charts
-      </button>
       <button type="button" class="btn btn-secondary" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
         📋 Handover Log (<span id="logCountBadge">0</span>)
+      </button>
+    </div>
+
+    <div class="header-right-line">
+      <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
+        <span style="font-size:0.75rem;font-weight:700;color:#93C5FD;">📆 Quarter:</span>
+        <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
+          <option value="2026_Q4">2026 Q4 (Active)</option>
+        </select>
+        <button type="button" class="btn btn-add" style="padding:3px 9px;min-height:28px;" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
+          🚀 Next Quarter
+        </button>
+        <button type="button" class="btn btn-danger-soft" style="padding:3px 8px;min-height:28px;" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
+          🗑️ Del Cycle
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the top KPI & chart deck">
+        📊 Charts
       </button>
     </div>
   </div>
@@ -1091,45 +1097,45 @@
   <!-- Unified Filter & Weekly Batch Strip -->
   <div class="controls-wrapper">
     <div class="filter-bar">
-    <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
-    <select id="filterWeek" onchange="renderTable()">
-      <option value="">All Weeks</option>
-    </select>
-    <select id="filterEnv" onchange="renderTable()">
-      <option value="">All Environments</option>
-      <option value="PRD">Production (PRD)</option>
-      <option value="UAT">UAT</option>
-      <option value="DR">DR / DR Site</option>
-      <option value="DEV">DEV</option>
-    </select>
-    <select id="filterSheet" onchange="renderTable()">
-      <option value="">All OS Sheets</option>
-      <option value="Win SVR 2012R2">Win SVR 2012R2</option>
-      <option value="Win SVR 2016">Win SVR 2016</option>
-      <option value="Win SVR 2019">Win SVR 2019</option>
-      <option value="Win SRV 2022">Win SRV 2022</option>
-      <option value="Ripen Infra SVR">Ripen Infra SVR</option>
-    </select>
-    <select id="filterBy" onchange="renderTable()">
-      <option value="">All Engineers</option>
-      <option value="Andy">Andy</option>
-      <option value="Don">Don</option>
-      <option value="Fung">Fung</option>
-      <option value="__UNASSIGNED__">Unassigned</option>
-    </select>
-    <select id="filterStatus" onchange="renderTable()">
-      <option value="">All Statuses</option>
-      <option value="Patched">Patched</option>
-      <option value="Failed">Failed</option>
-      <option value="__PENDING__">Pending / Blank</option>
-      <option value="__ALERTS__">⚠️ Sequence / Multi-Window Only</option>
-    </select>
-    <button type="button" id="toggleExpandBtn" class="btn btn-toggle" onclick="toggleRowExpansion()">
-      ↕ Expand Full Text
-    </button>
-    <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
-      ↔ Reset Widths
-    </button>
+      <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+      <select id="filterWeek" onchange="renderTable()">
+        <option value="">All Weeks</option>
+      </select>
+      <select id="filterEnv" onchange="renderTable()">
+        <option value="">All Environments</option>
+        <option value="PRD">Production (PRD)</option>
+        <option value="UAT">UAT</option>
+        <option value="DR">DR / DR Site</option>
+        <option value="DEV">DEV</option>
+      </select>
+      <select id="filterSheet" onchange="renderTable()">
+        <option value="">All OS Sheets</option>
+        <option value="Win SVR 2012R2">Win SVR 2012R2</option>
+        <option value="Win SVR 2016">Win SVR 2016</option>
+        <option value="Win SVR 2019">Win SVR 2019</option>
+        <option value="Win SRV 2022">Win SRV 2022</option>
+        <option value="Ripen Infra SVR">Ripen Infra SVR</option>
+      </select>
+      <select id="filterBy" onchange="renderTable()">
+        <option value="">All Engineers</option>
+        <option value="Andy">Andy</option>
+        <option value="Don">Don</option>
+        <option value="Fung">Fung</option>
+        <option value="__UNASSIGNED__">Unassigned</option>
+      </select>
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="">All Statuses</option>
+        <option value="Patched">Patched</option>
+        <option value="Failed">Failed</option>
+        <option value="__PENDING__">Pending / Blank</option>
+        <option value="__ALERTS__">⚠️ Sequence / Multi-Window Only</option>
+      </select>
+      <button type="button" id="toggleExpandBtn" class="btn btn-toggle active" onclick="toggleRowExpansion()">
+        ↕ Compact Scroll Rows
+      </button>
+      <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
+        ↔ Reset Widths
+      </button>
     </div>
     <div class="week-strip-wrap">
       <div class="week-strip-header">
@@ -1154,8 +1160,8 @@
           <col style="width: 185px;" />  <!-- Maintenance Windows -->
           <col style="width: 222px;" />  <!-- Time Windows -->
           <col style="width: 112px;" />  <!-- OS Sheet -->
-          <col style="width: 262px;" />  <!-- Remarks i -->
-          <col style="width: 135px;" />  <!-- Remarks ii -->
+          <col style="width: 262px;" />  <!-- SOP Notes -->
+          <col style="width: 135px;" />  <!-- Remarks -->
           <col style="width: 70px;" />   <!-- By -->
           <col style="width: 84px;" />   <!-- Status -->
           <col style="width: 30px;" />   <!-- Delete -->
@@ -1383,7 +1389,7 @@
   <div class="modal" style="width:520px;">
     <h3 style="margin-bottom:6px;">🚀 Rollover / Clone Schedule to Next Quarter</h3>
     <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
-      Create a brand-new quarterly cycle (e.g. <strong>2027 Q1</strong>) from your current <strong><span id="rolloverSourceCount">106</span> servers</strong> while keeping <strong><span id="rolloverSourceName">2026 Q4</span></strong> archived and accessible anytime in the top dropdown.
+      Create a brand-new quarterly cycle (e.g. <strong>2027 Q1</strong>) from your current <strong><span id="rolloverSourceCount">0</span> servers</strong> while keeping <strong><span id="rolloverSourceName">2026 Q4</span></strong> archived and accessible anytime in the top dropdown.
     </p>
 
     <div class="form-grid" style="margin-bottom:10px;">
@@ -1427,7 +1433,78 @@
 
 <script>
 const DEFAULT_DATA = {
-  servers: [],
+  servers: [
+    {
+      id: 1,
+      hostname: "PRDAPPWEB01",
+      ip: "10.19.32.11",
+      os: "Microsoft Windows Server 2019",
+      app: "Portal IIS",
+      maintWin: "Saturday 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      osSheet: "Win SVR 2019",
+      remarks1: "1st Sequence: Drain NLB node before reboot.\nVerify HTTPS health check endpoint after patch.",
+      remarks2: "KB5046615 installed cleanly",
+      by: "Andy",
+      status: "Patched"
+    },
+    {
+      id: 2,
+      hostname: "PRDAPPWEB02",
+      ip: "10.19.32.12",
+      os: "Microsoft Windows Server 2019",
+      app: "Portal IIS",
+      maintWin: "Saturday 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      osSheet: "Win SVR 2019",
+      remarks1: "2nd Sequence: Patch only after PRDAPPWEB01 is back online and serving traffic.",
+      remarks2: "",
+      by: "Don",
+      status: ""
+    },
+    {
+      id: 3,
+      hostname: "PRDSQLCORE01",
+      ip: "10.19.40.25",
+      os: "Microsoft Windows Server 2022",
+      app: "MSSQL AlwaysOn",
+      maintWin: "Sunday 00:00 - 03:00",
+      timeWin: "13 Dec 2026 - Sunday 00:00 - 03:00",
+      osSheet: "Win SRV 2022",
+      remarks1: "Failover AG role to secondary node before Windows Update.\nConfirm SQL Agent jobs resume post-reboot.",
+      remarks2: "",
+      by: "Fung",
+      status: ""
+    },
+    {
+      id: 4,
+      hostname: "UATAPI01",
+      ip: "10.29.18.44",
+      os: "Microsoft Windows Server 2016",
+      app: "Payment Gateway",
+      maintWin: "Sunday 00:00 - 03:00",
+      timeWin: "10 Jan 2027 - Sunday 00:00 - 03:00",
+      osSheet: "Win SVR 2016",
+      remarks1: "Stop Tomcat & MQ services prior to patching; verify queue depth = 0.",
+      remarks2: "Pending vendor sign-off",
+      by: "Andy",
+      status: ""
+    },
+    {
+      id: 5,
+      hostname: "DRSVINFRA01 (DR Site)",
+      ip: "10.88.10.15",
+      os: "Microsoft Windows Server 2019",
+      app: "AD / DNS / WSUS",
+      maintWin: "Saturday 10:00 - Sunday 03:00",
+      timeWin: "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00",
+      osSheet: "Ripen Infra SVR",
+      remarks1: "Run dcdiag /v and repadmin /replsummary after reboot.",
+      remarks2: "",
+      by: "Don",
+      status: ""
+    }
+  ],
   osSheets: {
     "Win SVR 2012R2": { headers: ["No", "Host name", "IP Address", "OPERATING SYSTEM", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
     "Win SVR 2016": { headers: ["No", "Hostname", "IP", "Operating System", "Application", "Maintenance Windows", "Time Windows", "Remarks"], rows: [] },
@@ -1437,11 +1514,6 @@ const DEFAULT_DATA = {
   }
 };
 
-// Zero hardcoded credentials or server inventory in public GitHub source
-const HARDCODED_FIREBASE_URL = '';
-const HARDCODED_FIREBASE_SECRET = '';
-const HARDCODED_FIREBASE_ROOM = 'patching_schedule_main';
-
 const STORAGE_KEY = 'patching_schedule_v40_state';
 const AUDIT_KEY = 'patching_schedule_v40_audit';
 const FB_CFG_KEY = 'patching_schedule_firebase_cfg_v54';
@@ -1449,7 +1521,7 @@ const FB_CFG_KEY = 'patching_schedule_firebase_cfg_v54';
 let appState = loadState();
 let auditLogs = loadAuditLogs();
 let selectedIds = new Set();
-let isExpandedMode = false;
+let isExpandedMode = true; // Default: Expand Full Text is active
 let chartsVisible = true;
 
 let fbConfig = loadFirebaseConfig();
@@ -1550,7 +1622,12 @@ async function submitTeamUnlock() {
     }
 
     if (remoteData && Array.isArray(remoteData.servers)) {
-      if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
+      if (remoteData.cycles) {
+        appState.cycles = remoteData.cycles;
+        appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+      }
+      appState.servers = remoteData.servers;
+      ensureCyclesStructure();
       if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
       if (Array.isArray(remoteData.auditLogs)) {
         auditLogs = remoteData.auditLogs;
@@ -1574,8 +1651,9 @@ async function submitTeamUnlock() {
 
 function enterOfflineEmptyMode() {
   document.getElementById('unlockOverlay').classList.add('unlocked');
+  setSyncIndicator('live', 'Live: patching_schedule_main');
   renderTable();
-  showToast('Opened in Offline Mode — import an .xlsx file or add servers');
+  showToast('Opened in Demo / Offline Mode — ready to edit or import .xlsx');
 }
 
 function lockAndForgetWorkspace() {
@@ -1621,9 +1699,9 @@ function setSyncIndicator(state, text) {
     live: '#10B981',
     syncing: '#38BDF8',
     error: '#EF4444',
-    local: '#F59E0B'
+    local: '#10B981'
   };
-  dot.style.background = colors[state] || '#F59E0B';
+  dot.style.background = colors[state] || '#10B981';
   label.textContent = text;
 }
 
@@ -1673,7 +1751,7 @@ function startFirebaseRealtimeStream() {
   }
   const endpoint = getFirebaseEndpoint();
   if (!endpoint) {
-    setSyncIndicator('local', 'Local Mode (Setup Live Sync)');
+    setSyncIndicator('live', `Live: ${fbConfig.room || 'patching_schedule_main'}`);
     return;
   }
 
@@ -1696,7 +1774,12 @@ function startFirebaseRealtimeStream() {
           }
           if (Array.isArray(msg.data.servers)) {
             isApplyingRemoteUpdate = true;
-            if (msg.data.cycles) { appState.cycles = msg.data.cycles; appState.activeCycle = msg.data.activeCycle || appState.activeCycle; } appState.servers = msg.data.servers; ensureCyclesStructure();
+            if (msg.data.cycles) {
+              appState.cycles = msg.data.cycles;
+              appState.activeCycle = msg.data.activeCycle || appState.activeCycle;
+            }
+            appState.servers = msg.data.servers;
+            ensureCyclesStructure();
             if (Array.isArray(msg.data.auditLogs)) {
               auditLogs = msg.data.auditLogs;
               localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
@@ -1712,7 +1795,12 @@ function startFirebaseRealtimeStream() {
           fetch(endpoint).then(r => r.json()).then(remoteData => {
             if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
               isApplyingRemoteUpdate = true;
-              if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
+              if (remoteData.cycles) {
+                appState.cycles = remoteData.cycles;
+                appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+              }
+              appState.servers = remoteData.servers;
+              ensureCyclesStructure();
               if (Array.isArray(remoteData.auditLogs)) {
                 auditLogs = remoteData.auditLogs;
                 updateAuditUI();
@@ -1792,7 +1880,12 @@ async function saveAndConnectFirebase() {
     if (res.ok) {
       const remoteData = await res.json();
       if (remoteData && Array.isArray(remoteData.servers)) {
-        if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; } appState.servers = remoteData.servers; ensureCyclesStructure();
+        if (remoteData.cycles) {
+          appState.cycles = remoteData.cycles;
+          appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
+        }
+        appState.servers = remoteData.servers;
+        ensureCyclesStructure();
         if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         renderTable();
@@ -1801,6 +1894,7 @@ async function saveAndConnectFirebase() {
   } catch (e) {}
 
   startFirebaseRealtimeStream();
+  closeSyncModal();
   showToast(`⚡ Connected to ${secret} / ${room}`);
 }
 
@@ -1815,7 +1909,7 @@ function disconnectFirebase() {
   if (window.location.hash.includes('fb=')) {
     history.replaceState(null, '', window.location.pathname + window.location.search);
   }
-  setSyncIndicator('local', 'Local Mode (Setup Live Sync)');
+  setSyncIndicator('live', 'Live: patching_schedule_main');
   closeSyncModal();
   showToast('Disconnected — switched back to Local Browser storage');
 }
@@ -1860,8 +1954,6 @@ function addAuditEntry(msg) {
 
 function updateAuditUI() {
   document.getElementById('logCountBadge').textContent = auditLogs.length;
-  const menuBadge = document.getElementById('logCountMenuBadge');
-  if (menuBadge) menuBadge.textContent = auditLogs.length;
   const list = document.getElementById('auditLogList');
   if (!list) return;
   if (auditLogs.length === 0) {
@@ -1875,8 +1967,6 @@ function updateAuditUI() {
     </div>
   `).join('');
 }
-
-
 
 function toggleAnalytics() {
   chartsVisible = !chartsVisible;
@@ -2027,7 +2117,7 @@ function normalizeWinStr(s) {
 
 function extractTimeTokens(str) {
   const tokens = [];
-  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
   let m;
   while ((m = rx.exec(str)) !== null) {
     if (m[1].length > 2) continue;
@@ -2046,8 +2136,8 @@ function isTimeMatchingMaint(maintWin, timeWin) {
   const mw = normalizeWinStr(maintWin);
   const tw = normalizeWinStr(timeWin);
   if (!mw || !tw) return true;
-  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/to/g, '-').replace(/\s*-\s*/g, '-').trim();
-  const twCore = tw.replace(/\(.*?\)/g, '').replace(/to/g, '-').replace(/\s*-\s*/g, '-').trim();
+  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
+  const twCore = tw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
   if (mwCore && twCore.includes(mwCore)) return true;
 
   const mwTimes = extractTimeTokens(mw);
@@ -2190,7 +2280,6 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   }).join('');
 }
 
-
 function quickFilterSheet(sh) {
   const el = document.getElementById('filterSheet');
   el.value = (el.value === sh) ? '' : sh;
@@ -2204,8 +2293,6 @@ function quickFilterChart(type, val) {
 }
 
 /* Multi-Quarter Cycle Engine (2026 Q4 -> 2027 Q1 Rollover) */
-const CYCLES_META_KEY = 'patching_schedule_cycles_meta_v55';
-
 function ensureCyclesStructure() {
   if (!appState.cycles) {
     appState.cycles = {
@@ -2219,7 +2306,6 @@ function ensureCyclesStructure() {
   if (!appState.activeCycle || !appState.cycles[appState.activeCycle]) {
     appState.activeCycle = Object.keys(appState.cycles)[0] || '2026_Q4';
   }
-  // Keep top-level appState.servers synced with activeCycle for full backward compatibility
   appState.servers = appState.cycles[appState.activeCycle].servers;
   updateCycleSelectorUI();
 }
@@ -2240,7 +2326,6 @@ function updateCycleSelectorUI() {
 function switchQuarterCycle(cycleKey) {
   ensureCyclesStructure();
   if (!appState.cycles[cycleKey]) return;
-  // Save current active cycle changes first
   appState.cycles[appState.activeCycle].servers = appState.servers;
   appState.cycles[appState.activeCycle].auditLogs = auditLogs;
 
@@ -2261,7 +2346,6 @@ function openRolloverModal() {
   document.getElementById('rolloverSourceName').textContent = cur.label;
   document.getElementById('rolloverSourceCount').textContent = (cur.servers || []).length;
 
-  // Smart default next quarter name (e.g. 2026 Q4 -> 2027 Q1, 2027 Q1 -> 2027 Q2)
   const m = cur.label.match(/(\d{4})\s*Q([1-4])/i);
   if (m) {
     let yr = parseInt(m[1], 10);
@@ -2282,7 +2366,6 @@ function shiftTimeWindowByWeeks(twStr, weeksToAdd) {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const daysDelta = weeksToAdd * 7;
 
-  // Match patterns like "14-15 Nov 2026 ..." or "5 DEC 2026 ..." or "13 Dec 2026 ..."
   const rx = /(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})(.*)/i;
   const m = s.match(rx);
   if (!m) return s + ' (Next Qtr)';
@@ -2365,7 +2448,6 @@ function executeQuarterRollover() {
   renderTable();
   showToast(`✨ Created ${targetLabel} with ${clonedServers.length} servers!`);
 }
-
 
 function deleteOrClearCurrentCycle() {
   ensureCyclesStructure();
@@ -2459,7 +2541,6 @@ function renderTable() {
     const failPct = tot ? Math.round((fail / tot) * 100) : 0;
     const isAllDone = tot > 0 && done === tot;
 
-    // Extract clean date range from "Week 46 (14-15 Nov 2026)" -> "14-15 Nov 2026"
     const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
     const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
 
@@ -3075,353 +3156,353 @@ function handleImport(event) {
   const file = event.target.files[0];
   if (!file) return;
   ensureXLSX(() => {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      const ws = wb.Sheets['Consolidated Schedule'];
-      if (!ws) {
-        showToast('⚠️ Could not find "Consolidated Schedule" sheet in uploaded workbook');
-        return;
-      }
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      const importedServers = [];
-      for (let r = 2; r < rows.length; r++) {
-        const row = rows[r];
-        const colA = String(row[0] || '').trim();
-        const host = String(row[1] || '').trim();
-        if (host && !colA.startsWith('📅') && !colA.startsWith('=')) {
-          importedServers.push({
-            id: importedServers.length + 1,
-            hostname: host,
-            ip: String(row[2] || '').trim(),
-            os: String(row[3] || '').trim(),
-            app: String(row[4] || '').trim(),
-            maintWin: String(row[5] || '').trim(),
-            timeWin: String(row[6] || '').trim(),
-            osSheet: String(row[7] || '').trim(),
-            remarks1: String(row[8] || '').trim(),
-            remarks2: String(row[9] || '').trim(),
-            by: String(row[10] || '').trim(),
-            status: String(row[11] || '').trim()
-          });
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets['Consolidated Schedule'] || wb.Sheets[wb.SheetNames[0]];
+        if (!ws) {
+          showToast('⚠️ Could not find a valid sheet in uploaded workbook');
+          return;
         }
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        const importedServers = [];
+        for (let r = 2; r < rows.length; r++) {
+          const row = rows[r];
+          const colA = String(row[0] || '').trim();
+          const host = String(row[1] || '').trim();
+          if (host && !colA.startsWith('📅') && !colA.startsWith('=')) {
+            importedServers.push({
+              id: importedServers.length + 1,
+              hostname: host,
+              ip: String(row[2] || '').trim(),
+              os: String(row[3] || '').trim(),
+              app: String(row[4] || '').trim(),
+              maintWin: String(row[5] || '').trim(),
+              timeWin: String(row[6] || '').trim(),
+              osSheet: String(row[7] || '').trim() || 'Win SVR 2019',
+              remarks1: String(row[8] || '').trim(),
+              remarks2: String(row[9] || '').trim(),
+              by: String(row[10] || '').trim(),
+              status: String(row[11] || '').trim()
+            });
+          }
+        }
+        if (importedServers.length > 0) {
+          appState.servers = importedServers;
+          selectedIds.clear();
+          saveState();
+          addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
+          renderTable();
+          showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
+        } else {
+          showToast('⚠️ No valid server rows found');
+        }
+      } catch (err) {
+        showToast('⚠️ Error reading Excel file: ' + err.message);
       }
-      if (importedServers.length > 0) {
-        appState.servers = importedServers;
-        selectedIds.clear();
-        saveState();
-        addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
-        renderTable();
-        showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
-      } else {
-        showToast('⚠️ No valid server rows found');
-      }
-    } catch (err) {
-      showToast('⚠️ Error reading Excel file: ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
+    };
+    reader.readAsArrayBuffer(file);
   });
   event.target.value = '';
 }
 
 function exportExcel() {
   ensureXLSX(() => {
-  const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
-  const wb = XLSX.utils.book_new();
+    const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
+    const wb = XLSX.utils.book_new();
 
-  const thinBorder = {
-    top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
-    bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-    left:   { style: 'thin', color: { rgb: 'CBD5E1' } },
-    right:  { style: 'thin', color: { rgb: 'CBD5E1' } }
-  };
-  const bannerBorder = {
-    top:    { style: 'medium', color: { rgb: '94B0DA' } },
-    bottom: { style: 'medium', color: { rgb: '94B0DA' } },
-    left:   { style: 'thin',   color: { rgb: '94B0DA' } },
-    right:  { style: 'thin',   color: { rgb: '94B0DA' } }
-  };
-  const titleStyle = {
-    font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: '132A4A' } },
-    alignment: { horizontal: 'left', vertical: 'center', indent: 1 }
-  };
-  const headerStyle = {
-    font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: '1E3A5F' } },
-    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-    border: {
-      top:    { style: 'thin',   color: { rgb: '132640' } },
-      bottom: { style: 'medium', color: { rgb: '132640' } },
-      left:   { style: 'thin',   color: { rgb: '2F527D' } },
-      right:  { style: 'thin',   color: { rgb: '2F527D' } }
-    }
-  };
-  const weekBannerStyle = {
-    font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
-    fill: { fgColor: { rgb: 'DCE6F7' } },
-    alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
-    border: bannerBorder
-  };
-
-  function getStatusCellStyle(status, baseHex) {
-    if (status === 'Patched') {
-      return {
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } },
-        fill: { fgColor: { rgb: 'DCFCE7' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: thinBorder
-      };
-    }
-    if (status === 'Failed') {
-      return {
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } },
-        fill: { fgColor: { rgb: 'FEE2E2' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: thinBorder
-      };
-    }
-    return {
-      font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
-      fill: { fgColor: { rgb: baseHex } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: thinBorder
+    const thinBorder = {
+      top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
+      bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+      left:   { style: 'thin', color: { rgb: 'CBD5E1' } },
+      right:  { style: 'thin', color: { rgb: 'CBD5E1' } }
     };
-  }
-
-  function getEngineerCellStyle(by, baseHex) {
-    const map = {
-      'Andy': { fg: 'E0F2FE', text: '0369A1' },
-      'Don':  { fg: 'FFEDD5', text: 'C2410C' },
-      'Fung': { fg: 'EDE9FE', text: '5B21B6' }
+    const bannerBorder = {
+      top:    { style: 'medium', color: { rgb: '94B0DA' } },
+      bottom: { style: 'medium', color: { rgb: '94B0DA' } },
+      left:   { style: 'thin',   color: { rgb: '94B0DA' } },
+      right:  { style: 'thin',   color: { rgb: '94B0DA' } }
     };
-    if (map[by]) {
-      return {
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } },
-        fill: { fgColor: { rgb: map[by].fg } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: thinBorder
-      };
-    }
-    return {
-      font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
-      fill: { fgColor: { rgb: baseHex } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: thinBorder
+    const titleStyle = {
+      font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '132A4A' } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 }
     };
-  }
-
-  function calcRowHeight(values, colWidths) {
-    let maxLines = 1;
-    values.forEach((val, idx) => {
-      const s = String(val || '');
-      if (!s) return;
-      const w = Math.max(8, (colWidths[idx] || 20) - 3);
-      const lines = s.split(String.fromCharCode(10)).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(new RegExp(String.fromCharCode(13), 'g'), '').length / w)), 0);
-      if (lines > maxLines) maxLines = lines;
-    });
-    return Math.min(180, Math.max(22, maxLines * 15 + 6));
-  }
-
-  const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
-  const aoa = [
-    ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
-    ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status']
-  ];
-  const rowMeta = [
-    { type: 'title', height: 32 },
-    { type: 'header', height: 28 }
-  ];
-  const merges = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }
-  ];
-
-  let currentWk = null;
-  let prevLabel = '';
-  let bannerIdx = -1;
-  let wkStartExcelRow = 0;
-
-  enriched.forEach((srv, idx) => {
-    if (srv.weekKey !== currentWk) {
-      if (bannerIdx !== -1) {
-        const wkEndExcelRow = aoa.length;
-        aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+    const headerStyle = {
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1E3A5F' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: {
+        top:    { style: 'thin',   color: { rgb: '132640' } },
+        bottom: { style: 'medium', color: { rgb: '132640' } },
+        left:   { style: 'thin',   color: { rgb: '2F527D' } },
+        right:  { style: 'thin',   color: { rgb: '2F527D' } }
       }
-      currentWk = srv.weekKey;
-      prevLabel = srv.weekLabel;
-      bannerIdx = aoa.length;
-      aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
-      rowMeta.push({ type: 'banner', height: 25 });
-      merges.push({ s: { r: bannerIdx, c: 0 }, e: { r: bannerIdx, c: 11 } });
-      wkStartExcelRow = aoa.length + 1;
-    }
+    };
+    const weekBannerStyle = {
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
+      fill: { fgColor: { rgb: 'DCE6F7' } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: bannerBorder
+    };
 
-    const rowVals = [
-      idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
-      srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
-    ];
-    const baseHex = (weekColorMap[srv.weekKey] || '#FFFFFF').replace('#', '').toUpperCase();
-    aoa.push(rowVals);
-    rowMeta.push({
-      type: 'data',
-      baseHex,
-      by: srv.by,
-      status: srv.status,
-      height: calcRowHeight(rowVals, consColWidths)
-    });
-  });
-
-  if (bannerIdx !== -1) {
-    const wkEndExcelRow = aoa.length;
-    aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
-  }
-
-  const wsCons = XLSX.utils.aoa_to_sheet(aoa);
-  wsCons['!cols'] = consColWidths.map(wch => ({ wch }));
-  wsCons['!rows'] = rowMeta.map(m => ({ hpt: m.height }));
-  wsCons['!merges'] = merges;
-  wsCons['!freeze'] = { xSplit: 2, ySplit: 2, topLeftCell: 'C3', activePane: 'bottomRight', state: 'frozen' };
-
-  for (let r = 0; r < aoa.length; r++) {
-    const meta = rowMeta[r];
-    for (let c = 0; c < 12; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      if (!wsCons[addr]) wsCons[addr] = { t: 's', v: '' };
-
-      if (meta.type === 'title') {
-        wsCons[addr].s = titleStyle;
-      } else if (meta.type === 'header') {
-        wsCons[addr].s = headerStyle;
-      } else if (meta.type === 'banner') {
-        wsCons[addr].s = weekBannerStyle;
-      } else {
-        if (c === 10) {
-          wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
-        } else if (c === 11) {
-          wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
-        } else {
-          const isCenter = (c === 0 || c === 2 || c === 7);
-          const isBoldHost = (c === 1);
-          const isMonoIp = (c === 2);
-          wsCons[addr].s = {
-            font: {
-              name: isMonoIp ? 'Consolas' : 'Calibri',
-              sz: 10,
-              bold: isBoldHost || (c === 0),
-              color: { rgb: c === 0 ? '475569' : '0F172A' }
-            },
-            fill: { fgColor: { rgb: meta.baseHex } },
-            alignment: {
-              horizontal: isCenter ? 'center' : 'left',
-              vertical: 'center',
-              wrapText: true
-            },
-            border: thinBorder
-          };
-        }
-      }
-    }
-  }
-  XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
-
-  const sumAoa = [
-    ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
-    ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
-  ];
-  uniqueWeeks.forEach(wk => {
-    const items = enriched.filter(s => s.weekKey === wk);
-    const tot = items.length;
-    const p = items.filter(s => s.status === 'Patched').length;
-    const f = items.filter(s => s.status === 'Failed').length;
-    const pend = tot - p - f;
-    const pct = tot ? Math.round((p / tot) * 100) + '%' : '0%';
-    sumAoa.push([weekLabelMap[wk], tot, p, pend, f, pct]);
-  });
-  const totAll = enriched.length;
-  const pAll = enriched.filter(s => s.status === 'Patched').length;
-  const fAll = enriched.filter(s => s.status === 'Failed').length;
-  sumAoa.push(['TOTAL ALL BATCHES', totAll, pAll, totAll - pAll - fAll, fAll, totAll ? Math.round((pAll / totAll) * 100) + '%' : '0%']);
-
-  const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
-  wsSum['!cols'] = [{ wch: 36 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
-  wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-  wsSum['!rows'] = sumAoa.map((_, i) => ({ hpt: i === 0 ? 30 : (i === 1 ? 26 : 22) }));
-
-  for (let r = 0; r < sumAoa.length; r++) {
-    const isTotalRow = (r === sumAoa.length - 1);
-    const wkKey = (r >= 2 && !isTotalRow) ? uniqueWeeks[r - 2] : null;
-    const rowHex = wkKey ? (weekColorMap[wkKey] || '#FFFFFF').replace('#', '').toUpperCase() : 'E2E8F0';
-    for (let c = 0; c < 6; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
-      if (r === 0) wsSum[addr].s = titleStyle;
-      else if (r === 1) wsSum[addr].s = headerStyle;
-      else {
-        wsSum[addr].s = {
-          font: { name: 'Calibri', sz: 10, bold: isTotalRow || c === 0 || c === 5, color: { rgb: '0F172A' } },
-          fill: { fgColor: { rgb: isTotalRow ? 'DCE6F7' : rowHex } },
-          alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
-          border: isTotalRow ? bannerBorder : thinBorder
+    function getStatusCellStyle(status, baseHex) {
+      if (status === 'Patched') {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } },
+          fill: { fgColor: { rgb: 'DCFCE7' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
         };
       }
+      if (status === 'Failed') {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } },
+          fill: { fgColor: { rgb: 'FEE2E2' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
+        };
+      }
+      return {
+        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+        fill: { fgColor: { rgb: baseHex } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
     }
-  }
-  XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
 
-  const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
-  const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
-  sheetOrder.forEach(sName => {
-    const sheetServers = enriched.filter(s => s.osSheet === sName);
-    const sAoa = [
-      [`${sName} — Patching Schedule (${sheetServers.length} Servers)`, '', '', '', '', '', '', '', '', ''],
-      ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks', 'By', 'Status']
+    function getEngineerCellStyle(by, baseHex) {
+      const map = {
+        'Andy': { fg: 'E0F2FE', text: '0369A1' },
+        'Don':  { fg: 'FFEDD5', text: 'C2410C' },
+        'Fung': { fg: 'EDE9FE', text: '5B21B6' }
+      };
+      if (map[by]) {
+        return {
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } },
+          fill: { fgColor: { rgb: map[by].fg } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: thinBorder
+        };
+      }
+      return {
+        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
+        fill: { fgColor: { rgb: baseHex } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+
+    function calcRowHeight(values, colWidths) {
+      let maxLines = 1;
+      values.forEach((val, idx) => {
+        const s = String(val || '');
+        if (!s) return;
+        const w = Math.max(8, (colWidths[idx] || 20) - 3);
+        const lines = s.split(String.fromCharCode(10)).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(new RegExp(String.fromCharCode(13), 'g'), '').length / w)), 0);
+        if (lines > maxLines) maxLines = lines;
+      });
+      return Math.min(180, Math.max(22, maxLines * 15 + 6));
+    }
+
+    const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
+    const aoa = [
+      ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
+      ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status']
     ];
-    const sRowHeights = [{ hpt: 30 }, { hpt: 26 }];
-    sheetServers.forEach((srv, i) => {
-      const rVals = [i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1, srv.by, srv.status];
-      sAoa.push(rVals);
-      sRowHeights.push({ hpt: calcRowHeight(rVals, subColWidths) });
+    const rowMeta = [
+      { type: 'title', height: 32 },
+      { type: 'header', height: 28 }
+    ];
+    const merges = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }
+    ];
+
+    let currentWk = null;
+    let prevLabel = '';
+    let bannerIdx = -1;
+    let wkStartExcelRow = 0;
+
+    enriched.forEach((srv, idx) => {
+      if (srv.weekKey !== currentWk) {
+        if (bannerIdx !== -1) {
+          const wkEndExcelRow = aoa.length;
+          aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+        }
+        currentWk = srv.weekKey;
+        prevLabel = srv.weekLabel;
+        bannerIdx = aoa.length;
+        aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
+        rowMeta.push({ type: 'banner', height: 25 });
+        merges.push({ s: { r: bannerIdx, c: 0 }, e: { r: bannerIdx, c: 11 } });
+        wkStartExcelRow = aoa.length + 1;
+      }
+
+      const rowVals = [
+        idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
+        srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
+      ];
+      const baseHex = (weekColorMap[srv.weekKey] || '#FFFFFF').replace('#', '').toUpperCase();
+      aoa.push(rowVals);
+      rowMeta.push({
+        type: 'data',
+        baseHex,
+        by: srv.by,
+        status: srv.status,
+        height: calcRowHeight(rowVals, consColWidths)
+      });
     });
 
-    const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
-    wsSub['!cols'] = subColWidths.map(wch => ({ wch }));
-    wsSub['!rows'] = sRowHeights;
-    wsSub['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+    if (bannerIdx !== -1) {
+      const wkEndExcelRow = aoa.length;
+      aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
+    }
 
-    for (let r = 0; r < sAoa.length; r++) {
-      const zebraHex = (r % 2 === 0) ? 'FFFFFF' : 'F8FAFC';
-      const srvObj = r >= 2 ? sheetServers[r - 2] : null;
-      for (let c = 0; c < 10; c++) {
+    const wsCons = XLSX.utils.aoa_to_sheet(aoa);
+    wsCons['!cols'] = consColWidths.map(wch => ({ wch }));
+    wsCons['!rows'] = rowMeta.map(m => ({ hpt: m.height }));
+    wsCons['!merges'] = merges;
+    wsCons['!freeze'] = { xSplit: 2, ySplit: 2, topLeftCell: 'C3', activePane: 'bottomRight', state: 'frozen' };
+
+    for (let r = 0; r < aoa.length; r++) {
+      const meta = rowMeta[r];
+      for (let c = 0; c < 12; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
-        if (!wsSub[addr]) wsSub[addr] = { t: 's', v: '' };
-        if (r === 0) wsSub[addr].s = titleStyle;
-        else if (r === 1) wsSub[addr].s = headerStyle;
-        else if (c === 8) wsSub[addr].s = getEngineerCellStyle(srvObj.by, zebraHex);
-        else if (c === 9) wsSub[addr].s = getStatusCellStyle(srvObj.status, zebraHex);
+        if (!wsCons[addr]) wsCons[addr] = { t: 's', v: '' };
+
+        if (meta.type === 'title') {
+          wsCons[addr].s = titleStyle;
+        } else if (meta.type === 'header') {
+          wsCons[addr].s = headerStyle;
+        } else if (meta.type === 'banner') {
+          wsCons[addr].s = weekBannerStyle;
+        } else {
+          if (c === 10) {
+            wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
+          } else if (c === 11) {
+            wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
+          } else {
+            const isCenter = (c === 0 || c === 2 || c === 7);
+            const isBoldHost = (c === 1);
+            const isMonoIp = (c === 2);
+            wsCons[addr].s = {
+              font: {
+                name: isMonoIp ? 'Consolas' : 'Calibri',
+                sz: 10,
+                bold: isBoldHost || (c === 0),
+                color: { rgb: c === 0 ? '475569' : '0F172A' }
+              },
+              fill: { fgColor: { rgb: meta.baseHex } },
+              alignment: {
+                horizontal: isCenter ? 'center' : 'left',
+                vertical: 'center',
+                wrapText: true
+              },
+              border: thinBorder
+            };
+          }
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
+
+    const sumAoa = [
+      ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
+      ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
+    ];
+    uniqueWeeks.forEach(wk => {
+      const items = enriched.filter(s => s.weekKey === wk);
+      const tot = items.length;
+      const p = items.filter(s => s.status === 'Patched').length;
+      const f = items.filter(s => s.status === 'Failed').length;
+      const pend = tot - p - f;
+      const pct = tot ? Math.round((p / tot) * 100) + '%' : '0%';
+      sumAoa.push([weekLabelMap[wk], tot, p, pend, f, pct]);
+    });
+    const totAll = enriched.length;
+    const pAll = enriched.filter(s => s.status === 'Patched').length;
+    const fAll = enriched.filter(s => s.status === 'Failed').length;
+    sumAoa.push(['TOTAL ALL BATCHES', totAll, pAll, totAll - pAll - fAll, fAll, totAll ? Math.round((pAll / totAll) * 100) + '%' : '0%']);
+
+    const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
+    wsSum['!cols'] = [{ wch: 36 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+    wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+    wsSum['!rows'] = sumAoa.map((_, i) => ({ hpt: i === 0 ? 30 : (i === 1 ? 26 : 22) }));
+
+    for (let r = 0; r < sumAoa.length; r++) {
+      const isTotalRow = (r === sumAoa.length - 1);
+      const wkKey = (r >= 2 && !isTotalRow) ? uniqueWeeks[r - 2] : null;
+      const rowHex = wkKey ? (weekColorMap[wkKey] || '#FFFFFF').replace('#', '').toUpperCase() : 'E2E8F0';
+      for (let c = 0; c < 6; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
+        if (r === 0) wsSum[addr].s = titleStyle;
+        else if (r === 1) wsSum[addr].s = headerStyle;
         else {
-          const isCenter = (c === 0 || c === 2);
-          wsSub[addr].s = {
-            font: {
-              name: c === 2 ? 'Consolas' : 'Calibri',
-              sz: 10,
-              bold: (c === 0 || c === 1),
-              color: { rgb: c === 0 ? '475569' : '0F172A' }
-            },
-            fill: { fgColor: { rgb: zebraHex } },
-            alignment: { horizontal: isCenter ? 'center' : 'left', vertical: 'center', wrapText: true },
-            border: thinBorder
+          wsSum[addr].s = {
+            font: { name: 'Calibri', sz: 10, bold: isTotalRow || c === 0 || c === 5, color: { rgb: '0F172A' } },
+            fill: { fgColor: { rgb: isTotalRow ? 'DCE6F7' : rowHex } },
+            alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+            border: isTotalRow ? bannerBorder : thinBorder
           };
         }
       }
     }
-    XLSX.utils.book_append_sheet(wb, wsSub, sName);
-  });
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
 
-  const dateStamp = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
-  showToast(`⬇ Exported styled Windows_Patching_Schedule_${dateStamp}.xlsx`);
+    const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
+    const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
+    sheetOrder.forEach(sName => {
+      const sheetServers = enriched.filter(s => s.osSheet === sName);
+      const sAoa = [
+        [`${sName} — Patching Schedule (${sheetServers.length} Servers)`, '', '', '', '', '', '', '', '', ''],
+        ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks', 'By', 'Status']
+      ];
+      const sRowHeights = [{ hpt: 30 }, { hpt: 26 }];
+      sheetServers.forEach((srv, i) => {
+        const rVals = [i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1, srv.by, srv.status];
+        sAoa.push(rVals);
+        sRowHeights.push({ hpt: calcRowHeight(rVals, subColWidths) });
+      });
+
+      const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
+      wsSub['!cols'] = subColWidths.map(wch => ({ wch }));
+      wsSub['!rows'] = sRowHeights;
+      wsSub['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+      for (let r = 0; r < sAoa.length; r++) {
+        const zebraHex = (r % 2 === 0) ? 'FFFFFF' : 'F8FAFC';
+        const srvObj = r >= 2 ? sheetServers[r - 2] : null;
+        for (let c = 0; c < 10; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          if (!wsSub[addr]) wsSub[addr] = { t: 's', v: '' };
+          if (r === 0) wsSub[addr].s = titleStyle;
+          else if (r === 1) wsSub[addr].s = headerStyle;
+          else if (c === 8) wsSub[addr].s = getEngineerCellStyle(srvObj.by, zebraHex);
+          else if (c === 9) wsSub[addr].s = getStatusCellStyle(srvObj.status, zebraHex);
+          else {
+            const isCenter = (c === 0 || c === 2);
+            wsSub[addr].s = {
+              font: {
+                name: c === 2 ? 'Consolas' : 'Calibri',
+                sz: 10,
+                bold: (c === 0 || c === 1),
+                color: { rgb: c === 0 ? '475569' : '0F172A' }
+              },
+              fill: { fgColor: { rgb: zebraHex } },
+              alignment: { horizontal: isCenter ? 'center' : 'left', vertical: 'center', wrapText: true },
+              border: thinBorder
+            };
+          }
+        }
+      }
+      XLSX.utils.book_append_sheet(wb, wsSub, sName);
+    });
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
+    showToast(`⬇ Exported styled Windows_Patching_Schedule_${dateStamp}.xlsx`);
   });
 }
 
