@@ -32,12 +32,12 @@
   header {
     background: linear-gradient(135deg, #132A4A 0%, #1E3A5F 100%);
     color: #fff;
-    padding: 12px 16px;
+    padding: 7px 14px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   }
   header h1 {
@@ -82,27 +82,53 @@
 
   .container {
     max-width: 100%;
-    padding: 12px 14px 48px;
+    padding: 7px 12px 14px;
   }
 
-  /* KPI Summary Cards */
+  /* Compact Inline Telemetry Ribbon (High-Density 1080p Layout) */
   .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .kpi-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
     background: var(--surface);
-    border-radius: 8px;
-    padding: 10px 13px;
     border: 1px solid var(--border-light);
-    border-left: 4px solid var(--primary);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border-radius: 7px;
+    padding: 5px 11px;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
-  .kpi-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
-  .kpi-value { font-size: 1.35rem; font-weight: 800; margin-top: 2px; color: var(--text-main); }
-  .kpi-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+  .kpi-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 5px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-left: 3px solid var(--primary);
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .kpi-chip:hover { background: #EFF6FF; }
+  .kpi-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+  .kpi-value { font-size: 0.96rem; font-weight: 800; color: var(--text-main); }
+  .kpi-sub { font-size: 0.67rem; color: var(--text-muted); }
+  .kpi-progress-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+  }
+  .kpi-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #E2E8F0;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+  }
 
   /* Visual Analytics Charts Panel */
   .analytics-panel {
@@ -223,34 +249,34 @@
     transition: width 0.25s ease;
   }
 
-  /* Weekly Quick-Count Pills */
+  /* Weekly Quick-Count Pills (Compact Single-Strip) */
   .week-pills {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     background: var(--surface);
-    padding: 7px 10px;
-    border-radius: 8px;
+    padding: 4px 9px;
+    border-radius: 7px;
     border: 1px solid var(--border-light);
-    margin-bottom: 9px;
+    margin-bottom: 5px;
   }
   .week-pills-label {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
-    margin-right: 4px;
+    margin-right: 3px;
   }
   .week-pill {
     border: 1px solid #CBD5E1;
     border-radius: 999px;
-    padding: 3px 9px;
-    font-size: 0.7rem;
+    padding: 2px 8px;
+    font-size: 0.68rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     color: #1E293B;
     transition: all 0.12s ease;
   }
@@ -262,46 +288,47 @@
   }
   .week-pill .badge {
     background: rgba(15, 23, 42, 0.12);
-    padding: 1px 6px;
+    padding: 0px 5px;
     border-radius: 999px;
     font-weight: 800;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
   }
   .week-pill.active .badge { background: rgba(255,255,255,0.22); }
 
   /* Filter & Control Bar */
   .filter-bar {
     background: var(--surface);
-    padding: 8px 10px;
-    border-radius: 8px;
+    padding: 5px 9px;
+    border-radius: 7px;
     border: 1px solid var(--border-light);
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: 6px;
     align-items: center;
   }
   .filter-bar input, .filter-bar select {
-    padding: 5px 8px;
+    padding: 4px 7px;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.76rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
     background: #fff;
     color: var(--text-main);
   }
   .filter-bar input { min-width: 210px; flex: 1; }
 
-  /* Table Wrapper - Optimized for 1920x1080 zero horizontal scroll */
+  /* Table Wrapper - Maximized Viewport Height for 1920x1080 */
   .table-card {
     background: var(--surface);
-    border-radius: 8px;
+    border-radius: 7px;
     border: 1px solid var(--border);
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     overflow: hidden;
   }
   .table-scroll {
     overflow-x: auto;
-    max-height: 70vh;
+    max-height: calc(100vh - 170px);
+    min-height: 480px;
   }
   table {
     width: 100%;
@@ -791,14 +818,13 @@
 <header>
   <div>
     <h1>🛡️ Windows Server Patching Schedule Manager (v5.4 Zero-Leak Team Login & Live Sync)</h1>
-    <p>Real-Time Team Sync (Firebase) · Multi-Row Bulk Actions · Sequence Alerts · Shift Handover Log</p>
   </div>
   <div class="toolbar">
     <button class="btn btn-secondary" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or check Firebase Live Sync">
       <span id="syncDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;"></span>
       <span id="syncStatusText">Local Mode (Setup Live Sync)</span>
     </button>
-    <button class="btn btn-secondary active" id="toggleChartsBtn" onclick="toggleAnalytics()">📊 Charts</button>
+    <button class="btn btn-secondary" id="toggleChartsBtn" onclick="toggleAnalytics()">📊 Charts</button>
     <button class="btn btn-secondary" onclick="openAuditDrawer()">📋 Handover Log (<span id="logCountBadge">0</span>)</button>
     <button class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
     <label class="btn btn-secondary" style="cursor:pointer;">
@@ -815,7 +841,7 @@
   <div class="kpi-grid" id="kpiGrid"></div>
 
   <!-- Visual Charts Dashboard -->
-  <div class="analytics-panel" id="analyticsPanel">
+  <div class="analytics-panel hidden" id="analyticsPanel">
     <div class="chart-card">
       <div class="chart-header">
         <span class="chart-title">📈 Weekly Patching Load &amp; Completion (Click bar to filter)</span>
@@ -1154,7 +1180,7 @@ let appState = loadState();
 let auditLogs = loadAuditLogs();
 let selectedIds = new Set();
 let isExpandedMode = false;
-let chartsVisible = true;
+let chartsVisible = false;
 
 let fbConfig = loadFirebaseConfig();
 let fbEventSource = null;
@@ -1928,26 +1954,37 @@ function renderTable() {
   const pending = total - patched - failed;
   const alertCnt = enriched.filter(s => s.flags.length > 0).length;
 
+  const pctDone = total ? Math.round((patched / total) * 100) : 0;
+  const pctFail = total ? Math.round((failed / total) * 100) : 0;
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-title">Total Scheduled Rows</div>
-      <div class="kpi-value">${total}</div>
-      <div class="kpi-sub">${uniqueWeeks.length} execution weekends · ${enriched.filter(s=>s.env==='PRD').length} PRD</div>
+    <div class="kpi-chip" onclick="document.getElementById('filterStatus').value='';renderTable();" title="Show all scheduled rows">
+      <span class="kpi-title">Total:</span>
+      <span class="kpi-value">${total}</span>
+      <span class="kpi-sub">(${uniqueWeeks.length} wks · ${enriched.filter(s=>s.env==='PRD').length} PRD)</span>
     </div>
-    <div class="kpi-card" style="border-left-color:#10B981;">
-      <div class="kpi-title">Patched Completed</div>
-      <div class="kpi-value" style="color:#059669;">${patched}</div>
-      <div class="kpi-sub">${total ? Math.round((patched/total)*100) : 0}% completion rate</div>
+    <div class="kpi-chip" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();" title="Filter Patched servers">
+      <span class="kpi-title">Patched:</span>
+      <span class="kpi-value" style="color:#059669;">${patched}</span>
+      <span class="kpi-sub">(${pctDone}%)</span>
     </div>
-    <div class="kpi-card" style="border-left-color:#3B82F6;">
-      <div class="kpi-title">Pending / Remaining</div>
-      <div class="kpi-value" style="color:#2563EB;">${pending}</div>
-      <div class="kpi-sub">${failed > 0 ? failed + ' Failed — review required' : '0 Failed'}</div>
+    <div class="kpi-chip" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();" title="Filter Pending servers">
+      <span class="kpi-title">Pending:</span>
+      <span class="kpi-value" style="color:#2563EB;">${pending}</span>
     </div>
-    <div class="kpi-card" style="border-left-color:#F59E0B;">
-      <div class="kpi-title">Sequence &amp; Window Flags</div>
-      <div class="kpi-value" style="color:#B45309;">${alertCnt}</div>
-      <div class="kpi-sub">Ordered reboot sequence &amp; window checks</div>
+    <div class="kpi-chip" style="border-left-color:#EF4444;" onclick="document.getElementById('filterStatus').value='Failed';renderTable();" title="Filter Failed servers">
+      <span class="kpi-title">Failed:</span>
+      <span class="kpi-value" style="color:#DC2626;">${failed}</span>
+    </div>
+    <div class="kpi-chip" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();" title="Filter Sequence / Window Alerts">
+      <span class="kpi-title">⚠️ Flags:</span>
+      <span class="kpi-value" style="color:#B45309;">${alertCnt}</span>
+    </div>
+    <div class="kpi-progress-wrap" title="Overall Completion: ${pctDone}% Patched, ${pctFail}% Failed">
+      <div class="kpi-progress-bar">
+        <div style="width:${pctDone}%;background:#10B981;"></div>
+        <div style="width:${pctFail}%;background:#EF4444;"></div>
+      </div>
+      <span style="font-size:0.74rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
     </div>
   `;
 
