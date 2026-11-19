@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.13)</title>
+<title>Windows Server Patching Schedule Manager (v5.14)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -30,7 +30,7 @@
     color: var(--text-main);
   }
 
-  /* Sleek Single-Row Navy Gradient Top Header Bar (v5.13) */
+  /* Sleek Single-Row Navy Gradient Top Header Bar (v5.14) */
   header {
     background: linear-gradient(90deg, #0F172A 0%, #1E3A5F 52%, #172E4D 100%);
     color: #F8FAFC;
@@ -404,6 +404,7 @@
     border-bottom: 2px solid #94B0DA;
     position: sticky;
     left: 0;
+    z-index: 5;
   }
   .banner-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .banner-count-pill { background: #1E3A5F; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
@@ -514,26 +515,24 @@
     border-color: #1D4ED8;
     transform: scale(1.06);
   }
-  .tw-suggest-popover {
+  .tw-global-tooltip {
     display: none;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 5px);
-    z-index: 95;
+    position: fixed;
+    z-index: 99999;
     width: max-content;
-    max-width: 310px;
+    max-width: 340px;
     background: #0F172A;
     color: #F8FAFC;
     border: 1px solid #38BDF8;
-    border-radius: 6px;
-    padding: 6px 9px;
-    font-size: 0.72rem;
-    line-height: 1.35;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.36);
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 0.73rem;
+    line-height: 1.38;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.45);
     pointer-events: none;
     white-space: normal;
   }
-  .tw-suggest-popover .pop-hdr {
+  .tw-global-tooltip .pop-hdr {
     font-size: 0.63rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -541,18 +540,14 @@
     margin-bottom: 2px;
     letter-spacing: 0.3px;
   }
-  .tw-suggest-popover .pop-val {
+  .tw-global-tooltip .pop-val {
     font-weight: 700;
     color: #FFFFFF;
   }
-  .tw-suggest-popover .pop-hint {
+  .tw-global-tooltip .pop-hint {
     font-size: 0.64rem;
     color: #94A3B8;
     margin-top: 2px;
-  }
-  .tw-suggest-anchor:hover .tw-suggest-popover,
-  .tw-suggest-icon-btn:focus + .tw-suggest-popover {
-    display: block;
   }
 
   .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
@@ -676,12 +671,12 @@
   </div>
 </div>
 
-<!-- Compact Single-Row Navy Gradient Top Header Bar (v5.13) -->
+<!-- Compact Single-Row Navy Gradient Top Header Bar (v5.14) -->
 <header>
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.13</span>
+      <span class="ver-pill">v5.14</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -809,7 +804,7 @@
 
   <!-- Schedule Table -->
   <div class="table-card">
-    <div class="table-scroll">
+    <div class="table-scroll" onscroll="hideSuggestTooltip()">
       <table>
         <colgroup id="scheduleColGroup">
           <col style="width: 34px;" />   <!-- Select -->
@@ -1090,6 +1085,11 @@
   </div>
 </div>
 
+<div class="tw-global-tooltip" id="twGlobalTooltip">
+  <div class="pop-hdr">⚡ Suggested Time Window</div>
+  <div class="pop-val" id="twGlobalTooltipVal"></div>
+  <div class="pop-hint">Click icon to apply automatically</div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1642,9 +1642,9 @@ function parseWeekendSpanMinutes(str) {
   const times = extractTimeTokens(s);
   if (times.length === 0) return null;
 
-  const hasSat = /sat(urday)?/i.test(s);
-  const hasSun = /sun(day)?/i.test(s);
-  const hasMon = /mon(day)?/i.test(s);
+  const hasSat = /\bsat(?:urday)?\b/i.test(s);
+  const hasSun = /\bsun(?:day)?\b/i.test(s);
+  const hasMon = /\bmon(?:day)?\b/i.test(s);
 
   let startOffset = 0; // default Saturday
   if (!hasSat && hasSun) startOffset = 1440;
@@ -1770,9 +1770,43 @@ function buildSuggestedTimeWindow(anchorTimeWin, maintWin) {
 }
 
 function normalizeForCompare(str) {
-  return String(str || '').toLowerCase().replace(/[–—]/g, '-').replace(/\./g, ':').replace(/\s*-\s*/g, '-').replace(/\s+/g, ' ').trim();
+  return String(str || '')
+    .toLowerCase()
+    .replace(/[–—]/g, '-')
+    .replace(/\./g, ':')
+    .replace(/\b(saturday|sunday|monday)\s*-\s*(\d)/g, '$1 $2')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
+
+function showSuggestTooltip(btn) {
+  const tip = document.getElementById('twGlobalTooltip');
+  const valEl = document.getElementById('twGlobalTooltipVal');
+  if (!tip || !valEl) return;
+  valEl.textContent = btn.getAttribute('data-suggest') || '';
+  tip.style.display = 'block';
+  const rect = btn.getBoundingClientRect();
+  const tipRect = tip.getBoundingClientRect();
+  const margin = 8;
+  // Place cleanly above the icon if room exists, otherwise cleanly below — never overlapping the icon
+  let top = rect.top - tipRect.height - 6;
+  if (top < 54) {
+    top = rect.bottom + 6;
+  }
+  let left = rect.right - tipRect.width;
+  if (left < margin) left = margin;
+  if (left + tipRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - tipRect.width - margin;
+  }
+  tip.style.top = Math.round(top) + 'px';
+  tip.style.left = Math.round(left) + 'px';
+}
+function hideSuggestTooltip() {
+  const tip = document.getElementById('twGlobalTooltip');
+  if (tip) tip.style.display = 'none';
+}
 function applySuggestedTimeWin(id) {
   const srv = appState.servers.find(s => s.id === id);
   if (!srv) return;
@@ -2242,10 +2276,10 @@ function renderTable() {
             <div class="banner-inner">
               <span>📅 ${srv.weekLabel}</span>
               <span class="banner-count-pill">Total Servers: ${countText}</span>
-              ${batchSugBtn}
               <button type="button" class="banner-mini-btn" onclick="selectWeekServers('${currentWk}')">☑ Select Week</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'hostname')">📋 Copy Hostnames</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'ip')">🌐 Copy IPs</button>
+              ${batchSugBtn}
             </div>
           </td>
         </tr>`);
@@ -2264,12 +2298,7 @@ function renderTable() {
     const showSuggestIcon = srv.suggestedTw && normalizeForCompare(srv.suggestedTw) !== normalizeForCompare(srv.timeWin);
     const suggestIconHtml = showSuggestIcon ? `
       <div class="tw-suggest-anchor">
-        <button type="button" class="tw-suggest-icon-btn" onclick="applySuggestedTimeWin(${srv.id})">⚡</button>
-        <div class="tw-suggest-popover">
-          <div class="pop-hdr">⚡ Suggested Time Window</div>
-          <div class="pop-val">${escapeHtml(srv.suggestedTw)}</div>
-          <div class="pop-hint">Click icon to apply automatically</div>
-        </div>
+        <button type="button" class="tw-suggest-icon-btn" data-suggest="${escapeHtml(srv.suggestedTw)}" onmouseenter="showSuggestTooltip(this)" onmouseleave="hideSuggestTooltip()" onfocus="showSuggestTooltip(this)" onblur="hideSuggestTooltip()" onclick="hideSuggestTooltip();applySuggestedTimeWin(${srv.id})">⚡</button>
       </div>` : '';
 
     rowsHtml.push(`
