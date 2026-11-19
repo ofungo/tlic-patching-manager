@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.10)</title>
+<title>Windows Server Patching Schedule Manager (v5.11)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -800,6 +800,32 @@
   }
   .del-btn:hover { background: #FEE2E2; color: #DC2626; }
 
+  /* Smart Time Window Auto-Suggest Pill (v5.11) */
+  .tw-suggest-btn {
+    margin-top: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px dashed #93C5FD;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.25;
+    max-width: 100%;
+    transition: all 0.14s ease;
+  }
+  .tw-suggest-btn:hover {
+    background: #DBEAFE;
+    border-style: solid;
+    border-color: #3B82F6;
+    color: #1E3A8A;
+  }
+
   /* Floating Bulk Action Bar */
   .bulk-bar {
     position: fixed;
@@ -1112,7 +1138,7 @@
     <div class="title-card">
       <h1>
         <span>🛡️ Windows Server Patching Schedule Manager</span>
-        <span class="ver-pill">v5.10</span>
+        <span class="ver-pill">v5.11</span>
         <span class="subtitle-pill">TLIC Patch Ops</span>
       </h1>
     </div>
@@ -1313,7 +1339,11 @@
   </select>
   <button class="bulk-btn bulk-btn-green" onclick="applyBulkUpdate()">✓ Apply By/Status</button>
   <span style="color:#475569;">|</span>
-  <input type="text" id="bulkTimeWin" placeholder="Target Schedule / Time Window..." list="timeSuggestions" style="width:255px;" />
+  <input type="text" id="bulkTimeWin" placeholder="Target Weekend Date or Time Window..." list="timeSuggestions" style="width:245px;" />
+  <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.73rem;color:#CBD5E1;cursor:pointer;user-select:none;" title="When moving to a weekend date (e.g. 28-29 Nov 2026), automatically combine with each server's own Maintenance Windows">
+    <input type="checkbox" id="bulkAutoMaint" checked />
+    <span>Auto-match Maint. Win</span>
+  </label>
   <button class="bulk-btn" onclick="moveSelectedToSchedule()" title="Move selected servers into this new Time Window">📅 Move to Schedule</button>
   <button class="bulk-btn" style="background:#8B5CF6;" onclick="copySelectedToSchedule()" title="Duplicate selected servers into this new Time Window (keeps original rows)">📑 Copy to New Schedule</button>
   <button type="button" class="bulk-btn" style="background:#334155;" onclick="copySelectedHosts()">📋 Copy Names</button>
@@ -1371,11 +1401,12 @@
       </div>
       <div class="form-group">
         <label>Maintenance Windows</label>
-        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" />
+        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" oninput="updateNewModalTimeSuggestion()" />
       </div>
       <div class="form-group full">
         <label>Time Windows * (Determines Week &amp; Auto-Sort Position)</label>
-        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" />
+        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" oninput="updateNewModalTimeSuggestion()" />
+        <div id="newModalSuggestWrap" style="margin-top:3px;"></div>
       </div>
       <div class="form-group">
         <label>Assigned By</label>
@@ -2148,11 +2179,22 @@ function buildWeekMetaResult(year, monIdx, day1, clean) {
   const { isoYear, isoWeek } = getISOWeekInfo(dt);
   const wkPad = String(isoWeek).padStart(2, '0');
   const rangeStr = formatWeekendRange(isoYear, isoWeek);
-  const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${clean}`;
+  const tokens = extractTimeTokens(clean);
+  let startHour = 0, startMin = 0;
+  if (tokens.length > 0) {
+    const [hh, mm] = tokens[0].split(':').map(Number);
+    startHour = hh || 0;
+    startMin = mm || 0;
+  }
+  const startEpoch = new Date(year, monIdx, day1, startHour, startMin, 0, 0).getTime();
+  const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${String(startHour).padStart(2,'0')}:${String(startMin).padStart(2,'0')}_${clean}`;
   return {
     weekKey: `${isoYear}-W${wkPad}`,
     shortWeek: `W${wkPad}`,
     weekLabel: `Week ${wkPad} (${rangeStr})`,
+    isoYear,
+    isoWeek,
+    startEpoch,
     sortKey
   };
 }
@@ -2198,7 +2240,7 @@ function parseTimeWindowMeta(twRaw) {
     }
   }
 
-  const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', sortKey: '9999-99-99_' + clean };
+  const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', isoYear: 9999, isoWeek: 99, startEpoch: Number.MAX_SAFE_INTEGER, sortKey: '9999-99-99_' + clean };
   _twMetaCache.set(key, fallback);
   return fallback;
 }
@@ -2237,27 +2279,139 @@ function extractTimeTokens(str) {
   return tokens;
 }
 
+/* 1. Smart Date + Maintenance Window Auto-Suggest Helper (v5.11) */
+function getWeekendSaturdayDate(timeWinStr) {
+  const clean = String(timeWinStr || '').replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
+  const mText = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})/i);
+  let anchorDate = null;
+  if (mText && (mText[3].toLowerCase() in MONTHS)) {
+    anchorDate = new Date(Date.UTC(parseInt(mText[4], 10), MONTHS[mText[3].toLowerCase()], parseInt(mText[1], 10)));
+  } else {
+    const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (mIso) anchorDate = new Date(Date.UTC(parseInt(mIso[1], 10), parseInt(mIso[2], 10) - 1, parseInt(mIso[3], 10)));
+  }
+  if (!anchorDate || isNaN(anchorDate.getTime())) return null;
+  const dow = anchorDate.getUTCDay(); // 0=Sun, 6=Sat
+  const sat = new Date(anchorDate);
+  if (dow === 0) sat.setUTCDate(sat.getUTCDate() - 1);
+  else if (dow !== 6) sat.setUTCDate(sat.getUTCDate() + (6 - dow));
+  return sat;
+}
+
+function buildSuggestedTimeWindow(anchorTimeWin, maintWin) {
+  const mwRaw = String(maintWin || '').replace(/[–—]/g, '-').replace(/\./g, ':').replace(/\s+/g, ' ').trim();
+  if (!mwRaw) return '';
+  const satDate = getWeekendSaturdayDate(anchorTimeWin);
+  if (!satDate) return '';
+
+  const sunDate = new Date(satDate);
+  sunDate.setUTCDate(satDate.getUTCDate() + 1);
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const satDay = satDate.getUTCDate();
+  const satMon = monthNames[satDate.getUTCMonth()];
+  const satYr  = satDate.getUTCFullYear();
+  const sunDay = sunDate.getUTCDate();
+  const sunMon = monthNames[sunDate.getUTCMonth()];
+  const sunYr  = sunDate.getUTCFullYear();
+
+  const lowerMw = mwRaw.toLowerCase();
+  const hasSat = lowerMw.includes('saturday') || lowerMw.includes('sat');
+  const hasSun = lowerMw.includes('sunday') || lowerMw.includes('sun');
+
+  // Extract clean time interval (e.g., "00:00 - 07:30" or "Saturday 10:00 - Sunday 07:30")
+  const tokens = extractTimeTokens(mwRaw);
+  let schedulePart = mwRaw;
+  if (hasSat && hasSun && tokens.length >= 2) {
+    schedulePart = `Saturday ${tokens[0]} - Sunday ${tokens[1]}`;
+  } else if (hasSun && !hasSat && tokens.length >= 2) {
+    schedulePart = `Sunday ${tokens[0]} - ${tokens[1]}`;
+  } else if (hasSat && !hasSun && tokens.length >= 2) {
+    const [sh] = tokens[0].split(':').map(Number);
+    const [eh] = tokens[1].split(':').map(Number);
+    if (eh < sh) {
+      schedulePart = `Saturday ${tokens[0]} - Sunday ${tokens[1]}`;
+    } else {
+      schedulePart = `Saturday ${tokens[0]} - ${tokens[1]}`;
+    }
+  }
+
+  const spansBothDays = (hasSat && hasSun) || schedulePart.toLowerCase().includes('sunday') && schedulePart.toLowerCase().includes('saturday');
+  let datePrefix = '';
+  if (spansBothDays) {
+    datePrefix = (satMon === sunMon && satYr === sunYr)
+      ? `${satDay}-${sunDay} ${satMon} ${satYr}`
+      : `${satDay} ${satMon}-${sunDay} ${sunMon} ${sunYr}`;
+  } else if (hasSun && !hasSat) {
+    datePrefix = `${sunDay} ${sunMon} ${sunYr}`;
+  } else {
+    datePrefix = `${satDay} ${satMon} ${satYr}`;
+  }
+
+  return `${datePrefix} - ${schedulePart}`;
+}
+
+/* 2. Continuous Weekend-Minute Interval Containment Check (0 to 2880 mins from Sat 00:00) */
+function parseWeekendIntervalMins(str, defaultDayOffset = null) {
+  const norm = normalizeWinStr(str);
+  if (!norm) return null;
+  const tokens = extractTimeTokens(norm);
+  if (tokens.length < 2) return null;
+
+  const [sh, sm] = tokens[0].split(':').map(Number);
+  const [eh, em] = tokens[1].split(':').map(Number);
+  const startClock = sh * 60 + sm;
+  const endClock = eh * 60 + em;
+
+  const hasSat = /\bsat(urday)?\b/.test(norm);
+  const hasSun = /\bsun(day)?\b/.test(norm);
+
+  let startDayOffset = 0; // 0 = Saturday, 1440 = Sunday
+  if (hasSat) {
+    startDayOffset = 0;
+  } else if (hasSun) {
+    startDayOffset = 1440;
+  } else if (defaultDayOffset !== null) {
+    startDayOffset = defaultDayOffset;
+  } else {
+    // Infer from calendar date in Time Windows if day-of-week word was omitted
+    const mDate = norm.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([a-z]{3,9})[\s,/-]+(\d{4})/);
+    if (mDate && (mDate[3] in MONTHS)) {
+      const dt = new Date(Date.UTC(parseInt(mDate[4], 10), MONTHS[mDate[3]], parseInt(mDate[1], 10)));
+      if (!isNaN(dt.getTime()) && dt.getUTCDay() === 0) startDayOffset = 1440;
+    }
+  }
+
+  const startTotal = startDayOffset + startClock;
+  let endTotal = startDayOffset + endClock;
+
+  // Multi-day Saturday -> Sunday span or overnight rollover past midnight
+  if (hasSat && hasSun) {
+    endTotal = 1440 + endClock;
+  } else if (endTotal <= startTotal) {
+    endTotal += 1440;
+  }
+
+  return { start: startTotal, end: endTotal, startDayOffset };
+}
+
 function isTimeMatchingMaint(maintWin, timeWin) {
   const mw = normalizeWinStr(maintWin);
   const tw = normalizeWinStr(timeWin);
   if (!mw || !tw) return true;
+
   const mwCore = mw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
   const twCore = tw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
   if (mwCore && twCore.includes(mwCore)) return true;
 
-  const mwTimes = extractTimeTokens(mw);
-  const twTimes = extractTimeTokens(tw);
-  const mwHasSat = mw.includes('saturday');
-  const mwHasSun = mw.includes('sunday');
-  const twHasSat = tw.includes('saturday');
+  const mwInterval = parseWeekendIntervalMins(mw);
+  if (!mwInterval) return true; // Non-standard maintenance note (e.g., "Anytime / Ad-hoc")
 
-  if (mwHasSun && !mwHasSat && twHasSat) return false;
-  if (mwTimes.length >= 2 && twTimes.length >= 2) {
-    const mwStart = mwTimes[0], mwEnd = mwTimes[1];
-    const twStart = twTimes[0], twEnd = twTimes[1];
-    if (mwStart !== twStart || mwEnd !== twEnd) return false;
-  }
-  return true;
+  const twInterval = parseWeekendIntervalMins(tw, mwInterval.startDayOffset);
+  if (!twInterval) return true;
+
+  // Valid if scheduled Time Windows [tw.start, tw.end] is completely inside Maintenance Windows [mw.start, mw.end]
+  return twInterval.start >= mwInterval.start && twInterval.end <= mwInterval.end;
 }
 
 function detectSmartFlags(srv) {
@@ -2275,10 +2429,17 @@ function detectSmartFlags(srv) {
     flags.push({
       cls: 'tag-warn',
       text: 'Window Mismatch',
-      title: `Time Windows ("${srv.timeWin}") differs from Maintenance Windows ("${srv.maintWin}"). Update Time Windows to match to clear this alert.`
+      title: `Scheduled Time Windows ("${srv.timeWin}") falls outside allowed Maintenance Windows ("${srv.maintWin}").`
     });
   }
   return flags;
+}
+
+function getSequenceRank(srv) {
+  const combinedText = `${srv.maintWin} ${srv.remarks1}`.toLowerCase();
+  if (combinedText.includes('1st sequence') || combinedText.includes('startup sequence: 1-')) return 1;
+  if (combinedText.includes('2nd sequence') || combinedText.includes('2st sequence') || combinedText.includes('shutdown sequence')) return 3;
+  return 2;
 }
 
 const PASTEL_PALETTE = [
@@ -2291,13 +2452,22 @@ function getSortedAndGrouped() {
     const meta = parseTimeWindowMeta(s.timeWin);
     const env = detectEnvironment(s.hostname);
     const flags = detectSmartFlags(s);
-    return { ...s, ...meta, env, flags };
+    const seqRank = getSequenceRank(s);
+    const suggestedTw = buildSuggestedTimeWindow(s.timeWin, s.maintWin);
+    return { ...s, ...meta, env, flags, seqRank, suggestedTw };
   });
 
+  /* 3. Multi-Level Chronological + Natural Hostname + Sequence Sorting within each Weekly Batch */
   enriched.sort((a, b) => {
     if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
+    // 1) Exact Start Timestamp
+    if (a.startEpoch !== b.startEpoch) return a.startEpoch - b.startEpoch;
     if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
-    return a.hostname.localeCompare(b.hostname);
+    // 2) Natural Hostname Order
+    const hostCmp = a.hostname.localeCompare(b.hostname, undefined, { numeric: true, sensitivity: 'base' });
+    if (hostCmp !== 0) return hostCmp;
+    // 3) Sequence Priority (SEQ 1 -> Untagged -> SEQ 2)
+    return a.seqRank - b.seqRank;
   });
 
   const uniqueWeeks = [...new Set(enriched.map(x => x.weekKey))];
@@ -2773,6 +2943,12 @@ function renderTable() {
       ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
     ].join('');
 
+    const showSuggestBtn = srv.suggestedTw &&
+      normalizeWinStr(srv.suggestedTw) !== normalizeWinStr(srv.timeWin);
+    const suggestHtml = showSuggestBtn
+      ? `<button type="button" class="tw-suggest-btn" title="Auto-fill from weekend date + Maintenance Windows" onclick="applySuggestedTimeWin(${srv.id})">⚡ Suggest: ${escapeHtml(srv.suggestedTw)}</button>`
+      : '';
+
     rowsHtml.push(`
       <tr class="${rowCls}" style="background-color:${rowBg};">
         <td class="center sticky-col-1" style="background:${rowBg};">
@@ -2787,23 +2963,9 @@ function renderTable() {
         <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'os', this.value)">${escapeHtml(srv.os)}</textarea></td>
         <td><input class="editable-cell" value="${escapeHtml(srv.app)}" onchange="updateField(${srv.id}, 'app', this.value)" /></td>
         <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea></td>
-        <td class="center">
-          <select class="editable-cell center" onchange="updateField(${srv.id}, 'osSheet', this.value)">
-            ${['Win SVR 2012R2','Win SVR 2016','Win SVR 2019','Win SRV 2022','Ripen Infra SVR'].map(sh =>
-              `<option value="${sh}" ${srv.osSheet === sh ? 'selected' : ''}>${sh}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea></td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
-        <td class="center">
-          <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
-            <option value="" ${srv.by === '' ? 'selected' : ''}></option>
-            <option value="Andy" ${srv.by === 'Andy' ? 'selected' : ''}>Andy</option>
-            <option value="Don" ${srv.by === 'Don' ? 'selected' : ''}>Don</option>
-            <option value="Fung" ${srv.by === 'Fung' ? 'selected' : ''}>Fung</option>
-          </select>
+        <td>
+          <textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea>
+          ${suggestHtml}
         </td>
         <td class="center">
           <select class="editable-cell center ${statusClass}" onchange="updateField(${srv.id}, 'status', this.value)">
@@ -2855,15 +3017,25 @@ function moveSelectedToSchedule() {
     document.getElementById('bulkTimeWin').focus();
     return;
   }
+  const autoMatchMaint = document.getElementById('bulkAutoMaint')?.checked;
+  const targetHasExplicitClock = extractTimeTokens(twVal).length >= 2;
   let count = 0;
+  let lastAssignedTw = twVal;
+
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
-      srv.timeWin = twVal;
+      let finalTw = twVal;
+      if (autoMatchMaint && !targetHasExplicitClock) {
+        const smartTw = buildSuggestedTimeWindow(twVal, srv.maintWin);
+        if (smartTw) finalTw = smartTw;
+      }
+      srv.timeWin = finalTw;
+      lastAssignedTw = finalTw;
       count++;
     }
   });
-  const meta = parseTimeWindowMeta(twVal);
-  addAuditEntry(`Moved ${count} servers to schedule "${twVal}" (${meta.weekLabel})`);
+  const meta = parseTimeWindowMeta(lastAssignedTw);
+  addAuditEntry(`Moved ${count} servers to schedule "${twVal}"${autoMatchMaint && !targetHasExplicitClock ? ' (auto-matched Maint. Win)' : ''} (${meta.weekLabel})`);
   document.getElementById('bulkTimeWin').value = '';
   saveState();
   renderTable();
@@ -2878,22 +3050,32 @@ function copySelectedToSchedule() {
     document.getElementById('bulkTimeWin').focus();
     return;
   }
+  const autoMatchMaint = document.getElementById('bulkAutoMaint')?.checked;
+  const targetHasExplicitClock = extractTimeTokens(twVal).length >= 2;
   let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
   const clones = [];
+  let lastAssignedTw = twVal;
+
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
       maxId += 1;
+      let finalTw = twVal;
+      if (autoMatchMaint && !targetHasExplicitClock) {
+        const smartTw = buildSuggestedTimeWindow(twVal, srv.maintWin);
+        if (smartTw) finalTw = smartTw;
+      }
+      lastAssignedTw = finalTw;
       clones.push({
         ...JSON.parse(JSON.stringify(srv)),
         id: maxId,
-        timeWin: twVal,
+        timeWin: finalTw,
         by: '',
         status: ''
       });
     }
   });
   appState.servers.push(...clones);
-  const meta = parseTimeWindowMeta(twVal);
+  const meta = parseTimeWindowMeta(lastAssignedTw);
   addAuditEntry(`Copied ${clones.length} servers into new schedule "${twVal}" (${meta.weekLabel})`);
   document.getElementById('bulkTimeWin').value = '';
   clearSelection();
@@ -3151,21 +3333,30 @@ function updateField(id, field, value, isTimeWin = false) {
   }
 }
 
-let _confirmCallback = null;
-function showCustomConfirm(title, message, okLabel, okColor, onConfirm) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmMessage').textContent = message;
-  const okBtn = document.getElementById('confirmOkBtn');
-  okBtn.textContent = okLabel || 'Confirm';
-  okBtn.style.background = okColor || '#EF4444';
-  _confirmCallback = onConfirm;
-  document.getElementById('confirmModal').classList.add('open');
+function applySuggestedTimeWin(id) {
+  const item = appState.servers.find(s => s.id === id);
+  if (!item) return;
+  const suggested = buildSuggestedTimeWindow(item.timeWin, item.maintWin);
+  if (!suggested) return;
+  updateField(id, 'timeWin', suggested, true);
 }
-function closeConfirmModal(confirmed) {
-  document.getElementById('confirmModal').classList.remove('open');
-  const cb = _confirmCallback;
-  _confirmCallback = null;
-  if (confirmed && typeof cb === 'function') cb();
+function openAddModal() {
+  document.getElementById('addModal').classList.add('open');
+  updateNewModalTimeSuggestion();
+}
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function updateNewModalTimeSuggestion() {
+  const maintVal = document.getElementById('newMaint').value;
+  const timeVal = document.getElementById('newTime').value;
+  const wrap = document.getElementById('newModalSuggestWrap');
+  if (!wrap) return;
+  const suggested = buildSuggestedTimeWindow(timeVal, maintVal);
+  if (suggested && normalizeWinStr(suggested) !== normalizeWinStr(timeVal)) {
+    wrap.innerHTML = `<button type="button" class="tw-suggest-btn" onclick="document.getElementById('newTime').value='${escapeHtml(suggested)}';updateNewModalTimeSuggestion();">⚡ Suggest from Maint. Window: ${escapeHtml(suggested)}</button>`;
+  } else {
+    wrap.innerHTML = '';
+  }
 }
 
 function deleteServer(id) {
