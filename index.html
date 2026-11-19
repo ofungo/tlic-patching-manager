@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.15)</title>
+<title>Windows Server Patching Schedule Manager (v5.16)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -199,17 +199,18 @@
     padding: 7px 12px 14px;
   }
 
-  /* 4-Column Command Center Dashboard */
+  /* 5-Column Command Center Dashboard (KPI | Weekly | OS Sheet | Engineer | Env) */
   .command-deck {
     display: grid;
-    grid-template-columns: 265px 1.18fr 0.96fr 1.04fr;
-    gap: 8px;
+    grid-template-columns: 245px 1.12fr 0.92fr 0.92fr 0.88fr;
+    gap: 7px;
     margin-bottom: 6px;
     align-items: stretch;
   }
   .command-deck.hidden { display: none; }
-  @media (max-width: 1360px) { .command-deck { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 820px) { .command-deck { grid-template-columns: 1fr; } }
+  @media (max-width: 1480px) { .command-deck { grid-template-columns: 245px 1.1fr 1fr 1fr; } }
+  @media (max-width: 1120px) { .command-deck { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 780px) { .command-deck { grid-template-columns: 1fr; } }
 
   .kpi-quad-card {
     background: var(--surface);
@@ -552,9 +553,189 @@
 
   .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
   .status-failed  { background-color: var(--failed-bg) !important; color: var(--failed-text) !important; font-weight: 700; }
-  .by-andy { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
-  .by-don  { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
-  .by-fung { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
+  .by-andy     { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
+  .by-don      { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
+  .by-fung     { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
+  .by-operator { background-color: #CCFBF1 !important; color: #0F766E !important; font-weight: 700; }
+
+  /* SOP Health Check Cell Wrapper, Quick-Insert & Interactive Runbook Drawer */
+  .sop-cell-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .sop-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .sop-top-row textarea { flex: 1; min-width: 0; }
+  .sop-insert-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.12s ease;
+  }
+  .sop-insert-btn:hover {
+    background: #0284C7;
+    color: #FFFFFF;
+    border-color: #0369A1;
+  }
+  .hc-badge-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 0 2px;
+  }
+  .hc-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    background: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    max-width: 100%;
+  }
+  .hc-pill-btn:hover {
+    background: #059669;
+    color: #FFFFFF;
+    border-color: #047857;
+  }
+  .hc-pill-btn.hc-done {
+    background: #DCFCE7;
+    color: #166534;
+    border-color: #22C55E;
+  }
+
+  /* Quick-Insert Floating Menu */
+  .hc-quick-menu {
+    display: none;
+    position: fixed;
+    z-index: 99998;
+    width: 310px;
+    max-height: 340px;
+    background: #FFFFFF;
+    border: 1px solid #94A3B8;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .hc-quick-menu.open { display: flex; }
+  .hc-qm-header {
+    background: #1E3A5F;
+    color: #FFFFFF;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .hc-qm-search {
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 0.75rem;
+    outline: none;
+    background: #F8FAFC;
+  }
+  .hc-qm-list {
+    overflow-y: auto;
+    max-height: 250px;
+    padding: 4px;
+  }
+  .hc-qm-item {
+    padding: 6px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border-bottom: 1px solid #F1F5F9;
+  }
+  .hc-qm-item:hover { background: #EFF6FF; }
+  .hc-qm-title { font-size: 0.74rem; font-weight: 700; color: #0F172A; }
+  .hc-qm-sub { font-size: 0.65rem; color: #64748B; }
+
+  /* Health Check Runbook Drawer */
+  .hc-step-card {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    padding: 9px 11px;
+    margin-bottom: 8px;
+    transition: all 0.14s ease;
+  }
+  .hc-step-card.checked {
+    background: #F0FDF4;
+    border-color: #86EFAC;
+  }
+  .hc-step-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .hc-step-top input[type="checkbox"] {
+    margin-top: 3px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+  }
+  .hc-cmd-box {
+    margin-top: 6px;
+    background: #0F172A;
+    color: #38BDF8;
+    font-family: 'Consolas', monospace;
+    font-size: 0.73rem;
+    padding: 5px 8px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    word-break: break-all;
+  }
+  .hc-copy-mini {
+    background: #1E293B;
+    color: #E2E8F0;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hc-copy-mini:hover { background: #0284C7; color: #FFFFFF; border-color: #38BDF8; }
+  .hc-expected-tag {
+    margin-top: 5px;
+    font-size: 0.71rem;
+    color: #065F46;
+    background: #ECFDF5;
+    border-left: 3px solid #10B981;
+    padding: 3px 7px;
+    border-radius: 0 4px 4px 0;
+  }
 
   .del-btn { background: transparent; border: none; color: #94A3B8; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; border-radius: 4px; }
   .del-btn:hover { background: #FEE2E2; color: #DC2626; }
@@ -676,7 +857,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.15</span>
+      <span class="ver-pill">v5.16</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -706,6 +887,9 @@
     </label>
     <button type="button" class="btn btn-seg" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
       <span style="color:#60A5FA;">⬇</span> Export .xlsx
+    </button>
+    <button type="button" class="btn btn-seg" onclick="openHealthCheckLibrary()" title="Browse & manage all Post-Patch Health Check SOP procedures">
+      🩺 SOP Library
     </button>
     <button type="button" class="btn btn-seg" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
       📋 Log <span class="log-badge-pill" id="logCountBadge">0</span>
@@ -743,10 +927,18 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">👷 Engineer &amp; Env Split</span>
+        <span class="chart-title">👷 Engineer Workload</span>
         <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
       </div>
       <div class="h-bar-list" id="engineerChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">🌐 Environment Split</span>
+        <span style="font-size:0.65rem;color:var(--text-muted);">Click to filter</span>
+      </div>
+      <div class="h-bar-list" id="envChart"></div>
     </div>
   </div>
 
@@ -759,10 +951,11 @@
       </select>
       <select id="filterEnv" onchange="renderTable()">
         <option value="">All Environments</option>
-        <option value="PRD">Production (PRD)</option>
-        <option value="UAT">UAT</option>
-        <option value="DR">DR / DR Site</option>
         <option value="DEV">DEV</option>
+        <option value="UAT">UAT</option>
+        <option value="PRD">Production (PRD)</option>
+        <option value="DR">DR / DR Site</option>
+        <option value="__UNASSIGNED__">Unassigned Env</option>
       </select>
       <select id="filterSheet" onchange="renderTable()">
         <option value="">All OS Sheets</option>
@@ -777,6 +970,7 @@
         <option value="Andy">Andy</option>
         <option value="Don">Don</option>
         <option value="Fung">Fung</option>
+        <option value="Operator">Operator</option>
         <option value="__UNASSIGNED__">Unassigned</option>
       </select>
       <select id="filterStatus" onchange="renderTable()">
@@ -854,6 +1048,7 @@
     <option value="Andy">By: Andy</option>
     <option value="Don">By: Don</option>
     <option value="Fung">By: Fung</option>
+    <option value="Operator">By: Operator</option>
     <option value="">Clear Engineer</option>
   </select>
   <select id="bulkStatus">
@@ -939,6 +1134,7 @@
           <option value="Andy">Andy</option>
           <option value="Don">Don</option>
           <option value="Fung">Fung</option>
+          <option value="Operator">Operator</option>
         </select>
       </div>
       <div class="form-group">
@@ -950,8 +1146,13 @@
         </select>
       </div>
       <div class="form-group full">
-        <label>SOP Notes (Supports multiple lines)</label>
-        <textarea id="newRem1" rows="3" placeholder="Optional multi-line notes..."></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label>SOP Notes / Health Check Procedure (Supports multiple lines)</label>
+          <select id="newSopQuickSelect" style="padding:2px 6px;font-size:0.74rem;border-radius:4px;border:1px solid #93C5FD;background:#EFF6FF;color:#1D4ED8;font-weight:700;" onchange="insertSopIntoNewModal(this.value);this.value='';">
+            <option value="">+ Insert Health Check Procedure...</option>
+          </select>
+        </div>
+        <textarea id="newRem1" rows="3" placeholder="Type notes or select a Health Check SOP from the dropdown above..."></textarea>
       </div>
     </div>
     <div class="modal-actions">
@@ -1090,6 +1291,35 @@
   <div class="pop-val" id="twGlobalTooltipVal"></div>
   <div class="pop-hint">Click icon to apply automatically</div>
 </div>
+<!-- Quick-Insert Health Check Procedure Menu for SOP Notes -->
+<div class="hc-quick-menu" id="hcQuickMenu">
+  <div class="hc-qm-header">
+    <span>🩺 Insert Health Check SOP</span>
+    <button type="button" style="background:none;border:none;color:#CBD5E1;cursor:pointer;font-weight:800;" onclick="closeHcQuickMenu()">✕</button>
+  </div>
+  <input type="text" class="hc-qm-search" id="hcQmSearchInput" placeholder="Filter procedure code, system, or host..." oninput="renderHcQuickMenuList()" />
+  <div class="hc-qm-list" id="hcQmList"></div>
+</div>
+
+<!-- Interactive Post-Patch Health Check Runbook & SOP Library Drawer -->
+<div class="drawer-backdrop" id="hcDrawer" onclick="if(event.target===this) closeHcDrawer()">
+  <div class="drawer" style="width:520px;max-width:96vw;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:1px solid #E2E8F0;padding-bottom:10px;">
+      <div>
+        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;color:#0284C7;letter-spacing:0.3px;" id="hcDrawerSub">Post-Patch Verification Runbook</div>
+        <h3 id="hcDrawerTitle" style="margin:2px 0 0;font-size:1.05rem;color:#0F172A;">Health Check SOP</h3>
+      </div>
+      <button type="button" class="del-btn" style="font-size:1.15rem;" onclick="closeHcDrawer()">✕</button>
+    </div>
+
+    <div id="hcDrawerTabs" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;"></div>
+
+    <div id="hcDrawerBody" class="log-list" style="background:#F8FAFC;padding:10px;margin:10px 0;"></div>
+
+    <div id="hcDrawerFooter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #E2E8F0;padding-top:10px;"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1859,11 +2089,13 @@ function isTimeMatchingMaint(maintWin, timeWin) {
 }
 
 function detectEnvironment(hostname) {
-  const h = String(hostname || '').toUpperCase();
-  if (h.includes('DR SITE') || h.startsWith('DRSV')) return 'DR';
+  const h = String(hostname || '').trim().toUpperCase();
+  if (!h) return '';
+  if (h.includes('DR SITE') || h.startsWith('DRSV') || h.startsWith('DRP') || h.startsWith('DR')) return 'DR';
   if (h.startsWith('UAT')) return 'UAT';
   if (h.startsWith('DEV')) return 'DEV';
-  return 'PRD';
+  if (h.startsWith('PRD') || h.includes('PROD')) return 'PRD';
+  return '';
 }
 
 function getSequenceRank(srv) {
@@ -1979,17 +2211,35 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   }).join('');
 
   const engItems = [
-    { label: 'Andy', filterType: 'by', filterVal: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, done: enriched.filter(s => s.by === 'Andy' && s.status === 'Patched').length, color: '#0284C7' },
-    { label: 'Don', filterType: 'by', filterVal: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, done: enriched.filter(s => s.by === 'Don' && s.status === 'Patched').length, color: '#F97316' },
-    { label: 'Fung', filterType: 'by', filterVal: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, done: enriched.filter(s => s.by === 'Fung' && s.status === 'Patched').length, color: '#8B5CF6' },
-    { label: 'Unassigned', filterType: 'by', filterVal: '__UNASSIGNED__', cnt: enriched.filter(s => !s.by).length, done: 0, color: '#94A3B8' },
-    { label: 'Production (PRD)', filterType: 'env', filterVal: 'PRD', cnt: enriched.filter(s => s.env === 'PRD').length, done: enriched.filter(s => s.env === 'PRD' && s.status === 'Patched').length, color: '#1E3A5F' }
+    { label: 'Andy', filterVal: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, done: enriched.filter(s => s.by === 'Andy' && s.status === 'Patched').length, color: '#0284C7' },
+    { label: 'Don', filterVal: 'Don', cnt: enriched.filter(s => s.by === 'Don').length, done: enriched.filter(s => s.by === 'Don' && s.status === 'Patched').length, color: '#F97316' },
+    { label: 'Fung', filterVal: 'Fung', cnt: enriched.filter(s => s.by === 'Fung').length, done: enriched.filter(s => s.by === 'Fung' && s.status === 'Patched').length, color: '#8B5CF6' },
+    { label: 'Operator', filterVal: 'Operator', cnt: enriched.filter(s => s.by === 'Operator').length, done: enriched.filter(s => s.by === 'Operator' && s.status === 'Patched').length, color: '#0D9488' },
+    { label: 'Unassigned', filterVal: '__UNASSIGNED__', cnt: enriched.filter(s => !s.by).length, done: enriched.filter(s => !s.by && s.status === 'Patched').length, color: '#94A3B8' }
   ];
   document.getElementById('engineerChart').innerHTML = engItems.map(item => {
     const pct = Math.round((item.cnt / total) * 100);
     const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
     return `
-      <div class="h-bar-row" onclick="quickFilterChart('${item.filterType}', '${item.filterVal}')" title="Click to filter ${item.label}">
+      <div class="h-bar-row" onclick="quickFilterChart('by', '${item.filterVal}')" title="Click to filter Engineer: ${item.label}">
+        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  const envItems = [
+    { label: 'DEV', filterVal: 'DEV', cnt: enriched.filter(s => s.env === 'DEV').length, done: enriched.filter(s => s.env === 'DEV' && s.status === 'Patched').length, color: '#06B6D4' },
+    { label: 'UAT', filterVal: 'UAT', cnt: enriched.filter(s => s.env === 'UAT').length, done: enriched.filter(s => s.env === 'UAT' && s.status === 'Patched').length, color: '#F59E0B' },
+    { label: 'Prod (PRD)', filterVal: 'PRD', cnt: enriched.filter(s => s.env === 'PRD').length, done: enriched.filter(s => s.env === 'PRD' && s.status === 'Patched').length, color: '#1E3A5F' },
+    { label: 'DR', filterVal: 'DR', cnt: enriched.filter(s => s.env === 'DR').length, done: enriched.filter(s => s.env === 'DR' && s.status === 'Patched').length, color: '#6366F1' },
+    { label: 'Unassigned', filterVal: '__UNASSIGNED__', cnt: enriched.filter(s => !s.env).length, done: enriched.filter(s => !s.env && s.status === 'Patched').length, color: '#94A3B8' }
+  ];
+  document.getElementById('envChart').innerHTML = envItems.map(item => {
+    const pct = Math.round((item.cnt / total) * 100);
+    const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
+    return `
+      <div class="h-bar-row" onclick="quickFilterChart('env', '${item.filterVal}')" title="Click to filter Environment: ${item.label}">
         <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
       </div>
@@ -2229,7 +2479,8 @@ function renderTable() {
 
   const filtered = enriched.filter(s => {
     if (fWeek && s.weekKey !== fWeek) return false;
-    if (fEnv && s.env !== fEnv) return false;
+    if (fEnv === '__UNASSIGNED__' && s.env !== '') return false;
+    if (fEnv && fEnv !== '__UNASSIGNED__' && s.env !== fEnv) return false;
     if (fSheet && s.osSheet !== fSheet) return false;
     if (fBy === '__UNASSIGNED__' && s.by !== '') return false;
     if (fBy && fBy !== '__UNASSIGNED__' && s.by !== fBy) return false;
@@ -2288,12 +2539,18 @@ function renderTable() {
     const rowBg = weekColorMap[srv.weekKey];
     const rowCls = 'data-row' + (selectedIds.has(srv.id) ? ' selected-row' : '');
     const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : '');
-    const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : ''));
-    const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : 'tag-env-dr');
+    const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : (srv.by === 'Operator' ? 'by-operator' : '')));
+    const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : (srv.env === 'DEV' ? 'tag-seq1' : (srv.env === 'DR' ? 'tag-env-dr' : '')));
+    const envLabel = srv.env || 'UNASSIGNED';
     const tagsHtml = [
-      `<span class="smart-tag ${envBadgeCls}">${srv.env}</span>`,
+      `<span class="smart-tag ${envBadgeCls}" style="${!srv.env ? 'background:#E2E8F0;color:#475569;' : ''}">${envLabel}</span>`,
       ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
     ].join('');
+    const matchedHcList = matchHealthCheckProcedures(srv);
+    const hcPillsHtml = matchedHcList.length > 0 ? `
+      <div class="hc-badge-strip">
+        ${matchedHcList.map(hc => `<button type="button" class="hc-pill-btn" onclick="openHealthCheckDrawer(${srv.id}, '${escapeHtml(hc.code)}')" title="Open Post-Patch Health Check Guide: ${escapeHtml(hc.title)}">🩺 ${escapeHtml(hc.code)}</button>`).join('')}
+      </div>` : '';
 
     const showSuggestIcon = srv.suggestedTw && normalizeForCompare(srv.suggestedTw) !== normalizeForCompare(srv.timeWin);
     const suggestIconHtml = showSuggestIcon ? `
@@ -2328,7 +2585,15 @@ function renderTable() {
             ).join('')}
           </select>
         </td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea></td>
+        <td>
+          <div class="sop-cell-wrap">
+            <div class="sop-top-row">
+              <textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea>
+              <button type="button" class="sop-insert-btn" onclick="openHcQuickMenu(this, ${srv.id})" title="Insert Health Check Procedure name into SOP Notes">🩺</button>
+            </div>
+            ${hcPillsHtml}
+          </div>
+        </td>
         <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
         <td class="center">
           <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
@@ -2336,6 +2601,7 @@ function renderTable() {
             <option value="Andy" ${srv.by === 'Andy' ? 'selected' : ''}>Andy</option>
             <option value="Don" ${srv.by === 'Don' ? 'selected' : ''}>Don</option>
             <option value="Fung" ${srv.by === 'Fung' ? 'selected' : ''}>Fung</option>
+            <option value="Operator" ${srv.by === 'Operator' ? 'selected' : ''}>Operator</option>
           </select>
         </td>
         <td class="center">
@@ -2597,7 +2863,11 @@ function deleteServer(id) {
   });
 }
 
-function openAddModal() { document.getElementById('addModal').classList.add('open'); refreshNewServerSuggestion(); }
+function openAddModal() {
+  populateNewModalSopSelect();
+  document.getElementById('addModal').classList.add('open');
+  refreshNewServerSuggestion();
+}
 function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
 function saveNewServer() {
   const host = document.getElementById('newHost').value.trim();
@@ -2707,7 +2977,7 @@ function exportExcel() {
       return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
     function getEngineerCellStyle(by, baseHex) {
-      const map = { 'Andy': { fg: 'E0F2FE', text: '0369A1' }, 'Don': { fg: 'FFEDD5', text: 'C2410C' }, 'Fung': { fg: 'EDE9FE', text: '5B21B6' } };
+      const map = { 'Andy': { fg: 'E0F2FE', text: '0369A1' }, 'Don': { fg: 'FFEDD5', text: 'C2410C' }, 'Fung': { fg: 'EDE9FE', text: '5B21B6' }, 'Operator': { fg: 'CCFBF1', text: '0F766E' } };
       if (map[by]) return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } }, fill: { fgColor: { rgb: map[by].fg } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
       return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
@@ -2901,6 +3171,542 @@ function exportExcel() {
     XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
     showToast(`⬇ Exported styled Windows_Patching_Schedule_${dateStamp}.xlsx (All Sheets)`);
   });
+}
+
+
+/* ============================================================================
+   POST-PATCH HEALTH CHECK SOP KNOWLEDGE BASE (FROM UPLOADED GUIDES)
+   ============================================================================ */
+const HEALTH_CHECK_SOP_CATALOG = [
+  {
+    code: "HC-L21-SCP",
+    title: "Life21 SCP Servers Health Check (v1.1)",
+    system: "Life21 SCP / Tectia SSH",
+    hosts: ["PRDVSCPSRV01", "PRDVSCPSRV02", "PRDVSCPSRV03"],
+    keywords: ["hc-l21-scp", "life21 scp", "scp", "prdvscpsrv01", "prdvscpsrv02", "prdvscpsrv03", "tectia", "sshtectiaserver"],
+    summary: "Verify SSHTectiaServer & TWS services and external SSH port 22 connectivity on active Life21 SCP servers.",
+    steps: [
+      {
+        label: "PRDVSCPSRV01 (10.19.32.84) — Verify Windows Services",
+        detail: "Open Task Manager → Services tab and confirm 'SSHTectiaServer' (Tectia Server) and TWS services are automatically started and Running.",
+        cmd: "sc query SSHTectiaServer",
+        expected: "STATE: RUNNING (Startup Type: Automatic)"
+      },
+      {
+        label: "PRDVSCPSRV01 — External Port 22 Connectivity Test",
+        detail: "From an external jump host / outside network, verify SSH port 22 reachability.",
+        cmd: "telnet 10.19.32.84 22",
+        expected: "SSH banner returned / TCP port 22 connected"
+      },
+      {
+        label: "PRDVSCPSRV02 (10.19.1.242) — Verify Services & Port 22",
+        detail: "Confirm 'SSHTectiaServer' and TWS services are Running, then test port 22 from outside.",
+        cmd: "telnet 10.19.1.242 22",
+        expected: "SSHTectiaServer = Running & Port 22 reachable"
+      },
+      {
+        label: "PRDVSCPSRV03 (10.19.1.243) — Standby Node",
+        detail: "Stand By Server — health check is not required.",
+        cmd: "",
+        expected: "No action required for Standby node"
+      }
+    ]
+  },
+  {
+    code: "HC-L21-REBOOT",
+    title: "Life21 System Reboot Log Sheet (TAHOE-L21SYSRB.xls)",
+    system: "Life21 / MLife21 Core Reboot",
+    hosts: ["PRDPL21DBS03", "PRDPL21DBS04", "PRDPL21WEB03", "PRDPL21WEB04", "PRDVL21DOC03", "PRDVL21PRT03"],
+    keywords: ["hc-l21-reboot", "tahoe-l21sysrb", "l21sysrb", "sysrb", "life21 reboot", "ds_tahoe-l21sysrb002", "ds_tahoe-l21sysrb019"],
+    summary: "Mandatory ATOS Operation reboot log sheet verification when any core Life21 DB, Web, DOC, or PRT server is rebooted.",
+    steps: [
+      {
+        label: "Execute Log Sheet TAHOE-L21SYSRB.xls (ATOS Operation)",
+        detail: "Required whenever any of prdpl21dbs03, prdpl21dbs04, prdpl21web03, prdpl21web04, PRDVL21DOC03, or PRDVL21PRT03 reboots.",
+        cmd: "Log Sheet: TAHOE-L21SYSRB.xls",
+        expected: "Complete ATOS Operation reboot checklist"
+      },
+      {
+        label: "Screen Capture Task 1: DS_TAHOE-L21SYSRB002",
+        detail: "Ensure ATOS Operation captures verification screenshot for task DS_TAHOE-L21SYSRB002.",
+        cmd: "Task ID: DS_TAHOE-L21SYSRB002",
+        expected: "Screenshot captured and attached for verification"
+      },
+      {
+        label: "Screen Capture Task 2: DS_TAHOE-L21SYSRB019",
+        detail: "Ensure ATOS Operation captures verification screenshot for task DS_TAHOE-L21SYSRB019. (Note: If completed, Section A3 App Log-on check is not required.)",
+        cmd: "Task ID: DS_TAHOE-L21SYSRB019",
+        expected: "Screenshot captured and verified"
+      }
+    ]
+  },
+  {
+    code: "HC-L21-INFRA",
+    title: "Life21 & MLife21 Production Servers Health Check",
+    system: "Life21 / MLife21 Servers (NFS, Ports & FreeFlow eCompose)",
+    hosts: ["PRDVL21DBS03", "PRDVL21WEB03", "PRDVL21WEB04", "PRDVL21PRT03", "PRDVL21FPS03", "PRDVL21DOC03"],
+    keywords: ["hc-l21-infra", "prdvl21dbs03", "prdvl21web03", "prdvl21web04", "prdvl21prt03", "prdvl21fps03", "prdvl21doc03", "freeflow", "ecompose", "watched_folder"],
+    summary: "Verify NFS mount points, Oracle/SSH ports (1521/1527/22), FreeFlow eCompose services, and _Watched_Folder_._Active_ files.",
+    steps: [
+      {
+        label: "prdvl21dbs03 (10.19.32.134) — Check 4 NFS Mount Points",
+        detail: "Verify all 4 filesystems are mounted and readable: prdvl21doc03:documents -> /u01/documents, prdvl21prt03:Life21_Report -> /archive/life21/Report, prdvl21prt03:MLife21_Report -> /archive/mlife21/Report, prdvl21doc03:vipo -> /u01/vipo.",
+        cmd: "df -h /u01/documents /archive/life21/Report /archive/mlife21/Report /u01/vipo",
+        expected: "All 4 mount points mounted and readable"
+      },
+      {
+        label: "prdvl21web03 (10.19.32.130) & prdvl21web04 (10.19.32.140) — Check Mount Point",
+        detail: "Verify prdvl21doc03:documents is mounted on /u01/documents and readable on both web nodes.",
+        cmd: "df -h /u01/documents",
+        expected: "prdvl21doc03:documents mounted on /u01/documents"
+      },
+      {
+        label: "PRDVL21PRT03 (10.19.32.121) & PRDVL21FPS03 (10.19.32.118) — Port Checks",
+        detail: "From PRDVL21PRT03 test DB ports 1521 & 1527 to 10.19.32.134; from PRDVL21FPS03 test SSH port 22 to 10.19.32.134.",
+        cmd: "telnet 10.19.32.134 1521 && telnet 10.19.32.134 1527 && telnet 10.19.32.134 22",
+        expected: "All target ports connect cleanly"
+      },
+      {
+        label: "PRDVL21DOC03 (10.19.32.120) — Watched Folders & FreeFlow Services",
+        detail: "1) Screen capture C:\xvtp\users\default_user\monitor_folder\dsla\, \image\, and \macau\ to confirm '_Watched_Folder_._Active_' exists.
+2) Screen capture Task Manager → Services confirming 'FreeFlow VI eCompose Dispatch Service', 'FreeFlow VI eCompose Service', and 'FreeFlow VI eCompose Watched Folders Service' are Running.",
+        cmd: "dir C:\xvtp\users\default_user\monitor_folder\*\_Watched_Folder_._Active_",
+        expected: "All 3 _Watched_Folder_._Active_ files exist & 3 FreeFlow services Running"
+      }
+    ]
+  },
+  {
+    code: "HC-L21-APP",
+    title: "Life21 & MLife21 Application Log-on Health Check",
+    system: "Life21 (HK) & MLife21 (Macau) Web Application",
+    hosts: ["PRDPL21WEB03", "PRDPL21WEB04", "PRDVL21WEB03", "PRDVL21WEB04"],
+    keywords: ["hc-l21-app", "life21 app", "mlife21", "oper01", "moper01", "ebaotech", "life21.tahoelife.com.hk", "mlife21.tahoelife.com.mo"],
+    summary: "Verify Life21 & MLife21 login portals (skipped if HC-L21-REBOOT Log Sheet was already performed).",
+    steps: [
+      {
+        label: "Check Prerequisite: Skip if Life21 Reboot Log Sheet (Item 1) Already Done",
+        detail: "If TAHOE-L21SYSRB.xls has already been executed, this Application Log-on check is not required.",
+        cmd: "",
+        expected: "Proceed only if Reboot Log Sheet was not run"
+      },
+      {
+        label: "Life21 Application Login Check (HK)",
+        detail: "Browse https://life21.tahoelife.com.hk/ls/ (or https://10.19.32.132/ls). ATOS Ops: login with 'oper01' or 'oper02' and verify main menu. Non-ATOS Ops: enter dummy credentials and confirm red error 'Sorry, your username and password are incorrect - please try again'.",
+        cmd: "https://life21.tahoelife.com.hk/ls/",
+        expected: "Main menu loads (oper01) OR invalid password prompt appears (dummy login)"
+      },
+      {
+        label: "MLife21 Application Login Check (Macau)",
+        detail: "Browse https://mlife21.tahoelife.com.mo/ls/ (or https://10.19.32.133/ls). ATOS Ops: login with 'moper01' or 'moper02'. Non-ATOS Ops: enter dummy credentials and verify login error message.",
+        cmd: "https://mlife21.tahoelife.com.mo/ls/",
+        expected: "Main menu loads (moper01) OR invalid password prompt appears (dummy login)"
+      }
+    ]
+  },
+  {
+    code: "HC-CHEQUE21",
+    title: "Cheque21 System Health Check",
+    system: "Cheque21 Application Server",
+    hosts: ["PRDVC21APP12"],
+    keywords: ["hc-cheque21", "cheque21", "prdvc21app12", "10.19.32.122"],
+    summary: "Verify internal Oracle DB port 1521 and external RDP port 3389 connectivity on PRDVC21APP12.",
+    steps: [
+      {
+        label: "PRDVC21APP12 (10.19.32.122) — Internal DB Port Check",
+        detail: "From PRDVC21APP12, verify Oracle DB port 1521 connectivity to 10.19.32.134.",
+        cmd: "telnet 10.19.32.134 1521",
+        expected: "Port 1521 connected"
+      },
+      {
+        label: "PRDVC21APP12 — External RDP Port 3389 Check",
+        detail: "Check from OUTSIDE to ensure RDP port 3389 connectivity on 10.19.32.122.",
+        cmd: "telnet 10.19.32.122 3389",
+        expected: "Port 3389 connected"
+      }
+    ]
+  },
+  {
+    code: "HC-SUNGL",
+    title: "SUN GL System Health Check",
+    system: "SunSystems / MSSQL Database Server",
+    hosts: ["PRDVGLSDBS01"],
+    keywords: ["hc-sungl", "sun gl", "sungl", "prdvglsdbs01", "10.19.32.71", "sunsystems"],
+    summary: "Verify all 10 MSSQL & SunSystems Windows services are Running and test ports 3389, 1433, 50000, 55000.",
+    steps: [
+      {
+        label: "PRDVGLSDBS01 (10.19.32.71) — Verify 10 Core Services Running",
+        detail: "Open Task Manager → Services and verify all 10 services are Running:
+• MSSQLSERVER, SQLSERVERAGENT, ReportServer, SQLWriter
+• SunSystems Configuration Service, SunSystems Connect Server, SunSystems Report Manager Service, SunSystems Security Service, SunSystems Session Manager, SunSystemsWeb",
+        cmd: "net start | findstr /I "SQL SunSystems ReportServer"",
+        expected: "All 10 SQL & SunSystems services in Running state"
+      },
+      {
+        label: "External Port Connectivity Checks (3389, 1433, 50000, 55000)",
+        detail: "Check from OUTSIDE to ensure all 4 ports on 10.19.32.71 are listening.",
+        cmd: "telnet 10.19.32.71 3389 && telnet 10.19.32.71 1433 && telnet 10.19.32.71 50000 && telnet 10.19.32.71 55000",
+        expected: "All 4 ports (3389, 1433, 50000, 55000) respond"
+      }
+    ]
+  },
+  {
+    code: "HC-PRD-WEB",
+    title: "PRD IIS, CS Log, Corporate Website & WeChat Health Check (v20260225)",
+    system: "PRD IIS / Redmine CS Log / OpenCms / WeChat CMS",
+    hosts: ["PRDVIISAPP11", "PRDVCWSAPP11"],
+    keywords: ["hc-prd-web", "prdviisapp11", "prdvcwsapp11", "cs log", "cslog", "corporate website", "wechat", "opencms", "inforce illustration"],
+    summary: "Verify PRD IIS-1 (8443), CS Log-1 (/cs/), Corporate Website + Fund Price, OpenCms, and Tahoe WeChat CMS.",
+    steps: [
+      {
+        label: "IIS-1 (Inforce Illustration System — prdviisapp11 / 10.19.32.77)",
+        detail: "Visit https://prdviisapp11:8443/iis/admin/login from staging/jump host and submit random login/password.",
+        cmd: "https://prdviisapp11:8443/iis/admin/login",
+        expected: "Returns: 'Invalid Username, Please try again'"
+      },
+      {
+        label: "LOG-1 (Customer Services Logging System — 10.19.32.77)",
+        detail: "Visit https://log.tahoelife.com.hk/cs/ (or https://10.19.32.77/cs/) and submit random login/password.",
+        cmd: "https://log.tahoelife.com.hk/cs/",
+        expected: "Returns Redmine banner: 'Invalid user or password'"
+      },
+      {
+        label: "Corporate Website & Fund Price Page (Internet)",
+        detail: "From internet browser, verify https://www.tahoelife.com.hk/ and https://www.tahoelife.com.hk/fundprice.asp?lang=0 load properly.",
+        cmd: "https://www.tahoelife.com.hk/fundprice.asp?lang=0",
+        expected: "Main page and Unit Price (單位價格) page render normally"
+      },
+      {
+        label: "OpenCms & WeChat CMS (prdvcwsapp11 / 10.19.2.17)",
+        detail: "1) Visit https://10.19.2.17/tl/system/login (OpenCms login prompt appears).
+2) Visit https://10.19.2.17/tahoe-wechat-cms/#/pages/custom-menu and test invalid login.",
+        cmd: "https://10.19.2.17/tahoe-wechat-cms/#/pages/custom-menu",
+        expected: "OpenCms login loads; WeChat CMS returns '登入失敗，請檢查用戶名密碼'"
+      }
+    ]
+  },
+  {
+    code: "HC-HR",
+    title: "HR System (WiseWorkflow ESS) Health Check",
+    system: "HR ESS Portal",
+    hosts: [],
+    keywords: ["hc-hr", "hr_healthcheck", "hr health", "wiseworkflow", "ess.tahoelife.com.hk", "hr page"],
+    summary: "Verify HR WiseWorkflow ESS login page and test invalid account error handling.",
+    steps: [
+      {
+        label: "Open HR WiseWorkflow Login Page",
+        detail: "Navigate to https://ess.tahoelife.com.hk/WiseWorkflow/html/login.jsp and verify Tahoe Life WiseWorkflow login screen loads.",
+        cmd: "https://ess.tahoelife.com.hk/WiseWorkflow/html/login.jsp",
+        expected: "WiseWorkflow login screen renders"
+      },
+      {
+        label: "Test Non-Existent Account Login ('Testing123')",
+        detail: "Input User ID 'Testing123' with password 'xxx' and click Login.",
+        cmd: "User: Testing123 / Pass: xxx",
+        expected: "Displays 'ERROR — Invalid Account. 無效賬戶。'"
+      }
+    ]
+  },
+  {
+    code: "HC-INVESTMENT",
+    title: "Investment System (FM) Health Check",
+    system: "Investment FM Portal",
+    hosts: ["PRDVLGHSRV01"],
+    keywords: ["hc-investment", "investment", "prdvlghsrv01", "/fm"],
+    summary: "Verify Investment FM endpoint on prdvlghsrv01:443 prompts for Windows Basic Authentication.",
+    steps: [
+      {
+        label: "Access Investment FM Endpoint on prdvlghsrv01",
+        detail: "Open http://prdvlghsrv01:443/FM in browser and verify Windows Security authentication popup appears (401 Authorization Required).",
+        cmd: "http://prdvlghsrv01:443/FM",
+        expected: "Windows Security login dialog ('The server prdvlghsrv01 is asking for your user name and password')"
+      }
+    ]
+  },
+  {
+    code: "HC-UAT-IIS-CS",
+    title: "UAT System Health Check (UAT IIS & UAT CS Log)",
+    system: "UAT IIS-1 & UAT CS Log-1",
+    hosts: ["UATVIISAPP11"],
+    keywords: ["hc-uat-iis-cs", "uatviisapp11", "loguat", "csuat", "uat system health", "uat iis"],
+    summary: "Verify UAT Inforce Illustration System (8443) and UAT Customer Services Logging System (/csuat).",
+    steps: [
+      {
+        label: "UAT IIS-1 (Inforce Illustration System — uatviisapp11:8443)",
+        detail: "Visit https://uatviisapp11:8443/iis/admin/login (bypass cert warning) and submit random login/password.",
+        cmd: "https://uatviisapp11:8443/iis/admin/login",
+        expected: "Login rejected / unable to log in (returns to login form)"
+      },
+      {
+        label: "UAT CS LOG-1 (Customer Services Logging System)",
+        detail: "Visit https://loguat.tahoelife.com.hk/csuat and submit random login/password.",
+        cmd: "https://loguat.tahoelife.com.hk/csuat",
+        expected: "Returns Redmine banner: 'Invalid user or password'"
+      }
+    ]
+  },
+  {
+    code: "HC-UAT-WEB",
+    title: "Website UAT Health Check (Domain, OpenCms & Web Nodes 1 & 2)",
+    system: "UAT Corporate Website / OpenCms / Fund Upload",
+    hosts: [],
+    keywords: ["hc-uat-web", "website_uat", "website uat", "wwwuat.tahoelife.com.hk", "10.19.250.17", "10.19.249.136", "10.19.249.147"],
+    summary: "Verify UAT website via Domain, OpenCms (10.19.250.17), Web Server 1 (10.19.249.136), Web Server 2 (10.19.249.147), and Fund Upload (8443).",
+    steps: [
+      {
+        label: "UAT Main Page & Fund Price Page (via Domain)",
+        detail: "Verify https://wwwuat.tahoelife.com.hk/tl/tc/ and https://wwwuat.tahoelife.com.hk/fundprice.asp?lang=0 load properly.",
+        cmd: "https://wwwuat.tahoelife.com.hk/tl/tc/",
+        expected: "UAT main page and fund price table load"
+      },
+      {
+        label: "UAT OpenCms Login Test (10.19.250.17)",
+        detail: "Visit https://10.19.250.17/tl/system/login and test invalid login ('Testing123').",
+        cmd: "https://10.19.250.17/tl/system/login",
+        expected: "Returns: 'Login failed! The given user name / password combination is not valid.'"
+      },
+      {
+        label: "Direct Web Server 1 (10.19.249.136) & Web Server 2 (10.19.249.147)",
+        detail: "Bypass cert warning and verify /tl/tc and /fundprice.asp?lang=0 on both 10.19.249.136 and 10.19.249.147.",
+        cmd: "https://10.19.249.136/tl/tc  |  https://10.19.249.147/tl/tc",
+        expected: "Both backend web nodes serve main page & fund price page"
+      },
+      {
+        label: "Fund Uploading Portal (10.19.250.17:8443)",
+        detail: "Visit https://10.19.250.17:8443 and confirm 'Tahoe Life Content Management System (New DC)' login screen loads.",
+        cmd: "https://10.19.250.17:8443",
+        expected: "Administration Corner login screen loads"
+      }
+    ]
+  },
+  {
+    code: "HC-UAT-WECHAT",
+    title: "WeChat UAT Health Check",
+    system: "UAT Tahoe WeChat CMS",
+    hosts: [],
+    keywords: ["hc-uat-wechat", "wechat_uat", "wechat uat", "wechact uat", "10.19.250.17/tahoe-wechat-cms"],
+    summary: "Verify UAT WeChat CMS login screen and invalid login error prompt on 10.19.250.17.",
+    steps: [
+      {
+        label: "Open UAT WeChat CMS & Test Invalid Credentials",
+        detail: "Visit https://10.19.250.17/tahoe-wechat-cms/#/login and enter invalid user ('Testing123').",
+        cmd: "https://10.19.250.17/tahoe-wechat-cms/#/login",
+        expected: "Returns toast: '登入失敗，請檢查用戶名密碼'"
+      }
+    ]
+  }
+];
+
+function matchHealthCheckProcedures(srv) {
+  const sopText = String(srv.remarks1 || '').toLowerCase();
+  const hostUpper = String(srv.hostname || '').split('(')[0].trim().toUpperCase();
+  const matches = [];
+  const seenCodes = new Set();
+
+  HEALTH_CHECK_SOP_CATALOG.forEach(proc => {
+    const codeHit = sopText.includes(proc.code.toLowerCase());
+    const kwHit = proc.keywords.some(kw => kw.length >= 4 && sopText.includes(kw));
+    const hostHit = hostUpper && proc.hosts.includes(hostUpper);
+    if ((codeHit || kwHit || hostHit) && !seenCodes.has(proc.code)) {
+      seenCodes.add(proc.code);
+      matches.push(proc);
+    }
+  });
+  return matches;
+}
+
+/* Quick-Insert Menu for SOP Notes Column */
+let _hcQuickTargetServerId = null;
+function openHcQuickMenu(btnEl, serverId) {
+  _hcQuickTargetServerId = serverId;
+  const menu = document.getElementById('hcQuickMenu');
+  const searchInp = document.getElementById('hcQmSearchInput');
+  searchInp.value = '';
+  renderHcQuickMenuList();
+  menu.classList.add('open');
+
+  const rect = btnEl.getBoundingClientRect();
+  let top = rect.bottom + 4;
+  if (top + 340 > window.innerHeight - 10) top = Math.max(10, rect.top - 344);
+  let left = rect.right - 310;
+  if (left < 10) left = 10;
+  menu.style.top = Math.round(top) + 'px';
+  menu.style.left = Math.round(left) + 'px';
+  setTimeout(() => searchInp.focus(), 30);
+}
+function closeHcQuickMenu() {
+  const menu = document.getElementById('hcQuickMenu');
+  if (menu) menu.classList.remove('open');
+  _hcQuickTargetServerId = null;
+}
+function renderHcQuickMenuList() {
+  const q = (document.getElementById('hcQmSearchInput').value || '').trim().toLowerCase();
+  const listEl = document.getElementById('hcQmList');
+  const items = HEALTH_CHECK_SOP_CATALOG.filter(p =>
+    !q || p.code.toLowerCase().includes(q) || p.title.toLowerCase().includes(q) || p.system.toLowerCase().includes(q) || p.hosts.join(' ').toLowerCase().includes(q)
+  );
+  listEl.innerHTML = items.map(p => `
+    <div class="hc-qm-item" onclick="insertHcCodeIntoServer(${_hcQuickTargetServerId}, '${escapeHtml(p.code)}')">
+      <div class="hc-qm-title">🩺 [${escapeHtml(p.code)}] ${escapeHtml(p.title)}</div>
+      <div class="hc-qm-sub">${escapeHtml(p.system)}${p.hosts.length ? ' · ' + p.hosts.slice(0,3).join(', ') : ''}</div>
+    </div>
+  `).join('') || '<div style="padding:12px;text-align:center;color:#64748B;font-size:0.75rem;">No matching health check procedure</div>';
+}
+function insertHcCodeIntoServer(serverId, code) {
+  const srv = appState.servers.find(s => s.id === serverId);
+  if (!srv) return;
+  const tag = `[HC: ${code}]`;
+  const cur = String(srv.remarks1 || '').trim();
+  if (!cur.includes(code)) {
+    const nextVal = cur ? `${cur}
+${tag}` : tag;
+    updateField(serverId, 'remarks1', nextVal);
+    showToast(`🩺 Tagged ${srv.hostname} with ${tag}`);
+  } else {
+    showToast(`ℹ️ ${code} is already tagged on ${srv.hostname}`);
+  }
+  closeHcQuickMenu();
+}
+
+function populateNewModalSopSelect() {
+  const sel = document.getElementById('newSopQuickSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">+ Insert Health Check Procedure...</option>' +
+    HEALTH_CHECK_SOP_CATALOG.map(p => `<option value="${escapeHtml(p.code)}">[${escapeHtml(p.code)}] ${escapeHtml(p.title)}</option>`).join('');
+}
+function insertSopIntoNewModal(code) {
+  if (!code) return;
+  const ta = document.getElementById('newRem1');
+  const tag = `[HC: ${code}]`;
+  const cur = ta.value.trim();
+  if (!cur.includes(code)) {
+    ta.value = cur ? `${cur}
+${tag}` : tag;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('hcQuickMenu');
+  if (menu && menu.classList.contains('open') && !menu.contains(e.target) && !e.target.classList.contains('sop-insert-btn')) {
+    closeHcQuickMenu();
+  }
+});
+
+/* Interactive Post-Patch Health Check Runbook Drawer & SOP Library */
+let _activeHcServerId = null;
+let _activeHcCode = null;
+let _hcStepChecks = {};
+
+function openHealthCheckDrawer(serverId, code) {
+  _activeHcServerId = serverId;
+  const srv = appState.servers.find(s => s.id === serverId);
+  const matched = srv ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG;
+  const tabsList = matched.length > 0 ? matched : HEALTH_CHECK_SOP_CATALOG;
+  _activeHcCode = code || tabsList[0].code;
+  renderHcDrawerContent(srv, tabsList);
+  document.getElementById('hcDrawer').classList.add('open');
+}
+
+function openHealthCheckLibrary() {
+  _activeHcServerId = null;
+  _activeHcCode = HEALTH_CHECK_SOP_CATALOG[0].code;
+  renderHcDrawerContent(null, HEALTH_CHECK_SOP_CATALOG);
+  document.getElementById('hcDrawer').classList.add('open');
+}
+
+function closeHcDrawer() {
+  document.getElementById('hcDrawer').classList.remove('open');
+}
+
+function switchActiveHcTab(code) {
+  _activeHcCode = code;
+  const srv = _activeHcServerId ? appState.servers.find(s => s.id === _activeHcServerId) : null;
+  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG) : HEALTH_CHECK_SOP_CATALOG;
+  renderHcDrawerContent(srv, tabsList);
+}
+
+function toggleHcStepCheck(key, checked) {
+  _hcStepChecks[key] = checked;
+  const srv = _activeHcServerId ? appState.servers.find(s => s.id === _activeHcServerId) : null;
+  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG) : HEALTH_CHECK_SOP_CATALOG;
+  renderHcDrawerContent(srv, tabsList);
+}
+
+function renderHcDrawerContent(srv, tabsList) {
+  const proc = HEALTH_CHECK_SOP_CATALOG.find(p => p.code === _activeHcCode) || tabsList[0];
+  document.getElementById('hcDrawerSub').textContent = srv
+    ? `Post-Patch Health Check · ${srv.hostname} (${srv.ip || 'No IP'})`
+    : 'Master Post-Patch Health Check SOP Library';
+  document.getElementById('hcDrawerTitle').textContent = `[${proc.code}] ${proc.title}`;
+
+  document.getElementById('hcDrawerTabs').innerHTML = tabsList.map(t => `
+    <button type="button" class="btn btn-toggle ${t.code === proc.code ? 'active' : ''}" style="height:26px;font-size:0.71rem;" onclick="switchActiveHcTab('${escapeHtml(t.code)}')">
+      🩺 ${escapeHtml(t.code)}
+    </button>
+  `).join('');
+
+  const bodyHtml = `
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:0.77rem;color:#1E3A8A;">
+      <strong>System:</strong> ${escapeHtml(proc.system)}<br/>
+      <span>${escapeHtml(proc.summary)}</span>
+    </div>
+    ${proc.steps.map((st, idx) => {
+      const chkKey = `${_activeHcServerId || 'lib'}_${proc.code}_${idx}`;
+      const isChecked = !!_hcStepChecks[chkKey];
+      const cmdHtml = st.cmd ? `
+        <div class="hc-cmd-box">
+          <span>${escapeHtml(st.cmd)}</span>
+          <button type="button" class="hc-copy-mini" onclick="sharePointSafeCopy('${escapeHtml(st.cmd)}', '📋 Command / URL copied!', 'Copy Command')">Copy</button>
+        </div>` : '';
+      return `
+        <div class="hc-step-card ${isChecked ? 'checked' : ''}">
+          <label class="hc-step-top">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleHcStepCheck('${chkKey}', this.checked)" />
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:0.79rem;color:#0F172A;">Step ${idx + 1}: ${escapeHtml(st.label)}</div>
+              <div style="font-size:0.74rem;color:#334155;margin-top:2px;white-space:pre-line;">${escapeHtml(st.detail)}</div>
+            </div>
+          </label>
+          ${cmdHtml}
+          <div class="hc-expected-tag"><strong>Expected:</strong> ${escapeHtml(st.expected)}</div>
+        </div>
+      `;
+    }).join('')}
+  `;
+  document.getElementById('hcDrawerBody').innerHTML = bodyHtml;
+
+  const footerEl = document.getElementById('hcDrawerFooter');
+  if (srv) {
+    footerEl.innerHTML = `
+      <span style="font-size:0.73rem;color:#475569;">Status: <strong>${escapeHtml(srv.status || 'Pending')}</strong></span>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-primary" onclick="markHealthCheckPassed(${srv.id}, '${escapeHtml(proc.code)}')">✅ Mark HC Passed &amp; Log in Remarks</button>
+        <button type="button" class="btn btn-secondary" onclick="closeHcDrawer()">Close</button>
+      </div>
+    `;
+  } else {
+    footerEl.innerHTML = `
+      <span style="font-size:0.73rem;color:#475569;">${HEALTH_CHECK_SOP_CATALOG.length} SOP Procedures Loaded</span>
+      <button type="button" class="btn btn-secondary" onclick="closeHcDrawer()">Close</button>
+    `;
+  }
+}
+
+function markHealthCheckPassed(serverId, code) {
+  const srv = appState.servers.find(s => s.id === serverId);
+  if (!srv) return;
+  const stamp = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+  const note = `[HC Passed: ${code} (${stamp})]`;
+  const curRem2 = String(srv.remarks2 || '').trim();
+  if (!curRem2.includes(`HC Passed: ${code}`)) {
+    srv.remarks2 = curRem2 ? `${curRem2}
+${note}` : note;
+  }
+  if (!srv.status) srv.status = 'Patched';
+  saveState();
+  addAuditEntry(`${srv.hostname}: completed post-patch health check ${code}`);
+  renderTable();
+  closeHcDrawer();
+  showToast(`✅ Recorded ${note} on ${srv.hostname}`);
 }
 
 /* Column Drag-Resizing + Sticky Offset Sync */
