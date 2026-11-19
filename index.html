@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TLIC Windows Patching Schedule Manager</title>
-  <!-- SheetJS for .xlsx export -->
+  <!-- SheetJS for .xlsx export/import -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <!-- Firebase Compat SDKs for Realtime Database Sync -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -36,7 +36,7 @@
       line-height: 1.35;
     }
 
-    /* Top Control Bar - Sticky z-index: 40 so nothing overlaps beneath it */
+    /* Top Control Bar */
     .topbar {
       background: #ffffff;
       border-bottom: 1px solid var(--border-color);
@@ -158,7 +158,7 @@
       border-radius: 3px;
     }
 
-    /* Bulk Action Bar (appears when rows are checked) */
+    /* Bulk Action Bar */
     .bulk-bar {
       display: none;
       background: #eff6ff;
@@ -173,10 +173,10 @@
       display: flex;
     }
 
-    /* Table Wrapper - overflow-x: visible so sticky thead and tooltips work cleanly */
+    /* Table Wrapper */
     .table-container {
       width: 100%;
-      padding: 8px 10px 28px 10px;
+      padding: 8px 10px 36px 10px;
     }
 
     table {
@@ -188,7 +188,6 @@
       border: 1px solid var(--border-color);
     }
 
-    /* Fixed proportional column widths totaling 100% for 1920px viewport */
     col.col-check   { width: 2.0%; }
     col.col-no      { width: 2.3%; }
     col.col-host    { width: 8.8%; }
@@ -203,7 +202,6 @@
     col.col-by      { width: 4.8%; }
     col.col-status  { width: 5.7%; }
 
-    /* Sticky thead dynamically aligned right beneath .topbar */
     thead th {
       background-color: var(--navy-header);
       color: #ffffff;
@@ -225,7 +223,6 @@
       text-align: center;
     }
 
-    /* Week Group Header Row - Normal flow inside tbody, never hidden behind thead */
     tr.week-header-row td {
       background-color: var(--week-bg);
       border-top: 2px solid var(--week-border);
@@ -257,7 +254,6 @@
       border-radius: 4px;
     }
 
-    /* Server Rows */
     tbody tr.server-row td {
       padding: 5px 6px;
       border-bottom: 1px solid var(--border-color);
@@ -320,7 +316,7 @@
       border: 1px solid #e9d5ff;
     }
 
-    /* Compact Inline Time Window + Hover Tooltip Suggestion Icon */
+    /* Compact Time Window + Hover Icon */
     .time-cell-flex {
       display: flex;
       align-items: center;
@@ -332,13 +328,6 @@
       flex: 1;
       font-size: 11.5px;
       color: #1f2937;
-    }
-
-    .suggest-icon-wrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
     }
 
     .suggest-icon-btn {
@@ -353,6 +342,7 @@
       color: #1d4ed8;
       font-size: 11px;
       cursor: pointer;
+      flex-shrink: 0;
       transition: background 0.15s, transform 0.1s;
     }
 
@@ -362,58 +352,37 @@
       transform: scale(1.08);
     }
 
-    /* Custom Hover Tooltip */
-    .suggest-tooltip {
-      visibility: hidden;
-      opacity: 0;
-      position: absolute;
-      bottom: calc(100% + 6px);
-      right: 0;
-      width: max-content;
-      max-width: 270px;
+    /* Fixed-position Floating Tooltip (never clipped by table or overflow) */
+    .floating-tooltip {
+      display: none;
+      position: fixed;
+      max-width: 290px;
       background: #1e293b;
       color: #ffffff;
-      padding: 6px 9px;
-      border-radius: 5px;
+      padding: 7px 10px;
+      border-radius: 6px;
       font-size: 11px;
-      line-height: 1.35;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
-      z-index: 60;
+      line-height: 1.38;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      z-index: 95;
       pointer-events: none;
-      transition: opacity 0.15s ease;
-      white-space: normal;
     }
-
-    .suggest-tooltip::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      right: 6px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #1e293b transparent transparent transparent;
+    .floating-tooltip.visible {
+      display: block;
     }
-
-    .suggest-tooltip-label {
+    .floating-tooltip-label {
       display: block;
       font-size: 10px;
       color: #93c5fd;
       font-weight: 700;
       margin-bottom: 2px;
     }
-
-    .suggest-tooltip-hint {
+    .floating-tooltip-hint {
       display: block;
       font-size: 9.5px;
       color: #cbd5e1;
-      margin-top: 3px;
+      margin-top: 4px;
       font-style: italic;
-    }
-
-    .suggest-icon-wrap:hover .suggest-tooltip,
-    .suggest-icon-btn:focus + .suggest-tooltip {
-      visibility: visible;
-      opacity: 1;
     }
 
     /* Inline Form Controls inside cells */
@@ -427,19 +396,16 @@
       cursor: pointer;
     }
 
-    /* OS Sheet Colors */
     .os-patched { background-color: #dcfce7; color: #166534; border-color: #86efac; }
     .os-pending { background-color: #fef9c3; color: #854d0e; border-color: #fde047; }
     .os-failed  { background-color: #fee2e2; color: #991b1b; border-color: #fca5a5; }
     .os-na      { background-color: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 
-    /* Assignee ("By") Colors */
     .by-fung { background-color: #dbeafe; color: #1e40af; border-color: #93c5fd; }
     .by-andy { background-color: #fef3c7; color: #92400e; border-color: #fcd34d; }
     .by-don  { background-color: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
     .by-none { background-color: #ffffff; color: #64748b; }
 
-    /* Overall Status Colors */
     .st-completed { background-color: #dcfce7; color: #166534; border-color: #86efac; }
     .st-inprog    { background-color: #dbeafe; color: #1e40af; border-color: #93c5fd; }
     .st-pending   { background-color: #f8fafc; color: #475569; border-color: #cbd5e1; }
@@ -556,6 +522,9 @@
   </style>
 </head>
 <body>
+
+  <!-- Floating Tooltip Element -->
+  <div id="floatingTooltip" class="floating-tooltip"></div>
 
   <!-- Top Control Bar -->
   <div class="topbar" id="topbar">
@@ -773,15 +742,15 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'tlic_patching_schedule_v5_5';
+    const STORAGE_KEY = 'tlic_patching_schedule_v5_6';
     const LEGACY_KEYS = [
+      'tlic_patching_schedule_v5_5',
       'tlic_patching_schedule_v5_4',
       'tlic_patching_schedule_v5_3',
       'tlic_patching_schedule_v5',
       'tlic_patching_schedule'
     ];
 
-    // Default dataset matching Week 46 (14-15 Nov 2026)
     const DEFAULT_SERVERS = [
       {
         id: 'srv_1',
@@ -952,7 +921,6 @@
     let dbRef = null;
     let fbConfig = null;
 
-    // Dynamically adjust sticky thead offset to match actual topbar height
     function updateStickyOffsets() {
       const topbar = document.getElementById('topbar');
       if (topbar) {
@@ -961,7 +929,6 @@
     }
     window.addEventListener('resize', updateStickyOffsets);
 
-    // Escape HTML to prevent rendering breaks when users type <, >, &, or quotes
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
       return String(str)
@@ -972,7 +939,42 @@
         .replace(/'/g, '&#39;');
     }
 
-    // Normalize server objects from any version or Firebase structure
+    // Fixed-position tooltip controller so tooltips never clip or get cut off
+    function showSuggestTooltip(btnEl, suggestedText) {
+      const tip = document.getElementById('floatingTooltip');
+      if (!tip || !btnEl || !suggestedText) return;
+      tip.innerHTML = `
+        <span class="floating-tooltip-label">Suggested Time Slot:</span>
+        ${escapeHtml(suggestedText)}
+        <span class="floating-tooltip-hint">Click icon to apply</span>
+      `;
+      tip.classList.add('visible');
+
+      const rect = btnEl.getBoundingClientRect();
+      const tipRect = tip.getBoundingClientRect();
+
+      let top = rect.top - tipRect.height - 8;
+      if (top < 8) {
+        top = rect.bottom + 8;
+      }
+
+      let left = rect.right - tipRect.width;
+      if (left < 8) left = 8;
+      if (left + tipRect.width > window.innerWidth - 8) {
+        left = window.innerWidth - tipRect.width - 8;
+      }
+
+      tip.style.top = top + 'px';
+      tip.style.left = left + 'px';
+    }
+
+    function hideSuggestTooltip() {
+      const tip = document.getElementById('floatingTooltip');
+      if (tip) {
+        tip.classList.remove('visible');
+      }
+    }
+
     function normalizeServers(rawList) {
       if (!Array.isArray(rawList)) return [];
       return rawList.filter(Boolean).map((item, idx) => ({
@@ -998,7 +1000,6 @@
     function loadInitialData() {
       updateStickyOffsets();
 
-      // Check current key first, then migrate from any legacy localStorage keys if present
       let loaded = null;
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -1099,8 +1100,8 @@
       updateStickyOffsets();
     }
 
-    // Core Table Renderer
     function renderTable() {
+      hideSuggestTooltip();
       const tbody = document.getElementById('scheduleBody');
       const filtered = getFilteredServers();
 
@@ -1112,7 +1113,6 @@
         return;
       }
 
-      // Group servers by Week
       const groups = {};
       filtered.forEach(srv => {
         const wk = srv.week || 'Unscheduled';
@@ -1123,12 +1123,10 @@
       let html = '';
 
       Object.entries(groups).forEach(([weekName, groupServers]) => {
-        // Sort by Time Windows inside each week
         groupServers.sort((a, b) => (a.timeWindow || '').localeCompare(b.timeWindow || ''));
 
         const weekKey = encodeURIComponent(weekName);
 
-        // Week Group Header Row (colspan="13" spans all 13 columns cleanly in normal flow)
         html += `
           <tr class="week-header-row">
             <td colspan="13">
@@ -1143,7 +1141,6 @@
           </tr>
         `;
 
-        // Render all 13 <td> cells for every server row
         groupServers.forEach((srv, idx) => {
           const isChecked = selectedIds.has(srv.id);
           const envLower = (srv.env || '').toLowerCase();
@@ -1151,15 +1148,12 @@
 
           html += `
             <tr class="server-row ${isChecked ? 'selected' : ''}" data-id="${escapeHtml(srv.id)}">
-              <!-- 1. Checkbox -->
               <td class="center">
                 <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleRowSelect('${escapeHtml(srv.id)}', this.checked)" />
               </td>
 
-              <!-- 2. No -->
               <td class="center">${idx + 1}</td>
 
-              <!-- 3. Hostname + Env/Seq Badges -->
               <td>
                 <span class="hostname-text">${escapeHtml(srv.hostname)}</span>
                 <div class="badge-row">
@@ -1168,36 +1162,32 @@
                 </div>
               </td>
 
-              <!-- 4. IP Address -->
               <td><span class="ip-text">${escapeHtml(srv.ip)}</span></td>
 
-              <!-- 5. Operating System -->
               <td>${escapeHtml(srv.os)}</td>
 
-              <!-- 6. Application -->
               <td>${escapeHtml(srv.app)}</td>
 
-              <!-- 7. Maintenance Windows -->
               <td>${escapeHtml(srv.maintWindow)}</td>
 
-              <!-- 8. Time Windows (Compact single-line + Hover Icon for Suggestion) -->
               <td>
                 <div class="time-cell-flex">
                   <span class="time-value-text">${escapeHtml(srv.timeWindow)}</span>
                   ${srv.suggestWindow ? `
-                    <span class="suggest-icon-wrap">
-                      <button type="button" class="suggest-icon-btn" onclick="applySuggestedWindow('${escapeHtml(srv.id)}')" aria-label="Apply suggested time slot">⚡</button>
-                      <span class="suggest-tooltip">
-                        <span class="suggest-tooltip-label">Suggested Time Slot:</span>
-                        ${escapeHtml(srv.suggestWindow)}
-                        <span class="suggest-tooltip-hint">Click icon to apply</span>
-                      </span>
-                    </span>
+                    <button
+                      type="button"
+                      class="suggest-icon-btn"
+                      onmouseenter="showSuggestTooltip(this, decodeURIComponent('${encodeURIComponent(srv.suggestWindow)}'))"
+                      onmouseleave="hideSuggestTooltip()"
+                      onfocus="showSuggestTooltip(this, decodeURIComponent('${encodeURIComponent(srv.suggestWindow)}'))"
+                      onblur="hideSuggestTooltip()"
+                      onclick="applySuggestedWindow('${escapeHtml(srv.id)}')"
+                      aria-label="Apply suggested time slot"
+                    >⚡</button>
                   ` : ''}
                 </div>
               </td>
 
-              <!-- 9. OS Sheet -->
               <td>
                 <select class="cell-select ${getOsSheetClass(srv.osSheet)}" onchange="updateField('${escapeHtml(srv.id)}', 'osSheet', this.value)">
                   <option value="Patched" ${srv.osSheet === 'Patched' ? 'selected' : ''}>Patched</option>
@@ -1207,7 +1197,6 @@
                 </select>
               </td>
 
-              <!-- 10. SOP Notes -->
               <td>
                 <div class="sop-cell">
                   <div class="sop-text ${srv.sopNotes ? '' : 'sop-placeholder'}" onclick="editSopNote('${escapeHtml(srv.id)}')" title="Click to edit SOP Note">
@@ -1217,7 +1206,6 @@
                 </div>
               </td>
 
-              <!-- 11. Remarks -->
               <td>
                 <input
                   type="text"
@@ -1228,7 +1216,6 @@
                 />
               </td>
 
-              <!-- 12. By -->
               <td>
                 <select class="cell-select ${getByClass(srv.by)}" onchange="updateField('${escapeHtml(srv.id)}', 'by', this.value)">
                   <option value="" ${!srv.by ? 'selected' : ''}>--</option>
@@ -1238,7 +1225,6 @@
                 </select>
               </td>
 
-              <!-- 13. Status -->
               <td>
                 <select class="cell-select ${getStatusClass(srv.status || 'Pending')}" onchange="updateField('${escapeHtml(srv.id)}', 'status', this.value)">
                   <option value="Pending" ${(srv.status || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
@@ -1256,7 +1242,6 @@
       updateStickyOffsets();
     }
 
-    // Field Updates & Interactive Handlers
     function updateField(id, field, value) {
       const srv = servers.find(s => s.id === id);
       if (!srv) return;
@@ -1266,6 +1251,7 @@
     }
 
     function applySuggestedWindow(id) {
+      hideSuggestTooltip();
       const srv = servers.find(s => s.id === id);
       if (!srv || !srv.suggestWindow) return;
       srv.timeWindow = srv.suggestWindow;
@@ -1367,7 +1353,6 @@
       });
     }
 
-    // Add Server Modal
     function openAddServerModal() {
       document.getElementById('addServerModal').classList.add('open');
     }
@@ -1407,7 +1392,6 @@
       closeModal('addServerModal');
     }
 
-    // Import Excel / JSON Modal
     function openImportModal() {
       document.getElementById('importModal').classList.add('open');
     }
@@ -1461,7 +1445,6 @@
       else reader.readAsBinaryString(file);
     }
 
-    // Export to .xlsx via SheetJS
     function exportToExcel() {
       if (typeof XLSX === 'undefined') {
         alert('SheetJS library is still loading. Please try again in a moment.');
@@ -1491,7 +1474,6 @@
       XLSX.writeFile(wb, 'TLIC_Windows_Patching_Schedule.xlsx');
     }
 
-    // Firebase Realtime DB Hash Sync (#fb=base64_json) - supports both /servers and root object structures
     function initFirebaseFromHash() {
       const hash = window.location.hash;
       if (!hash.startsWith('#fb=')) return;
