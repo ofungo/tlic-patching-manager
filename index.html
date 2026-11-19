@@ -1984,7 +1984,7 @@ function buildSuggestedTimeWindow(anchorTimeWin, maintWin) {
   let datePart = `${sDay} ${sMon} ${sYr}`;
   if (sDay !== eDay || sMon !== eMon || sYr !== eYr) {
     if (sMon === eMon && sYr === eYr) datePart = `${sDay}-${eDay} ${sMon} ${sYr}`;
-    else datePart = `${sDay} ${sMon}-${eDay} ${eMon} ${eYr}`;
+    else datePart = `${sDay} ${sMon}-${eDay} ${eMon} ${sYr}`;
   }
 
   const startDayName = span.startMin >= 2880 ? 'Monday' : (span.startMin >= 1440 ? 'Sunday' : 'Saturday');
@@ -2020,7 +2020,6 @@ function showSuggestTooltip(btn) {
   const rect = btn.getBoundingClientRect();
   const tipRect = tip.getBoundingClientRect();
   const margin = 8;
-  // Place cleanly above the icon if room exists, otherwise cleanly below — never overlapping the icon
   let top = rect.top - tipRect.height - 6;
   if (top < 54) {
     top = rect.bottom + 6;
@@ -2912,7 +2911,7 @@ function exportCSVFallback() {
   enriched.forEach((srv, idx) => {
     lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
   });
-  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'Patching_Schedule_Updated.csv';
@@ -3268,9 +3267,8 @@ const HEALTH_CHECK_SOP_CATALOG = [
       },
       {
         label: "PRDVL21DOC03 (10.19.32.120) — Watched Folders & FreeFlow Services",
-        detail: "1) Screen capture C:\xvtp\users\default_user\monitor_folder\dsla\, \image\, and \macau\ to confirm '_Watched_Folder_._Active_' exists.
-2) Screen capture Task Manager → Services confirming 'FreeFlow VI eCompose Dispatch Service', 'FreeFlow VI eCompose Service', and 'FreeFlow VI eCompose Watched Folders Service' are Running.",
-        cmd: "dir C:\xvtp\users\default_user\monitor_folder\*\_Watched_Folder_._Active_",
+        detail: "1) Screen capture C:\\xvtp\\users\\default_user\\monitor_folder\\dsla\\, \\image\\, and \\macau\\ to confirm '_Watched_Folder_._Active_' exists.\n2) Screen capture Task Manager → Services confirming 'FreeFlow VI eCompose Dispatch Service', 'FreeFlow VI eCompose Service', and 'FreeFlow VI eCompose Watched Folders Service' are Running.",
+        cmd: "dir C:\\xvtp\\users\\default_user\\monitor_folder\\*\\_Watched_Folder_._Active_",
         expected: "All 3 _Watched_Folder_._Active_ files exist & 3 FreeFlow services Running"
       }
     ]
@@ -3335,10 +3333,8 @@ const HEALTH_CHECK_SOP_CATALOG = [
     steps: [
       {
         label: "PRDVGLSDBS01 (10.19.32.71) — Verify 10 Core Services Running",
-        detail: "Open Task Manager → Services and verify all 10 services are Running:
-• MSSQLSERVER, SQLSERVERAGENT, ReportServer, SQLWriter
-• SunSystems Configuration Service, SunSystems Connect Server, SunSystems Report Manager Service, SunSystems Security Service, SunSystems Session Manager, SunSystemsWeb",
-        cmd: "net start | findstr /I "SQL SunSystems ReportServer"",
+        detail: "Open Task Manager → Services and verify all 10 services are Running:\n• MSSQLSERVER, SQLSERVERAGENT, ReportServer, SQLWriter\n• SunSystems Configuration Service, SunSystems Connect Server, SunSystems Report Manager Service, SunSystems Security Service, SunSystems Session Manager, SunSystemsWeb",
+        cmd: "net start | findstr /I \"SQL SunSystems ReportServer\"",
         expected: "All 10 SQL & SunSystems services in Running state"
       },
       {
@@ -3377,8 +3373,7 @@ const HEALTH_CHECK_SOP_CATALOG = [
       },
       {
         label: "OpenCms & WeChat CMS (prdvcwsapp11 / 10.19.2.17)",
-        detail: "1) Visit https://10.19.2.17/tl/system/login (OpenCms login prompt appears).
-2) Visit https://10.19.2.17/tahoe-wechat-cms/#/pages/custom-menu and test invalid login.",
+        detail: "1) Visit https://10.19.2.17/tl/system/login (OpenCms login prompt appears).\n2) Visit https://10.19.2.17/tahoe-wechat-cms/#/pages/custom-menu and test invalid login.",
         cmd: "https://10.19.2.17/tahoe-wechat-cms/#/pages/custom-menu",
         expected: "OpenCms login loads; WeChat CMS returns '登入失敗，請檢查用戶名密碼'"
       }
@@ -3557,8 +3552,7 @@ function insertHcCodeIntoServer(serverId, code) {
   const tag = `[HC: ${code}]`;
   const cur = String(srv.remarks1 || '').trim();
   if (!cur.includes(code)) {
-    const nextVal = cur ? `${cur}
-${tag}` : tag;
+    const nextVal = cur ? `${cur}\n${tag}` : tag;
     updateField(serverId, 'remarks1', nextVal);
     showToast(`🩺 Tagged ${srv.hostname} with ${tag}`);
   } else {
@@ -3579,8 +3573,7 @@ function insertSopIntoNewModal(code) {
   const tag = `[HC: ${code}]`;
   const cur = ta.value.trim();
   if (!cur.includes(code)) {
-    ta.value = cur ? `${cur}
-${tag}` : tag;
+    ta.value = cur ? `${cur}\n${tag}` : tag;
   }
 }
 
@@ -3655,7 +3648,7 @@ function renderHcDrawerContent(srv, tabsList) {
       const cmdHtml = st.cmd ? `
         <div class="hc-cmd-box">
           <span>${escapeHtml(st.cmd)}</span>
-          <button type="button" class="hc-copy-mini" onclick="sharePointSafeCopy('${escapeHtml(st.cmd)}', '📋 Command / URL copied!', 'Copy Command')">Copy</button>
+          <button type="button" class="hc-copy-mini" data-copy-cmd="${escapeHtml(st.cmd)}" onclick="sharePointSafeCopy(this.getAttribute('data-copy-cmd'), '📋 Command / URL copied!', 'Copy Command')">Copy</button>
         </div>` : '';
       return `
         <div class="hc-step-card ${isChecked ? 'checked' : ''}">
@@ -3698,8 +3691,7 @@ function markHealthCheckPassed(serverId, code) {
   const note = `[HC Passed: ${code} (${stamp})]`;
   const curRem2 = String(srv.remarks2 || '').trim();
   if (!curRem2.includes(`HC Passed: ${code}`)) {
-    srv.remarks2 = curRem2 ? `${curRem2}
-${note}` : note;
+    srv.remarks2 = curRem2 ? `${curRem2}\n${note}` : note;
   }
   if (!srv.status) srv.status = 'Patched';
   saveState();
