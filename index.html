@@ -341,7 +341,7 @@
   <div class="controls-bar">
     <div class="stats-group" id="statsBar"></div>
     <div class="filter-group">
-      <input type="text" id="searchInput" placeholder="Search hostname, IP, app, remarks..." oninput="renderTable()" />
+      <input type="text" id="searchInput" name="table_filter_query" autocomplete="off" placeholder="Search hostname, IP, app, remarks..." oninput="renderTable()" />
       <select id="batchFilter" onchange="renderTable()">
         <option value="">All Weeks / Batches</option>
       </select>
@@ -1019,8 +1019,7 @@
         const combinedRemarks = [srv.remarks1, srv.remarks2]
           .map(v => (v || "").trim())
           .filter(Boolean)
-          .join("
-");
+          .join("\n");
 
         const vals = [
           idx + 1,
@@ -1055,8 +1054,7 @@
         });
 
         applyStatusAndAssigneeStyle(r.getCell(9), r.getCell(10), srv.by, srv.status);
-        r.height = combinedRemarks.includes("
-") || combinedRemarks.length > 50 ? 42 : 25;
+        r.height = combinedRemarks.includes("\n") || combinedRemarks.length > 50 ? 42 : 25;
       });
     });
 
@@ -1075,6 +1073,25 @@
 
   // Firebase Realtime Database initialization
   function initFirebaseFromStorage() {
+    // Support #fb=<base64> hash links automatically
+    if (window.location.hash && window.location.hash.startsWith("#fb=")) {
+      try {
+        const b64 = decodeURIComponent(window.location.hash.slice(4));
+        const decoded = JSON.parse(atob(b64));
+        const url = (decoded.databaseURL || decoded.url || "").trim().replace(/\/+$/, "");
+        const secret = (decoded.secret || decoded.path || decoded.room || "tlic-patching-q4-2026").trim();
+        if (url) {
+          localStorage.setItem(FB_CFG_KEY, JSON.stringify({ url, secret }));
+          document.getElementById("fbUrl").value = url;
+          document.getElementById("fbSecret").value = secret;
+          connectFirebase(url, secret);
+          return;
+        }
+      } catch (e) {
+        console.warn("Could not parse #fb hash:", e);
+      }
+    }
+
     const raw = localStorage.getItem(FB_CFG_KEY);
     if (!raw) return;
     try {
