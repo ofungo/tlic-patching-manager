@@ -36,7 +36,7 @@
       line-height: 1.35;
     }
 
-    /* Top Control Bar - Compact for 1920x1080 */
+    /* Top Control Bar - Sticky z-index: 40 so nothing overlaps beneath it */
     .topbar {
       background: #ffffff;
       border-bottom: 1px solid var(--border-color);
@@ -48,13 +48,14 @@
       gap: 10px;
       position: sticky;
       top: 0;
-      z-index: 30;
+      z-index: 40;
+      min-height: 44px;
     }
 
     .topbar-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .app-title {
@@ -87,7 +88,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     input[type="text"], select {
@@ -142,17 +143,40 @@
       background: #166534;
     }
 
+    .btn-danger {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
     .btn-xs {
       font-size: 11px;
       padding: 2px 7px;
       border-radius: 3px;
     }
 
-    /* Table Wrapper optimized for 1920x1080 without horizontal scroll */
+    /* Bulk Action Bar (appears when rows are checked) */
+    .bulk-bar {
+      display: none;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      padding: 6px 14px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .bulk-bar.active {
+      display: flex;
+    }
+
+    /* Table Wrapper - overflow-x: visible so sticky thead and tooltips work cleanly */
     .table-container {
       width: 100%;
-      overflow-x: auto;
-      padding: 8px 10px 24px 10px;
+      padding: 8px 10px 28px 10px;
     }
 
     table {
@@ -172,13 +196,14 @@
     col.col-os      { width: 8.5%; }
     col.col-app     { width: 6.2%; }
     col.col-maint   { width: 10.5%; }
-    col.col-time    { width: 12.0%; }
+    col.col-time    { width: 12.5%; }
     col.col-ossheet { width: 6.3%; }
-    col.col-sop     { width: 16.0%; }
+    col.col-sop     { width: 15.5%; }
     col.col-remarks { width: 10.5%; }
     col.col-by      { width: 4.8%; }
     col.col-status  { width: 5.7%; }
 
+    /* Sticky thead dynamically aligned right beneath .topbar */
     thead th {
       background-color: var(--navy-header);
       color: #ffffff;
@@ -188,8 +213,8 @@
       padding: 7px 6px;
       border-right: 1px solid rgba(255, 255, 255, 0.15);
       position: sticky;
-      top: 43px;
-      z-index: 20;
+      top: var(--topbar-height, 44px);
+      z-index: 25;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -200,12 +225,14 @@
       text-align: center;
     }
 
-    /* Week Group Header Row */
+    /* Week Group Header Row - Normal flow inside tbody, never hidden behind thead */
     tr.week-header-row td {
       background-color: var(--week-bg);
-      border-top: 1px solid var(--week-border);
+      border-top: 2px solid var(--week-border);
       border-bottom: 1px solid var(--week-border);
-      padding: 5px 8px;
+      padding: 6px 8px;
+      position: relative;
+      z-index: 1;
     }
 
     .week-header-flex {
@@ -293,20 +320,100 @@
       border: 1px solid #e9d5ff;
     }
 
-    /* Suggest Time Window Box */
-    .suggest-box {
-      margin-top: 3px;
-      padding: 2px 5px;
-      border: 1px dashed #60a5fa;
+    /* Compact Inline Time Window + Hover Tooltip Suggestion Icon */
+    .time-cell-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+    }
+
+    .time-value-text {
+      flex: 1;
+      font-size: 11.5px;
+      color: #1f2937;
+    }
+
+    .suggest-icon-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .suggest-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid #93c5fd;
       background: #eff6ff;
       color: #1d4ed8;
-      border-radius: 3px;
-      font-size: 10px;
+      font-size: 11px;
       cursor: pointer;
-      line-height: 1.25;
+      transition: background 0.15s, transform 0.1s;
     }
-    .suggest-box:hover {
+
+    .suggest-icon-btn:hover {
       background: #dbeafe;
+      border-color: #3b82f6;
+      transform: scale(1.08);
+    }
+
+    /* Custom Hover Tooltip */
+    .suggest-tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      right: 0;
+      width: max-content;
+      max-width: 270px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 6px 9px;
+      border-radius: 5px;
+      font-size: 11px;
+      line-height: 1.35;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+      z-index: 60;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      white-space: normal;
+    }
+
+    .suggest-tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      right: 6px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #1e293b transparent transparent transparent;
+    }
+
+    .suggest-tooltip-label {
+      display: block;
+      font-size: 10px;
+      color: #93c5fd;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .suggest-tooltip-hint {
+      display: block;
+      font-size: 9.5px;
+      color: #cbd5e1;
+      margin-top: 3px;
+      font-style: italic;
+    }
+
+    .suggest-icon-wrap:hover .suggest-tooltip,
+    .suggest-icon-btn:focus + .suggest-tooltip {
+      visibility: visible;
+      opacity: 1;
     }
 
     /* Inline Form Controls inside cells */
@@ -344,7 +451,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      min-height: 24px;
+      min-height: 22px;
     }
 
     .sop-text {
@@ -396,13 +503,13 @@
       outline: none;
     }
 
-    /* Modal */
+    /* Modals */
     .modal-backdrop {
       display: none;
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.45);
-      z-index: 50;
+      z-index: 80;
       align-items: center;
       justify-content: center;
     }
@@ -412,7 +519,7 @@
     .modal-box {
       background: #ffffff;
       border-radius: 6px;
-      width: 440px;
+      width: 480px;
       max-width: 95vw;
       padding: 16px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -451,14 +558,15 @@
 <body>
 
   <!-- Top Control Bar -->
-  <div class="topbar">
+  <div class="topbar" id="topbar">
     <div class="topbar-left">
       <div class="app-title">🛡️ TLIC Windows Patching Schedule Manager</div>
       <span id="syncStatus" class="sync-badge offline">Local Mode</span>
+      <span id="serverCountSummary" style="font-size:11px; color:#475569; font-weight:600;"></span>
     </div>
 
     <div class="topbar-controls">
-      <input type="text" id="searchInput" placeholder="Search hostname, IP, app..." oninput="renderTable()" style="width: 185px;" />
+      <input type="text" id="searchInput" placeholder="Search hostname, IP, app..." oninput="renderTable()" style="width: 175px;" />
 
       <select id="weekFilter" onchange="renderTable()">
         <option value="ALL">All Weeks</option>
@@ -488,8 +596,39 @@
       </select>
 
       <button class="btn" onclick="openAddServerModal()">+ Add Server</button>
+      <button class="btn" onclick="openImportModal()">📤 Import Excel/JSON</button>
       <button class="btn" onclick="openFirebaseModal()">☁️ Sync Config</button>
       <button class="btn btn-success" onclick="exportToExcel()">📥 Export .xlsx</button>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar when rows are selected -->
+  <div class="bulk-bar" id="bulkBar">
+    <div>
+      <strong id="selectedCountLabel">0 servers selected</strong>
+    </div>
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:11px; color:#334155;">Bulk Assign By:</span>
+      <select id="bulkBySelect">
+        <option value="">-- Select --</option>
+        <option value="Fung">Fung</option>
+        <option value="Andy">Andy</option>
+        <option value="Don">Don</option>
+      </select>
+      <button class="btn btn-xs btn-primary" onclick="applyBulkBy()">Apply</button>
+
+      <span style="font-size:11px; color:#334155; margin-left:6px;">Bulk Status:</span>
+      <select id="bulkStatusSelect">
+        <option value="">-- Select --</option>
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Failed">Failed</option>
+      </select>
+      <button class="btn btn-xs btn-primary" onclick="applyBulkStatus()">Apply</button>
+
+      <button class="btn btn-xs" onclick="clearSelection()">Clear Selection</button>
+      <button class="btn btn-xs btn-danger" onclick="deleteSelectedServers()">Delete Selected</button>
     </div>
   </div>
 
@@ -589,12 +728,30 @@
     </div>
   </div>
 
+  <!-- Import Excel / JSON Modal -->
+  <div id="importModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-title">Import Schedule (.xlsx / .csv / .json)</div>
+      <p style="font-size:11.5px; color:#4b5563; margin-bottom:10px;">
+        Upload an exported <code>.xlsx</code> schedule file to restore or merge your full multi-week server list.
+      </p>
+      <div class="form-group">
+        <label>Select Spreadsheet File</label>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv,.json" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('importModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="processImportFile()">Import Data</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase Config Modal -->
   <div id="firebaseModal" class="modal-backdrop">
     <div class="modal-box">
       <div class="modal-title">Firebase Realtime Database Sync</div>
       <p style="font-size:11.5px; color:#4b5563; margin-bottom:10px;">
-        Automatically parses <code>#fb=...</code> URL hash or lets you enter your Realtime Database URL and room key manually.
+        Automatically parses <code>#fb=...</code> URL hash or lets you connect manually to sync live data across the team.
       </p>
       <div class="form-group">
         <label>Database URL</label>
@@ -616,7 +773,13 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'tlic_patching_schedule_v5_4';
+    const STORAGE_KEY = 'tlic_patching_schedule_v5_5';
+    const LEGACY_KEYS = [
+      'tlic_patching_schedule_v5_4',
+      'tlic_patching_schedule_v5_3',
+      'tlic_patching_schedule_v5',
+      'tlic_patching_schedule'
+    ];
 
     // Default dataset matching Week 46 (14-15 Nov 2026)
     const DEFAULT_SERVERS = [
@@ -789,7 +952,16 @@
     let dbRef = null;
     let fbConfig = null;
 
-    // Escape HTML to prevent rendering breaks when users type <, >, &, or quotes in SOP Notes / Remarks
+    // Dynamically adjust sticky thead offset to match actual topbar height
+    function updateStickyOffsets() {
+      const topbar = document.getElementById('topbar');
+      if (topbar) {
+        document.documentElement.style.setProperty('--topbar-height', topbar.offsetHeight + 'px');
+      }
+    }
+    window.addEventListener('resize', updateStickyOffsets);
+
+    // Escape HTML to prevent rendering breaks when users type <, >, &, or quotes
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
       return String(str)
@@ -800,17 +972,54 @@
         .replace(/'/g, '&#39;');
     }
 
+    // Normalize server objects from any version or Firebase structure
+    function normalizeServers(rawList) {
+      if (!Array.isArray(rawList)) return [];
+      return rawList.filter(Boolean).map((item, idx) => ({
+        id: item.id || ('srv_' + idx + '_' + (item.hostname || 'host')),
+        week: item.week || 'Week 46 (14-15 Nov 2026)',
+        hostname: item.hostname || '',
+        env: item.env || '',
+        seq: item.seq || '',
+        ip: item.ip || '',
+        os: item.os || 'Microsoft Windows Server 2019',
+        app: item.app || '',
+        maintWindow: item.maintWindow || item.maintenanceWindow || '',
+        timeWindow: item.timeWindow || '',
+        suggestWindow: item.suggestWindow || '',
+        osSheet: item.osSheet || 'Pending',
+        sopNotes: item.sopNotes || '',
+        remarks: item.remarks || '',
+        by: item.by || '',
+        status: item.status || 'Pending'
+      }));
+    }
+
     function loadInitialData() {
+      updateStickyOffsets();
+
+      // Check current key first, then migrate from any legacy localStorage keys if present
+      let loaded = null;
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        try {
-          servers = JSON.parse(saved);
-        } catch (e) {
-          servers = structuredClone(DEFAULT_SERVERS);
-        }
-      } else {
-        servers = structuredClone(DEFAULT_SERVERS);
+        try { loaded = JSON.parse(saved); } catch (e) {}
       }
+      if (!loaded) {
+        for (const key of LEGACY_KEYS) {
+          const old = localStorage.getItem(key);
+          if (old) {
+            try {
+              const parsed = JSON.parse(old);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                loaded = parsed;
+                break;
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
+      servers = loaded && loaded.length > 0 ? normalizeServers(loaded) : structuredClone(DEFAULT_SERVERS);
       populateWeekFilter();
       initFirebaseFromHash();
       renderTable();
@@ -878,13 +1087,28 @@
       });
     }
 
-    // Core Table Renderer - Guaranteed 13 columns per row & colspan="13" on week banner
+    function updateBulkBar() {
+      const bar = document.getElementById('bulkBar');
+      const count = selectedIds.size;
+      if (count > 0) {
+        bar.classList.add('active');
+        document.getElementById('selectedCountLabel').textContent = `${count} server${count > 1 ? 's' : ''} selected`;
+      } else {
+        bar.classList.remove('active');
+      }
+      updateStickyOffsets();
+    }
+
+    // Core Table Renderer
     function renderTable() {
       const tbody = document.getElementById('scheduleBody');
       const filtered = getFilteredServers();
 
+      document.getElementById('serverCountSummary').textContent = `Showing ${filtered.length} / ${servers.length} servers`;
+      updateBulkBar();
+
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:20px; color:#6b7280;">No matching servers found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:24px; color:#6b7280;">No matching servers found.</td></tr>`;
         return;
       }
 
@@ -904,7 +1128,7 @@
 
         const weekKey = encodeURIComponent(weekName);
 
-        // Week Group Header Row (colspan="13" spans all 13 columns cleanly)
+        // Week Group Header Row (colspan="13" spans all 13 columns cleanly in normal flow)
         html += `
           <tr class="week-header-row">
             <td colspan="13">
@@ -956,14 +1180,21 @@
               <!-- 7. Maintenance Windows -->
               <td>${escapeHtml(srv.maintWindow)}</td>
 
-              <!-- 8. Time Windows (Auto-Sorts) + Suggest Pill -->
+              <!-- 8. Time Windows (Compact single-line + Hover Icon for Suggestion) -->
               <td>
-                <div>${escapeHtml(srv.timeWindow)}</div>
-                ${srv.suggestWindow ? `
-                  <div class="suggest-box" title="Click to apply suggested window" onclick="applySuggestedWindow('${escapeHtml(srv.id)}')">
-                    ⚡ Suggest: ${escapeHtml(srv.suggestWindow)}
-                  </div>
-                ` : ''}
+                <div class="time-cell-flex">
+                  <span class="time-value-text">${escapeHtml(srv.timeWindow)}</span>
+                  ${srv.suggestWindow ? `
+                    <span class="suggest-icon-wrap">
+                      <button type="button" class="suggest-icon-btn" onclick="applySuggestedWindow('${escapeHtml(srv.id)}')" aria-label="Apply suggested time slot">⚡</button>
+                      <span class="suggest-tooltip">
+                        <span class="suggest-tooltip-label">Suggested Time Slot:</span>
+                        ${escapeHtml(srv.suggestWindow)}
+                        <span class="suggest-tooltip-hint">Click icon to apply</span>
+                      </span>
+                    </span>
+                  ` : ''}
+                </div>
               </td>
 
               <!-- 9. OS Sheet -->
@@ -1022,6 +1253,7 @@
       });
 
       tbody.innerHTML = html;
+      updateStickyOffsets();
     }
 
     // Field Updates & Interactive Handlers
@@ -1055,8 +1287,7 @@
 
     function clearSopNote(id) {
       const srv = servers.find(s => s.id === id);
-      if (!srv) return;
-      if (!srv.sopNotes) return;
+      if (!srv || !srv.sopNotes) return;
       srv.sopNotes = '';
       saveData();
       renderTable();
@@ -1085,6 +1316,42 @@
         if (allSelected) selectedIds.delete(s.id);
         else selectedIds.add(s.id);
       });
+      renderTable();
+    }
+
+    function clearSelection() {
+      selectedIds.clear();
+      document.getElementById('selectAllGlobal').checked = false;
+      renderTable();
+    }
+
+    function applyBulkBy() {
+      const val = document.getElementById('bulkBySelect').value;
+      if (!val) return;
+      servers.forEach(s => {
+        if (selectedIds.has(s.id)) s.by = val;
+      });
+      saveData();
+      renderTable();
+    }
+
+    function applyBulkStatus() {
+      const val = document.getElementById('bulkStatusSelect').value;
+      if (!val) return;
+      servers.forEach(s => {
+        if (selectedIds.has(s.id)) s.status = val;
+      });
+      saveData();
+      renderTable();
+    }
+
+    function deleteSelectedServers() {
+      if (selectedIds.size === 0) return;
+      if (!confirm(`Delete ${selectedIds.size} selected server(s)?`)) return;
+      servers = servers.filter(s => !selectedIds.has(s.id));
+      selectedIds.clear();
+      populateWeekFilter();
+      saveData();
       renderTable();
     }
 
@@ -1140,6 +1407,60 @@
       closeModal('addServerModal');
     }
 
+    // Import Excel / JSON Modal
+    function openImportModal() {
+      document.getElementById('importModal').classList.add('open');
+    }
+
+    function processImportFile() {
+      const fileInput = document.getElementById('importFileInput');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please choose a file first.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          if (file.name.endsWith('.json')) {
+            const parsed = JSON.parse(e.target.result);
+            servers = normalizeServers(Array.isArray(parsed) ? parsed : (parsed.servers || []));
+          } else {
+            const wb = XLSX.read(e.target.result, { type: 'binary' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const jsonRows = XLSX.utils.sheet_to_json(ws);
+            servers = jsonRows.map((r, idx) => ({
+              id: 'srv_imp_' + idx + '_' + Date.now(),
+              week: r['Week'] || 'Week 46 (14-15 Nov 2026)',
+              hostname: r['Hostname'] || '',
+              env: r['Environment'] || '',
+              seq: r['Sequence'] || '',
+              ip: r['IP Address'] || '',
+              os: r['Operating System'] || 'Microsoft Windows Server 2019',
+              app: r['Application'] || '',
+              maintWindow: r['Maintenance Windows'] || '',
+              timeWindow: r['Time Windows'] || '',
+              suggestWindow: '',
+              osSheet: r['OS Sheet'] || 'Pending',
+              sopNotes: r['SOP Notes'] || '',
+              remarks: r['Remarks'] || '',
+              by: r['By'] || '',
+              status: r['Status'] || 'Pending'
+            }));
+          }
+          populateWeekFilter();
+          saveData();
+          renderTable();
+          closeModal('importModal');
+          alert(`Successfully imported ${servers.length} servers.`);
+        } catch (err) {
+          alert('Failed to parse file: ' + err.message);
+        }
+      };
+      if (file.name.endsWith('.json')) reader.readAsText(file);
+      else reader.readAsBinaryString(file);
+    }
+
     // Export to .xlsx via SheetJS
     function exportToExcel() {
       if (typeof XLSX === 'undefined') {
@@ -1170,7 +1491,7 @@
       XLSX.writeFile(wb, 'TLIC_Windows_Patching_Schedule.xlsx');
     }
 
-    // Firebase Realtime DB Hash Sync (#fb=base64_json)
+    // Firebase Realtime DB Hash Sync (#fb=base64_json) - supports both /servers and root object structures
     function initFirebaseFromHash() {
       const hash = window.location.hash;
       if (!hash.startsWith('#fb=')) return;
@@ -1211,14 +1532,22 @@
           firebase.initializeApp({ databaseURL });
         }
         const db = firebase.database();
+        const roomRef = db.ref(roomPath);
         dbRef = db.ref(roomPath + '/servers');
-        dbRef.on('value', snapshot => {
-          const remoteData = snapshot.val();
-          if (Array.isArray(remoteData) && remoteData.length > 0) {
-            servers = remoteData;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
-            populateWeekFilter();
-            renderTable();
+
+        roomRef.on('value', snapshot => {
+          const val = snapshot.val();
+          if (val) {
+            const candidateList = Array.isArray(val)
+              ? val
+              : (Array.isArray(val.servers) ? val.servers : (val.servers && typeof val.servers === 'object' ? Object.values(val.servers) : null));
+
+            if (candidateList && candidateList.length > 0) {
+              servers = normalizeServers(candidateList);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
+              populateWeekFilter();
+              renderTable();
+            }
           }
           badge.textContent = 'Live Sync Connected';
           badge.className = 'sync-badge connected';
