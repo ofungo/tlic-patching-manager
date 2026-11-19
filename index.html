@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.12)</title>
+<title>Windows Server Patching Schedule Manager (v5.13)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -30,53 +30,48 @@
     color: var(--text-main);
   }
 
-  /* Compact Single-Row Navy Gradient Top Header Bar (v5.10) */
+  /* Sleek Single-Row Navy Gradient Top Header Bar (v5.13) */
   header {
-    background: linear-gradient(90deg, #0F172A 0%, #1E3A5F 50%, #172E4D 100%);
+    background: linear-gradient(90deg, #0F172A 0%, #1E3A5F 52%, #172E4D 100%);
     color: #F8FAFC;
-    min-height: 46px;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-bottom: 2px solid #0284C7;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.22);
+    min-height: 46px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
   }
-  .header-cluster {
+  .header-left-group, .header-right-group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
   }
-  .title-card {
+  .title-glass-card {
     background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(148, 163, 184, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 7px;
     padding: 4px 10px;
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
-  header h1 {
+  .title-glass-card h1 {
     margin: 0;
-    font-size: 0.98rem;
+    font-size: 0.96rem;
     font-weight: 800;
     color: #FFFFFF;
-    letter-spacing: -0.15px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
+    letter-spacing: -0.1px;
     white-space: nowrap;
   }
   .ver-pill {
     font-size: 0.68rem;
     font-weight: 800;
-    background: rgba(56, 189, 248, 0.22);
-    color: #7DD3FC;
-    border: 1px solid rgba(56, 189, 248, 0.45);
+    background: #0284C7;
+    color: #FFFFFF;
     padding: 1px 7px;
     border-radius: 999px;
   }
@@ -85,76 +80,20 @@
     font-weight: 600;
     color: #CBD5E1;
     padding-left: 7px;
-    border-left: 1px solid rgba(148, 163, 184, 0.35);
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    white-space: nowrap;
   }
   @keyframes pulseLive {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.45; transform: scale(1.22); }
   }
-  .live-dot-pulse {
-    animation: pulseLive 1.8s infinite ease-in-out;
-  }
+  .live-dot-pulse { animation: pulseLive 1.8s infinite ease-in-out; }
 
-  /* Compact 30px Top Bar Buttons & Segmented Groups */
   .btn {
     border: 1px solid transparent;
     border-radius: 6px;
     padding: 0 10px;
     height: 30px;
-    font-size: 0.77rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.14s ease;
-    white-space: nowrap;
-  }
-  .btn-live-pill {
-    background: rgba(16, 185, 129, 0.18);
-    color: #A7F3D0;
-    border-color: rgba(52, 211, 153, 0.45);
-    font-weight: 700;
-  }
-  .btn-live-pill:hover {
-    background: rgba(16, 185, 129, 0.28);
-    color: #FFFFFF;
-  }
-  .btn-lock {
-    background: rgba(255, 255, 255, 0.08);
-    color: #E2E8F0;
-    border-color: rgba(148, 163, 184, 0.32);
-  }
-  .btn-lock:hover {
-    background: rgba(239, 68, 68, 0.25);
-    color: #FECACA;
-    border-color: rgba(248, 113, 113, 0.55);
-  }
-  .btn-add {
-    background: #2563EB;
-    color: #FFFFFF;
-    border-color: #3B82F6;
-    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4);
-  }
-  .btn-add:hover { background: #1D4ED8; }
-
-  /* Segmented Action Strip on Right Side */
-  .segmented-group {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.45);
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    border-radius: 7px;
-    padding: 2px;
-    gap: 2px;
-  }
-  .seg-btn {
-    height: 26px;
-    padding: 0 9px;
-    border: none;
-    border-radius: 5px;
-    background: transparent;
-    color: #E2E8F0;
     font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
@@ -164,85 +103,88 @@
     transition: all 0.14s ease;
     white-space: nowrap;
   }
-  .seg-btn:hover {
-    background: rgba(255, 255, 255, 0.14);
-    color: #FFFFFF;
+  .btn-live-pill {
+    background: rgba(16, 185, 129, 0.16);
+    color: #A7F3D0;
+    border-color: rgba(16, 185, 129, 0.45);
+    font-weight: 700;
   }
-  .seg-btn.active {
-    background: #0284C7;
-    color: #FFFFFF;
-    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.45);
+  .btn-live-pill:hover { background: rgba(16, 185, 129, 0.26); }
+  .btn-lock {
+    background: rgba(255, 255, 255, 0.1);
+    color: #E2E8F0;
+    border-color: rgba(255, 255, 255, 0.22);
   }
-  .seg-divider {
-    width: 1px;
-    height: 16px;
-    background: rgba(148, 163, 184, 0.25);
+  .btn-lock:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #FECACA;
+    border-color: rgba(248, 113, 113, 0.5);
+  }
+  .btn-add {
+    background: #2563EB;
+    color: #FFFFFF;
+    border-color: #3B82F6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  }
+  .btn-add:hover { background: #1D4ED8; }
+  .btn-seg {
+    background: rgba(255, 255, 255, 0.11);
+    color: #F8FAFC;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .btn-seg:hover { background: rgba(255, 255, 255, 0.2); }
+  .btn-seg.active {
+    background: #0EA5E9;
+    color: #FFFFFF;
+    border-color: #38BDF8;
   }
   .log-badge-pill {
-    background: #38BDF8;
+    background: #F59E0B;
     color: #0F172A;
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     font-weight: 800;
-    padding: 0 6px;
+    padding: 0 5px;
     border-radius: 999px;
-    line-height: 1.45;
   }
 
-  /* Translucent Navy Quarter Switcher Pill with Crisp White Dropdown */
   .cycle-pill-box {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    padding: 0 4px 0 8px;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    padding: 0 5px 0 8px;
     height: 30px;
-    border-radius: 7px;
-  }
-  .cycle-label-text {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #E2E8F0;
-    white-space: nowrap;
+    border-radius: 6px;
   }
   .cycle-select {
     background: #FFFFFF;
     color: #0F172A;
-    border: 1px solid #94A3B8;
-    border-radius: 5px;
+    border: none;
+    border-radius: 4px;
     padding: 0 8px;
-    height: 23px;
-    min-width: 158px;
-    font-size: 0.77rem;
+    height: 22px;
+    min-width: 155px;
+    font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
   }
-  .cycle-select:hover { border-color: #38BDF8; }
   .cycle-sub-btn {
-    height: 23px;
+    height: 22px;
     padding: 0 7px;
-    font-size: 0.72rem;
+    font-size: 0.71rem;
     font-weight: 700;
-    border-radius: 5px;
-    border: 1px solid transparent;
+    border-radius: 4px;
+    border: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    transition: all 0.14s ease;
     white-space: nowrap;
   }
-  .cycle-next-btn {
-    background: #0284C7;
-    color: #FFFFFF;
-    border-color: #38BDF8;
-  }
+  .cycle-next-btn { background: #0284C7; color: #FFFFFF; }
   .cycle-next-btn:hover { background: #0369A1; }
-  .cycle-del-btn {
-    background: rgba(239, 68, 68, 0.18);
-    color: #FECACA;
-    border-color: rgba(248, 113, 113, 0.4);
-  }
+  .cycle-del-btn { background: rgba(239, 68, 68, 0.22); color: #FECACA; }
   .cycle-del-btn:hover { background: #DC2626; color: #FFFFFF; }
 
   .btn-primary { background: #10B981; color: #fff; }
@@ -254,10 +196,10 @@
 
   .container {
     max-width: 100%;
-    padding: 6px 12px 12px;
+    padding: 7px 12px 14px;
   }
 
-  /* 4-Column Command Center Dashboard (Balanced Proportions on 1920x1080) */
+  /* 4-Column Command Center Dashboard */
   .command-deck {
     display: grid;
     grid-template-columns: 265px 1.18fr 0.96fr 1.04fr;
@@ -266,31 +208,26 @@
     align-items: stretch;
   }
   .command-deck.hidden { display: none; }
-  @media (max-width: 1360px) {
-    .command-deck { grid-template-columns: 1fr 1fr; }
-  }
-  @media (max-width: 820px) {
-    .command-deck { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 1360px) { .command-deck { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 820px) { .command-deck { grid-template-columns: 1fr; } }
 
-  /* 2x2 Readable KPI Card (Full-Height Stretch) */
   .kpi-quad-card {
     background: var(--surface);
     border: 1px solid var(--border-light);
     border-radius: 7px;
-    padding: 9px 10px;
+    padding: 8px 10px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 8px;
+    gap: 7px;
     height: 100%;
   }
   .kpi-quad-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 7px;
+    gap: 6px;
     flex: 1;
   }
   .kpi-box {
@@ -298,7 +235,7 @@
     border: 1px solid #E2E8F0;
     border-left: 3.5px solid var(--primary);
     border-radius: 5px;
-    padding: 7px 9px;
+    padding: 6px 8px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -306,37 +243,11 @@
     transition: all 0.12s ease;
   }
   .kpi-box:hover { background: #EFF6FF; border-color: #93C5FD; }
-  .kpi-box-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 0.2px;
-  }
-  .kpi-box-val {
-    font-size: 1.12rem;
-    font-weight: 800;
-    line-height: 1.15;
-    color: var(--text-main);
-  }
-  .kpi-box-sub {
-    font-size: 0.64rem;
-    color: var(--text-muted);
-  }
-  .kpi-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 2px;
-  }
-  .kpi-bar-track {
-    flex: 1;
-    height: 7px;
-    background: #E2E8F0;
-    border-radius: 999px;
-    overflow: hidden;
-    display: flex;
-  }
+  .kpi-box-label { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.2px; }
+  .kpi-box-val { font-size: 1.08rem; font-weight: 800; line-height: 1.15; color: var(--text-main); }
+  .kpi-box-sub { font-size: 0.63rem; color: var(--text-muted); }
+  .kpi-bar-row { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+  .kpi-bar-track { flex: 1; height: 7px; background: #E2E8F0; border-radius: 999px; overflow: hidden; display: flex; }
 
   .chart-card {
     background: #fff;
@@ -348,111 +259,34 @@
     flex-direction: column;
     justify-content: space-between;
   }
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-  .chart-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .chart-legend {
-    display: flex;
-    gap: 8px;
-    font-size: 0.66rem;
-    color: var(--text-muted);
-  }
-  .legend-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 2px;
-    margin-right: 3px;
-  }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .chart-title { font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px; }
+  .chart-legend { display: flex; gap: 8px; font-size: 0.66rem; color: var(--text-muted); }
+  .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
 
-  /* Weekly Stacked Bar Chart */
   .weekly-bars {
     display: flex;
     align-items: flex-end;
     gap: 5px;
-    height: 92px;
-    padding-top: 12px;
+    height: 88px;
+    padding-top: 10px;
     border-bottom: 1px solid #CBD5E1;
   }
-  .w-bar-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    min-width: 22px;
-  }
+  .w-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 22px; }
   .w-bar-col:hover .w-bar-stack { transform: scaleY(1.04); filter: brightness(0.95); }
-  .w-bar-count {
-    font-size: 0.64rem;
-    font-weight: 700;
-    color: #334155;
-    margin-bottom: 1px;
-  }
-  .w-bar-stack {
-    width: 100%;
-    max-width: 28px;
-    display: flex;
-    flex-direction: column-reverse;
-    border-radius: 3px 3px 0 0;
-    overflow: hidden;
-    transition: transform 0.15s ease;
-    background: #E2E8F0;
-  }
+  .w-bar-count { font-size: 0.64rem; font-weight: 700; color: #334155; margin-bottom: 1px; }
+  .w-bar-stack { width: 100%; max-width: 28px; display: flex; flex-direction: column-reverse; border-radius: 3px 3px 0 0; overflow: hidden; transition: transform 0.15s ease; background: #E2E8F0; }
   .seg-patched { background: #10B981; }
   .seg-pending { background: #3B82F6; }
   .seg-failed  { background: #EF4444; }
-  .w-bar-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-top: 3px;
-  }
+  .w-bar-label { font-size: 0.62rem; font-weight: 700; color: var(--text-muted); margin-top: 3px; }
 
-  /* Side-by-Side Breakdown inside Right Chart Card */
-  .h-bar-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .h-bar-row {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    cursor: pointer;
-    padding: 1px 3px;
-    border-radius: 4px;
-    transition: background 0.12s ease;
-  }
+  .h-bar-list { display: flex; flex-direction: column; gap: 4px; }
+  .h-bar-row { display: flex; flex-direction: column; gap: 1px; cursor: pointer; padding: 1px 3px; border-radius: 4px; transition: background 0.12s ease; }
   .h-bar-row:hover { background: #F1F5F9; }
-  .h-bar-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.67rem;
-    font-weight: 600;
-    color: #334155;
-  }
-  .h-bar-track {
-    height: 5px;
-    background: #E2E8F0;
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .h-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    transition: width 0.25s ease;
-  }
+  .h-bar-meta { display: flex; justify-content: space-between; font-size: 0.67rem; font-weight: 600; color: #334155; }
+  .h-bar-track { height: 5px; background: #E2E8F0; border-radius: 999px; overflow: hidden; }
+  .h-bar-fill { height: 100%; border-radius: 999px; transition: width 0.25s ease; }
 
   /* Unified Control Strip: Filter Bar + Weekly Batch Cards */
   .controls-wrapper {
@@ -465,71 +299,24 @@
     flex-direction: column;
     gap: 5px;
   }
-  .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-  }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .filter-bar input, .filter-bar select {
     padding: 4px 7px;
     border: 1px solid var(--border);
     border-radius: 5px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     background: #fff;
     color: var(--text-main);
   }
   .filter-bar input { min-width: 210px; flex: 1; }
 
-  .week-strip-wrap {
-    display: flex;
-    align-items: stretch;
-    gap: 8px;
-    padding-top: 6px;
-    border-top: 1px solid #E2E8F0;
-  }
-  .week-strip-header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
-    padding-right: 6px;
-    border-right: 1px solid #E2E8F0;
-    flex-shrink: 0;
-  }
-  .week-pills-label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: var(--primary);
-    white-space: nowrap;
-  }
-  .week-all-btn {
-    border: 1px solid #CBD5E1;
-    background: #F8FAFC;
-    color: #334155;
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.14s ease;
-  }
+  .week-strip-wrap { display: flex; align-items: stretch; gap: 8px; padding-top: 5px; border-top: 1px solid #E2E8F0; }
+  .week-strip-header { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding-right: 6px; border-right: 1px solid #E2E8F0; flex-shrink: 0; }
+  .week-pills-label { font-size: 0.67rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; color: var(--primary); white-space: nowrap; }
+  .week-all-btn { border: 1px solid #CBD5E1; background: #F8FAFC; color: #334155; border-radius: 6px; padding: 3px 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.14s ease; }
   .week-all-btn:hover { border-color: var(--accent); background: #EFF6FF; }
-  .week-all-btn.active {
-    background: #1E3A5F;
-    color: #FFFFFF;
-    border-color: #1E3A5F;
-  }
-  .week-pills {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 6px;
-    flex: 1;
-  }
+  .week-all-btn.active { background: #1E3A5F; color: #FFFFFF; border-color: #1E3A5F; }
+  .week-pills { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; flex: 1; }
   .week-batch-card {
     border: 1px solid #CBD5E1;
     border-radius: 7px;
@@ -539,76 +326,26 @@
     flex-direction: column;
     justify-content: space-between;
     gap: 3px;
-    min-width: 122px;
+    min-width: 118px;
     color: #0F172A;
     transition: all 0.14s ease;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     text-align: left;
   }
-  .week-batch-card:hover {
-    border-color: #0284C7;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(2, 132, 199, 0.14);
-  }
-  .week-batch-card.active {
-    background: #1E3A5F !important;
-    color: #FFFFFF !important;
-    border-color: #0F172A;
-    box-shadow: 0 3px 8px rgba(30, 58, 95, 0.28);
-  }
-  .wb-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-  }
-  .wb-wk-tag {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-  }
-  .wb-count-pill {
-    font-size: 0.66rem;
-    font-weight: 800;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.1);
-    color: #1E293B;
-  }
-  .week-batch-card.active .wb-count-pill {
-    background: rgba(255, 255, 255, 0.22);
-    color: #FFFFFF;
-  }
-  .wb-count-pill.done-all {
-    background: #DCFCE7;
-    color: #166534;
-  }
-  .week-batch-card.active .wb-count-pill.done-all {
-    background: #10B981;
-    color: #FFFFFF;
-  }
-  .wb-date {
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: #475569;
-    white-space: nowrap;
-  }
-  .week-batch-card.active .wb-date {
-    color: #CBD5E1;
-  }
-  .wb-progress-track {
-    width: 100%;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.12);
-    overflow: hidden;
-    display: flex;
-  }
-  .week-batch-card.active .wb-progress-track {
-    background: rgba(255, 255, 255, 0.22);
-  }
+  .week-batch-card:hover { border-color: #0284C7; transform: translateY(-1px); box-shadow: 0 3px 6px rgba(2, 132, 199, 0.14); }
+  .week-batch-card.active { background: #1E3A5F !important; color: #FFFFFF !important; border-color: #0F172A; box-shadow: 0 3px 8px rgba(30, 58, 95, 0.28); }
+  .wb-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .wb-wk-tag { font-size: 0.71rem; font-weight: 800; letter-spacing: 0.2px; }
+  .wb-count-pill { font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: rgba(15, 23, 42, 0.1); color: #1E293B; }
+  .week-batch-card.active .wb-count-pill { background: rgba(255, 255, 255, 0.22); color: #FFFFFF; }
+  .wb-count-pill.done-all { background: #DCFCE7; color: #166534; }
+  .week-batch-card.active .wb-count-pill.done-all { background: #10B981; color: #FFFFFF; }
+  .wb-date { font-size: 0.67rem; font-weight: 600; color: #475569; white-space: nowrap; }
+  .week-batch-card.active .wb-date { color: #CBD5E1; }
+  .wb-progress-track { width: 100%; height: 4px; border-radius: 999px; background: rgba(15, 23, 42, 0.12); overflow: hidden; display: flex; }
+  .week-batch-card.active .wb-progress-track { background: rgba(255, 255, 255, 0.22); }
 
-  /* Table Wrapper - Maximized Viewport Height for 1920x1080 */
+  /* Table Wrapper - Maximized Viewport Height */
   .table-card {
     background: var(--surface);
     border-radius: 7px;
@@ -642,7 +379,6 @@
     font-size: 0.73rem;
     user-select: none;
   }
-  /* Column Drag-Resize Handle */
   .col-resizer {
     position: absolute;
     top: 0;
@@ -652,11 +388,7 @@
     cursor: col-resize;
     z-index: 25;
   }
-  .col-resizer:hover, .col-resizer.resizing {
-    background: #38BDF8;
-    opacity: 0.85;
-  }
-  /* Sticky Left Columns */
+  .col-resizer:hover, .col-resizer.resizing { background: #38BDF8; opacity: 0.85; }
   thead th.sticky-col-1, tbody td.sticky-col-1 { position: sticky; left: 0; z-index: 12; }
   thead th.sticky-col-2, tbody td.sticky-col-2 { position: sticky; left: 34px; z-index: 12; }
   thead th.sticky-col-3, tbody td.sticky-col-3 { position: sticky; left: 70px; z-index: 12; box-shadow: 2px 0 4px rgba(15,23,42,0.06); }
@@ -667,37 +399,31 @@
     color: var(--banner-text);
     font-weight: 800;
     font-size: 0.82rem;
-    padding: 7px 10px;
+    padding: 6px 10px;
     border-top: 2px solid #94B0DA;
     border-bottom: 2px solid #94B0DA;
     position: sticky;
     left: 0;
   }
-  .banner-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-  }
-  .banner-count-pill {
-    background: #1E3A5F;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 700;
-  }
-  .banner-mini-btn {
-    background: rgba(255,255,255,0.75);
-    border: 1px solid #94B0DA;
-    color: #1E3A5F;
-    border-radius: 4px;
-    padding: 2px 7px;
-    font-size: 0.69rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
+  .banner-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .banner-count-pill { background: #1E3A5F; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  .banner-mini-btn { background: rgba(255,255,255,0.8); border: 1px solid #94B0DA; color: #1E3A5F; border-radius: 4px; padding: 2px 7px; font-size: 0.69rem; font-weight: 700; cursor: pointer; }
   .banner-mini-btn:hover { background: #fff; }
+  .banner-apply-suggest-btn {
+    background: #FEF3C7;
+    border: 1px solid #F59E0B;
+    color: #92400E;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.69rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 1px 2px rgba(245, 158, 11, 0.18);
+  }
+  .banner-apply-suggest-btn:hover { background: #FDE68A; color: #78350F; }
 
   tbody tr.data-row td {
     border: 1px solid var(--border);
@@ -706,30 +432,13 @@
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  tbody tr.data-row:hover td {
-    filter: brightness(0.97);
-  }
-  tbody tr.data-row.selected-row td {
-    box-shadow: inset 0 0 0 1px #0284C7;
-  }
+  tbody tr.data-row:hover td { filter: brightness(0.97); }
+  tbody tr.data-row.selected-row td { box-shadow: inset 0 0 0 1px #0284C7; }
   td.center { text-align: center; vertical-align: middle !important; }
   td.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.74rem; }
 
-  /* Smart Badges under Hostname */
-  .tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    margin-top: 2px;
-  }
-  .smart-tag {
-    font-size: 0.62rem;
-    font-weight: 700;
-    padding: 0px 4px;
-    border-radius: 3px;
-    line-height: 1.35;
-    display: inline-block;
-  }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+  .smart-tag { font-size: 0.62rem; font-weight: 700; padding: 0px 4px; border-radius: 3px; line-height: 1.35; display: inline-block; }
   .tag-env-prd { background: #FEE2E2; color: #991B1B; }
   .tag-env-uat { background: #FEF3C7; color: #92400E; }
   .tag-env-dr  { background: #E0E7FF; color: #3730A3; }
@@ -737,7 +446,6 @@
   .tag-seq2    { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
   .tag-warn    { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
 
-  /* Editable Inputs & Textareas (Expanded Full Text by Default) */
   .editable-cell {
     width: 100%;
     border: 1px solid transparent;
@@ -749,16 +457,8 @@
     border-radius: 4px;
     transition: border-color 0.15s, background 0.15s;
   }
-  .editable-cell:hover {
-    border-color: #94A3B8;
-    background: rgba(255,255,255,0.75);
-  }
-  .editable-cell:focus {
-    outline: none;
-    border-color: var(--accent);
-    background: #FFFFFF;
-    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
-  }
+  .editable-cell:hover { border-color: #94A3B8; background: rgba(255,255,255,0.75); }
+  .editable-cell:focus { outline: none; border-color: var(--accent); background: #FFFFFF; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); }
   textarea.editable-textarea {
     resize: vertical;
     height: 36px;
@@ -776,124 +476,94 @@
     overflow-y: hidden;
     resize: none;
   }
-  select.editable-cell {
+  select.editable-cell { cursor: pointer; font-weight: 600; padding: 2px 1px; }
+
+  /* Compact Inline Time Window Suggestion Icon + Single Non-Overlapping Hover Tooltip */
+  .tw-cell-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .tw-cell-wrap textarea { flex: 1; min-width: 0; }
+  .tw-suggest-anchor {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .tw-suggest-icon-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid #93C5FD;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    font-size: 0.72rem;
+    font-weight: 800;
     cursor: pointer;
-    font-weight: 600;
-    padding: 2px 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.12s ease;
+  }
+  .tw-suggest-icon-btn:hover {
+    background: #2563EB;
+    color: #FFFFFF;
+    border-color: #1D4ED8;
+    transform: scale(1.06);
+  }
+  .tw-suggest-popover {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    z-index: 95;
+    width: max-content;
+    max-width: 310px;
+    background: #0F172A;
+    color: #F8FAFC;
+    border: 1px solid #38BDF8;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.36);
+    pointer-events: none;
+    white-space: normal;
+  }
+  .tw-suggest-popover .pop-hdr {
+    font-size: 0.63rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #38BDF8;
+    margin-bottom: 2px;
+    letter-spacing: 0.3px;
+  }
+  .tw-suggest-popover .pop-val {
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+  .tw-suggest-popover .pop-hint {
+    font-size: 0.64rem;
+    color: #94A3B8;
+    margin-top: 2px;
+  }
+  .tw-suggest-anchor:hover .tw-suggest-popover,
+  .tw-suggest-icon-btn:focus + .tw-suggest-popover {
+    display: block;
   }
 
-  /* Status & Engineer Pills */
   .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
   .status-failed  { background-color: var(--failed-bg) !important; color: var(--failed-text) !important; font-weight: 700; }
   .by-andy { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
   .by-don  { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
   .by-fung { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
 
-  .del-btn {
-    background: transparent;
-    border: none;
-    color: #94A3B8;
-    cursor: pointer;
-    font-size: 0.85rem;
-    padding: 2px 4px;
-    border-radius: 4px;
-  }
+  .del-btn { background: transparent; border: none; color: #94A3B8; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; border-radius: 4px; }
   .del-btn:hover { background: #FEE2E2; color: #DC2626; }
 
-  /* Compact Inline Time Window Suggestion Icon & Floating Hover Tooltip (v5.12) */
-  .tw-cell-wrap {
-    display: flex;
-    align-items: flex-start;
-    gap: 4px;
-    width: 100%;
-  }
-  .tw-cell-wrap textarea.editable-textarea {
-    flex: 1;
-    min-width: 0;
-  }
-  .tw-suggest-icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    border-radius: 5px;
-    background: #DBEAFE;
-    color: #1D4ED8;
-    border: 1px solid #93C5FD;
-    font-size: 0.72rem;
-    font-weight: 800;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: all 0.14s ease;
-  }
-  .tw-suggest-icon:hover {
-    background: #2563EB;
-    color: #FFFFFF;
-    border-color: #1D4ED8;
-    transform: scale(1.06);
-  }
-  .tw-hover-tooltip {
-    position: fixed;
-    z-index: 1350;
-    background: #0F172A;
-    color: #F8FAFC;
-    border: 1px solid #38BDF8;
-    border-radius: 7px;
-    padding: 7px 10px;
-    font-size: 0.74rem;
-    line-height: 1.35;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
-    pointer-events: none;
-    max-width: 310px;
-    display: none;
-  }
-  .tw-hover-tooltip .tt-head {
-    font-size: 0.67rem;
-    font-weight: 800;
-    color: #38BDF8;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-bottom: 2px;
-  }
-  .tw-hover-tooltip .tt-val {
-    font-weight: 700;
-    color: #FFFFFF;
-  }
-  .tw-hover-tooltip .tt-hint {
-    font-size: 0.66rem;
-    color: #94A3B8;
-    margin-top: 2px;
-  }
-  .tw-suggest-btn {
-    margin-top: 3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px dashed #93C5FD;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: left;
-    line-height: 1.25;
-    max-width: 100%;
-    transition: all 0.14s ease;
-  }
-  .tw-suggest-btn:hover {
-    background: #DBEAFE;
-    border-style: solid;
-    border-color: #3B82F6;
-    color: #1E3A8A;
-  }
-
-  /* Floating Bulk Action Bar */
   .bulk-bar {
     position: fixed;
     bottom: 16px;
@@ -913,7 +583,7 @@
     border: 1px solid #334155;
   }
   .bulk-bar.visible { transform: translateX(-50%) translateY(0); }
-  .bulk-bar select, .bulk-bar input {
+  .bulk-bar select, .bulk-bar input[type="text"] {
     background: #1E293B;
     color: #fff;
     border: 1px solid #475569;
@@ -921,237 +591,51 @@
     padding: 5px 8px;
     font-size: 0.76rem;
   }
-  .bulk-btn {
-    background: #0284C7;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    font-size: 0.76rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
+  .bulk-btn { background: #0284C7; color: #fff; border: none; border-radius: 5px; padding: 5px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; }
   .bulk-btn:hover { background: #0369A1; }
   .bulk-btn-green { background: #10B981; }
   .bulk-btn-green:hover { background: #059669; }
   .bulk-btn-ghost { background: transparent; border: 1px solid #475569; color: #CBD5E1; }
 
-  /* Shift Handover / Audit Log Drawer */
-  .drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    display: none;
-    justify-content: flex-end;
-    z-index: 1050;
-  }
+  .drawer-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none; justify-content: flex-end; z-index: 1050; }
   .drawer-backdrop.open { display: flex; }
-  .drawer {
-    width: 420px;
-    max-width: 95vw;
-    background: #fff;
-    height: 100%;
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: -6px 0 24px rgba(0,0,0,0.18);
-  }
+  .drawer { width: 420px; max-width: 95vw; background: #fff; height: 100%; padding: 18px; display: flex; flex-direction: column; box-shadow: -6px 0 24px rgba(0,0,0,0.18); }
   .drawer h3 { margin: 0 0 6px; color: var(--primary); font-size: 1.05rem; }
-  .log-list {
-    flex: 1;
-    overflow-y: auto;
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    padding: 8px;
-    background: #F8FAFC;
-    font-size: 0.78rem;
-    margin: 10px 0;
-  }
-  .log-item {
-    padding: 6px 8px;
-    border-bottom: 1px solid #E2E8F0;
-    line-height: 1.35;
-  }
+  .log-list { flex: 1; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; padding: 8px; background: #F8FAFC; font-size: 0.78rem; margin: 10px 0; }
+  .log-item { padding: 6px 8px; border-bottom: 1px solid #E2E8F0; line-height: 1.35; }
   .log-item:last-child { border-bottom: none; }
   .log-time { color: #64748B; font-size: 0.7rem; font-weight: 600; }
 
-  /* Toast Notification */
-  .toast {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    background: #0F172A;
-    color: #fff;
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-    pointer-events: none;
-    z-index: 1100;
-  }
+  .toast { position: fixed; top: 16px; right: 16px; background: #0F172A; color: #fff; padding: 9px 14px; border-radius: 8px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-10px); transition: all 0.2s ease; pointer-events: none; z-index: 1100; }
   .toast.show { opacity: 1; transform: translateY(0); }
 
-  /* Add Server Modal */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: none; align-items: center; justify-content: center; z-index: 1000; }
   .modal-backdrop.open { display: flex; }
-  .modal {
-    background: #fff;
-    border-radius: 10px;
-    width: 560px;
-    max-width: 95vw;
-    padding: 20px 22px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-  }
+  .modal { background: #fff; border-radius: 10px; width: 560px; max-width: 95vw; padding: 20px 22px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
   .modal h3 { margin: 0 0 14px; font-size: 1.05rem; color: var(--primary); }
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .form-group { display: flex; flex-direction: column; gap: 4px; }
   .form-group.full { grid-column: span 2; }
   .form-group label { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
-  .form-group input, .form-group select, .form-group textarea {
-    padding: 8px 10px;
-    border: 1px solid #CBD5E1;
-    border-radius: 6px;
-    font-size: 0.84rem;
-    font-family: inherit;
-  }
-  .modal-actions {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
+  .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 0.84rem; font-family: inherit; }
+  .modal-actions { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
 
-  /* Team Workspace Unlock Overlay */
-  .unlock-overlay {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 55%, #0F172A 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 16px;
-  }
-  .unlock-overlay.unlocked {
-    display: none;
-  }
-  .unlock-card {
-    background: #FFFFFF;
-    border-radius: 14px;
-    width: 470px;
-    max-width: 96vw;
-    padding: 28px 26px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-    border: 1px solid #CBD5E1;
-  }
-  .unlock-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px solid #BFDBFE;
-    font-size: 0.73rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 999px;
-    margin-bottom: 10px;
-  }
-  .unlock-card h2 {
-    margin: 0 0 6px;
-    font-size: 1.25rem;
-    color: #0F172A;
-  }
-  .unlock-card p.sub {
-    margin: 0 0 18px;
-    font-size: 0.82rem;
-    color: #475569;
-    line-height: 1.45;
-  }
-  .unlock-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 13px;
-  }
-  .unlock-field label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #334155;
-  }
-  .unlock-field input {
-    padding: 9px 11px;
-    border: 1px solid #CBD5E1;
-    border-radius: 7px;
-    font-size: 0.85rem;
-    font-family: inherit;
-    background: #F8FAFC;
-  }
-  .unlock-field input:focus {
-    outline: none;
-    border-color: #0284C7;
-    background: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.16);
-  }
-  .unlock-remember {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    color: #334155;
-    margin: 6px 0 16px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .unlock-error {
-    background: #FEF2F2;
-    color: #B91C1C;
-    border: 1px solid #FECACA;
-    border-radius: 7px;
-    padding: 8px 10px;
-    font-size: 0.78rem;
-    margin-bottom: 12px;
-    display: none;
-  }
-  .unlock-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .unlock-submit {
-    width: 100%;
-    justify-content: center;
-    padding: 10px 14px;
-    font-size: 0.88rem;
-    background: #0284C7;
-    color: #fff;
-  }
+  .unlock-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 55%, #0F172A 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+  .unlock-overlay.unlocked { display: none; }
+  .unlock-card { background: #FFFFFF; border-radius: 14px; width: 470px; max-width: 96vw; padding: 28px 26px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); border: 1px solid #CBD5E1; }
+  .unlock-badge { display: inline-flex; align-items: center; gap: 6px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.73rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .unlock-card h2 { margin: 0 0 6px; font-size: 1.25rem; color: #0F172A; }
+  .unlock-card p.sub { margin: 0 0 18px; font-size: 0.82rem; color: #475569; line-height: 1.45; }
+  .unlock-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+  .unlock-field label { font-size: 0.78rem; font-weight: 700; color: #334155; }
+  .unlock-field input { padding: 9px 11px; border: 1px solid #CBD5E1; border-radius: 7px; font-size: 0.85rem; font-family: inherit; background: #F8FAFC; }
+  .unlock-field input:focus { outline: none; border-color: #0284C7; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.16); }
+  .unlock-remember { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #334155; margin: 6px 0 16px; cursor: pointer; user-select: none; }
+  .unlock-error { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; border-radius: 7px; padding: 8px 10px; font-size: 0.78rem; margin-bottom: 12px; display: none; }
+  .unlock-actions { display: flex; flex-direction: column; gap: 8px; }
+  .unlock-submit { width: 100%; justify-content: center; padding: 10px 14px; font-size: 0.88rem; background: #0284C7; color: #fff; }
   .unlock-submit:hover { background: #0369A1; }
-  .unlock-local-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 8px 12px;
-    font-size: 0.79rem;
-    background: #F1F5F9;
-    color: #475569;
-    border: 1px solid #CBD5E1;
-    box-shadow: none;
-  }
+  .unlock-local-btn { width: 100%; justify-content: center; padding: 8px 12px; font-size: 0.79rem; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; box-shadow: none; }
   .unlock-local-btn:hover { background: #E2E8F0; color: #0F172A; }
 </style>
 </head>
@@ -1163,15 +647,12 @@
     <div class="unlock-badge">🔒 Zero-Leak Protected Workspace</div>
     <h2>Windows Patching Schedule Login</h2>
     <p class="sub">No server hostnames, IPs, or database URLs are stored in this public page. Enter your <strong>Firebase Database URL</strong>, <strong>Team Secret Key</strong>, and <strong>Room</strong> to load your team schedule.</p>
-
     <div class="unlock-error" id="unlockErrorMsg"></div>
-
     <form onsubmit="event.preventDefault(); submitTeamUnlock();">
       <div class="unlock-field">
         <label>Firebase Realtime Database URL *</label>
         <input type="url" id="loginFirebaseUrl" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" required />
       </div>
-
       <div class="unlock-field">
         <label>Team Secret Key (Firebase Rule Path) *</label>
         <div style="display:flex;gap:6px;">
@@ -1179,17 +660,14 @@
           <button type="button" class="btn btn-toggle" style="padding:0 10px;" onclick="toggleSecretVisibility()" title="Show/Hide Secret Key">👁️</button>
         </div>
       </div>
-
       <div class="unlock-field">
         <label>Room Name *</label>
         <input type="text" id="loginRoomName" value="patching_schedule_main" placeholder="patching_schedule_main" required />
       </div>
-
       <label class="unlock-remember">
         <input type="checkbox" id="loginRememberMe" checked />
         <span>Remember credentials on this workstation (auto-login next time)</span>
       </label>
-
       <div class="unlock-actions">
         <button type="submit" class="btn unlock-submit">🔓 Unlock &amp; Connect Live</button>
         <button type="button" class="btn unlock-local-btn" onclick="enterOfflineEmptyMode()">Continue Offline / Demo Mode (No Cloud Sync)</button>
@@ -1198,18 +676,14 @@
   </div>
 </div>
 
-<!-- Compact Single-Row Navy Gradient Top Header Bar (v5.10) -->
+<!-- Compact Single-Row Navy Gradient Top Header Bar (v5.13) -->
 <header>
-  <!-- Left Cluster: Distinct Title Card + Live Sync & Lock -->
-  <div class="header-cluster">
-    <div class="title-card">
-      <h1>
-        <span>🛡️ Windows Server Patching Schedule Manager</span>
-        <span class="ver-pill">v5.12</span>
-        <span class="subtitle-pill">TLIC Patch Ops</span>
-      </h1>
+  <div class="header-left-group">
+    <div class="title-glass-card">
+      <h1>🛡️ Windows Server Patching Schedule Manager</h1>
+      <span class="ver-pill">v5.13</span>
+      <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
-
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
       <span id="syncDot" class="live-dot-pulse" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;"></span>
       <span id="syncStatusText">Live: patching_schedule_main</span>
@@ -1219,47 +693,36 @@
     </button>
   </div>
 
-  <!-- Right Cluster: Quarter Switcher + Primary Actions -->
-  <div class="header-cluster">
+  <div class="header-right-group">
     <div class="cycle-pill-box" title="Switch active quarter or roll over to the next quarter">
-      <span class="cycle-label-text">📆</span>
+      <span style="font-size:0.78rem;">📆</span>
       <select id="cycleSelector" class="cycle-select" onchange="switchQuarterCycle(this.value)">
         <option value="2026_Q4">2026 Q4 (Active)</option>
       </select>
-      <button type="button" class="cycle-sub-btn cycle-next-btn" onclick="openRolloverModal()" title="Clone current servers into next quarter (e.g. 2027 Q1)">
-        + Next
-      </button>
-      <button type="button" class="cycle-sub-btn cycle-del-btn" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">
-        🗑️
-      </button>
+      <button type="button" class="cycle-sub-btn cycle-next-btn" onclick="openRolloverModal()" title="Clone current servers into next quarter">+ Next</button>
+      <button type="button" class="cycle-sub-btn cycle-del-btn" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">🗑️</button>
     </div>
 
     <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
 
-    <div class="segmented-group">
-      <label class="seg-btn" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
-        <span>📂 Import</span>
-        <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
-      </label>
-      <span class="seg-divider"></span>
-      <button type="button" class="seg-btn" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
-        <span>⬇ Export .xlsx</span>
-      </button>
-      <span class="seg-divider"></span>
-      <button type="button" class="seg-btn" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
-        <span>📋 Log</span>
-        <span class="log-badge-pill" id="logCountBadge">0</span>
-      </button>
-      <span class="seg-divider"></span>
-      <button type="button" class="seg-btn active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the KPI & weekly workload charts">
-        <span>📊 Charts</span>
-      </button>
-    </div>
+    <label class="btn btn-seg" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
+      <span style="color:#34D399;">📂</span> Import
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImport(event)" />
+    </label>
+    <button type="button" class="btn btn-seg" onclick="exportExcel()" title="Export formatted multi-sheet Excel workbook">
+      <span style="color:#60A5FA;">⬇</span> Export .xlsx
+    </button>
+    <button type="button" class="btn btn-seg" onclick="openAuditDrawer()" title="View shift handover summary and recent change log">
+      📋 Log <span class="log-badge-pill" id="logCountBadge">0</span>
+    </button>
+    <button type="button" class="btn btn-seg active" id="toggleChartsBtn" onclick="toggleAnalytics()" title="Show or hide the KPI & weekly workload charts">
+      📊 Charts
+    </button>
   </div>
 </header>
 
 <div class="container">
-  <!-- 4-Card Command Deck: 2x2 KPI + Weekly Load + OS Sheet + Engineer & Env -->
+  <!-- 4-Card Command Deck -->
   <div class="command-deck" id="analyticsPanel">
     <div class="kpi-quad-card" id="kpiGrid"></div>
 
@@ -1326,7 +789,7 @@
         <option value="Patched">Patched</option>
         <option value="Failed">Failed</option>
         <option value="__PENDING__">Pending / Blank</option>
-        <option value="__ALERTS__">⚠️ Sequence / Multi-Window Only</option>
+        <option value="__ALERTS__">⚠️ Sequence / Window Mismatch Only</option>
       </select>
       <button type="button" id="toggleExpandBtn" class="btn btn-toggle active" onclick="toggleRowExpansion()">
         ↕ Compact Scroll Rows
@@ -1356,9 +819,9 @@
           <col style="width: 185px;" />  <!-- Operating System -->
           <col style="width: 82px;" />   <!-- Application -->
           <col style="width: 185px;" />  <!-- Maintenance Windows -->
-          <col style="width: 222px;" />  <!-- Time Windows -->
+          <col style="width: 230px;" />  <!-- Time Windows (Auto-Sorts + Inline Suggest Icon) -->
           <col style="width: 112px;" />  <!-- OS Sheet -->
-          <col style="width: 262px;" />  <!-- SOP Notes -->
+          <col style="width: 254px;" />  <!-- SOP Notes -->
           <col style="width: 135px;" />  <!-- Remarks -->
           <col style="width: 70px;" />   <!-- By -->
           <col style="width: 84px;" />   <!-- Status -->
@@ -1406,10 +869,9 @@
   </select>
   <button class="bulk-btn bulk-btn-green" onclick="applyBulkUpdate()">✓ Apply By/Status</button>
   <span style="color:#475569;">|</span>
-  <input type="text" id="bulkTimeWin" placeholder="Target Weekend Date or Time Window..." list="timeSuggestions" style="width:245px;" />
-  <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.73rem;color:#CBD5E1;cursor:pointer;user-select:none;" title="When moving to a weekend date (e.g. 28-29 Nov 2026), automatically combine with each server's own Maintenance Windows">
-    <input type="checkbox" id="bulkAutoMaint" checked />
-    <span>Auto-match Maint. Win</span>
+  <input type="text" id="bulkTimeWin" placeholder="Target Weekend / Time Window..." list="timeSuggestions" style="width:225px;" />
+  <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.73rem;color:#CBD5E1;cursor:pointer;" title="Automatically combine the target weekend date with each selected server's Maintenance Windows">
+    <input type="checkbox" id="bulkAutoMatchMaint" checked /> Auto-match Maint. Win
   </label>
   <button class="bulk-btn" onclick="moveSelectedToSchedule()" title="Move selected servers into this new Time Window">📅 Move to Schedule</button>
   <button class="bulk-btn" style="background:#8B5CF6;" onclick="copySelectedToSchedule()" title="Duplicate selected servers into this new Time Window (keeps original rows)">📑 Copy to New Schedule</button>
@@ -1468,12 +930,12 @@
       </div>
       <div class="form-group">
         <label>Maintenance Windows</label>
-        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" oninput="updateNewModalTimeSuggestion()" />
+        <input type="text" id="newMaint" value="Sunday 00:00 – 03:00" oninput="refreshNewServerSuggestion()" />
       </div>
       <div class="form-group full">
         <label>Time Windows * (Determines Week &amp; Auto-Sort Position)</label>
-        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" oninput="updateNewModalTimeSuggestion()" />
-        <div id="newModalSuggestWrap" style="margin-top:3px;"></div>
+        <input type="text" id="newTime" value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00" list="timeSuggestions" oninput="refreshNewServerSuggestion()" />
+        <div id="newTimeSuggestBox" style="margin-top:4px;display:none;"></div>
       </div>
       <div class="form-group">
         <label>Assigned By</label>
@@ -1505,28 +967,24 @@
 </div>
 
 <datalist id="timeSuggestions">
-  <option value="14-15 Nov 2026 -Saturday -10:00 - Sunday 07:30">
-  <option value="28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00">
-  <option value="28-29 Nov 2026 -Saturday -10:00 - Sunday 07:30">
-  <option value="5 DEC 2026 - Saturday 10:00 – 14:00">
+  <option value="14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30">
+  <option value="28-30 Nov 2026 - Saturday 13:00 - Monday 08:30">
+  <option value="28-29 Nov 2026 - Saturday - 10:00 - Sunday 07:30">
+  <option value="5 Dec 2026 - Saturday 10:00 - 14:00">
   <option value="13 Dec 2026 - Sunday 00:00 - 03:00">
   <option value="13 Dec 2026 - Sunday 00:00 - 07:30">
   <option value="10 Jan 2027 - Sunday 00:00 - 03:00">
-  <option value="17 Jan 2027 - Sunday 10:00 -  07:30">
   <option value="17 Jan 2027 - Sunday 10:00 - 13:30">
   <option value="24 Jan 2027 - Sunday 00:00 - 03:00">
-  <option value="30 Jan 2027 - Sunday 00:00 - 03.00">
   <option value="31 Jan 2027 - Sunday 00:00 - 03:00">
-  <option value="13 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
-  <option value="14 Feb 2027 - Sunday - 00:00 - Sunday 03:00">
-  <option value="21 Feb 2027 - Sunday - 00:00 - 03:00">
-  <option value="21 Feb 2027 - Sunday - 10:00 - 07:00">
-  <option value="27 Feb 2027 - Saturday - 10:00 - Sunday 03:00">
-  <option value="27 Feb 2027 - Sunday - 10:00 - 03:00">
-  <option value="6-7 Mar 2027 - Saturday - 10:00 - Sunday 03:00">
+  <option value="13-14 Feb 2027 - Saturday 10:00 - Sunday 03:00">
+  <option value="14 Feb 2027 - Sunday 00:00 - 03:00">
+  <option value="21 Feb 2027 - Sunday 00:00 - 03:00">
+  <option value="27-28 Feb 2027 - Saturday 10:00 - Sunday 03:00">
+  <option value="6-7 Mar 2027 - Saturday 10:00 - Sunday 03:00">
 </datalist>
 
-<!-- Custom SharePoint-Safe Confirm Modal -->
+<!-- Custom Confirm Modal -->
 <div class="modal-backdrop" id="confirmModal" style="z-index:1200;">
   <div class="modal" style="width:410px;">
     <h3 id="confirmTitle" style="margin-bottom:8px;">Confirm Action</h3>
@@ -1538,7 +996,7 @@
   </div>
 </div>
 
-<!-- SharePoint-Safe Clipboard Fallback Modal -->
+<!-- Clipboard Fallback Modal -->
 <div class="modal-backdrop" id="copyFallbackModal" style="z-index:1250;">
   <div class="modal" style="width:460px;">
     <h3 id="copyModalTitle" style="margin-bottom:6px;">📋 Copy List</h3>
@@ -1587,7 +1045,7 @@
   </div>
 </div>
 
-<!-- Next Quarter Cycle Rollover Modal (e.g., 2026 Q4 -> 2027 Q1) -->
+<!-- Next Quarter Cycle Rollover Modal -->
 <div class="modal-backdrop" id="rolloverModal" style="z-index:1230;" onclick="if(event.target===this) closeRolloverModal()">
   <div class="modal" style="width:520px;">
     <h3 style="margin-bottom:6px;">🚀 Rollover / Clone Schedule to Next Quarter</h3>
@@ -1633,7 +1091,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="tw-hover-tooltip" id="twHoverTooltip"></div>
 
 <script>
 const DEFAULT_DATA = {
@@ -1645,9 +1102,10 @@ const DEFAULT_DATA = {
       os: "Microsoft Windows Server 2019",
       app: "Portal IIS",
       maintWin: "Saturday 10:00 - Sunday 07:30",
-      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday 10:00 - Sunday 07:30",
       osSheet: "Win SVR 2019",
-      remarks1: "1st Sequence: Drain NLB node before reboot.\nVerify HTTPS health check endpoint after patch.",
+      remarks1: "1st Sequence: Drain NLB node before reboot.
+Verify HTTPS health check endpoint after patch.",
       remarks2: "KB5046615 installed cleanly",
       by: "Andy",
       status: "Patched"
@@ -1659,7 +1117,7 @@ const DEFAULT_DATA = {
       os: "Microsoft Windows Server 2019",
       app: "Portal IIS",
       maintWin: "Saturday 10:00 - Sunday 07:30",
-      timeWin: "14-15 Nov 2026 - Saturday - 10:00 - Sunday 07:30",
+      timeWin: "14-15 Nov 2026 - Saturday 12:00 - Sunday 04:00",
       osSheet: "Win SVR 2019",
       remarks1: "2nd Sequence: Patch only after PRDAPPWEB01 is back online and serving traffic.",
       remarks2: "",
@@ -1672,10 +1130,11 @@ const DEFAULT_DATA = {
       ip: "10.19.40.25",
       os: "Microsoft Windows Server 2022",
       app: "MSSQL AlwaysOn",
-      maintWin: "Sunday 00:00 - 03:00",
-      timeWin: "13 Dec 2026 - Sunday 00:00 - 03:00",
+      maintWin: "Saturday 13:00 - Monday 08:30",
+      timeWin: "28-29 Nov 2026 -Saturday - 13:00 - Sunday 23:00",
       osSheet: "Win SRV 2022",
-      remarks1: "Failover AG role to secondary node before Windows Update.\nConfirm SQL Agent jobs resume post-reboot.",
+      remarks1: "Nov 28-29 follow Maintenance Windows.
+Failover AG role to secondary node before Windows Update.",
       remarks2: "",
       by: "Fung",
       status: ""
@@ -1686,8 +1145,8 @@ const DEFAULT_DATA = {
       ip: "10.29.18.44",
       os: "Microsoft Windows Server 2016",
       app: "Payment Gateway",
-      maintWin: "Sunday 00:00 - 03:00",
-      timeWin: "10 Jan 2027 - Sunday 00:00 - 03:00",
+      maintWin: "Sunday 00:00 - 07:30",
+      timeWin: "28-29 Nov 2026 - Saturday 10:00 - Sunday 03:00",
       osSheet: "Win SVR 2016",
       remarks1: "Stop Tomcat & MQ services prior to patching; verify queue depth = 0.",
       remarks2: "Pending vendor sign-off",
@@ -1701,7 +1160,7 @@ const DEFAULT_DATA = {
       os: "Microsoft Windows Server 2019",
       app: "AD / DNS / WSUS",
       maintWin: "Saturday 10:00 - Sunday 03:00",
-      timeWin: "13 Feb 2027 - Saturday - 10:00 - Sunday 03:00",
+      timeWin: "13-14 Feb 2027 - Saturday 10:00 - Sunday 03:00",
       osSheet: "Ripen Infra SVR",
       remarks1: "Run dcdiag /v and repadmin /replsummary after reboot.",
       remarks2: "",
@@ -1725,7 +1184,7 @@ const FB_CFG_KEY = 'patching_schedule_firebase_cfg_v54';
 let appState = loadState();
 let auditLogs = loadAuditLogs();
 let selectedIds = new Set();
-let isExpandedMode = true; // Default: Expand Full Text is active
+let isExpandedMode = true;
 let chartsVisible = true;
 
 let fbConfig = loadFirebaseConfig();
@@ -1750,7 +1209,6 @@ function loadFirebaseConfig() {
       }
     }
   } catch (e) {}
-
   try {
     const sessRaw = sessionStorage.getItem(FB_CFG_KEY);
     if (sessRaw) {
@@ -1758,7 +1216,6 @@ function loadFirebaseConfig() {
       if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
     }
   } catch (e) {}
-
   try {
     const raw = localStorage.getItem(FB_CFG_KEY);
     if (raw) {
@@ -1766,7 +1223,6 @@ function loadFirebaseConfig() {
       if (parsed && parsed.url && parsed.secret && parsed.room) return parsed;
     }
   } catch (e) {}
-
   return { url: '', secret: '', room: 'patching_schedule_main' };
 }
 
@@ -1867,10 +1323,7 @@ function lockAndForgetWorkspace() {
     'Lock & Clear',
     '#DC2626',
     () => {
-      if (fbEventSource) {
-        fbEventSource.close();
-        fbEventSource = null;
-      }
+      if (fbEventSource) { fbEventSource.close(); fbEventSource = null; }
       localStorage.removeItem(FB_CFG_KEY);
       sessionStorage.removeItem(FB_CFG_KEY);
       localStorage.removeItem(STORAGE_KEY);
@@ -1899,12 +1352,7 @@ function setSyncIndicator(state, text) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncStatusText');
   if (!dot || !label) return;
-  const colors = {
-    live: '#10B981',
-    syncing: '#38BDF8',
-    error: '#EF4444',
-    local: '#10B981'
-  };
+  const colors = { live: '#10B981', syncing: '#38BDF8', error: '#EF4444', local: '#10B981' };
   dot.style.background = colors[state] || '#10B981';
   label.textContent = text;
 }
@@ -1942,53 +1390,34 @@ async function pushStateToFirebase() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     setSyncIndicator('live', `Live: ${fbConfig.room}`);
   } catch (err) {
-    console.error('Firebase sync error:', err);
     setSyncIndicator('error', 'Sync Error (Check Rules)');
     showToast('⚠️ Firebase sync failed: ' + err.message);
   }
 }
 
 function startFirebaseRealtimeStream() {
-  if (fbEventSource) {
-    fbEventSource.close();
-    fbEventSource = null;
-  }
+  if (fbEventSource) { fbEventSource.close(); fbEventSource = null; }
   const endpoint = getFirebaseEndpoint();
   if (!endpoint) {
     setSyncIndicator('live', `Live: ${fbConfig.room || 'patching_schedule_main'}`);
     return;
   }
-
   setSyncIndicator('syncing', 'Connecting...');
   try {
     fbEventSource = new EventSource(endpoint);
-
     const handleStreamPayload = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
         if (!msg || msg.data === undefined) return;
         if (msg.path === '/') {
-          if (msg.data === null) {
-            pushStateToFirebase();
-            return;
-          }
-          if (msg.data.updatedBy === clientSessionId) {
-            setSyncIndicator('live', `Live: ${fbConfig.room}`);
-            return;
-          }
+          if (msg.data === null) { pushStateToFirebase(); return; }
+          if (msg.data.updatedBy === clientSessionId) { setSyncIndicator('live', `Live: ${fbConfig.room}`); return; }
           if (Array.isArray(msg.data.servers)) {
             isApplyingRemoteUpdate = true;
-            if (msg.data.cycles) {
-              appState.cycles = msg.data.cycles;
-              appState.activeCycle = msg.data.activeCycle || appState.activeCycle;
-            }
+            if (msg.data.cycles) { appState.cycles = msg.data.cycles; appState.activeCycle = msg.data.activeCycle || appState.activeCycle; }
             appState.servers = msg.data.servers;
             ensureCyclesStructure();
-            if (Array.isArray(msg.data.auditLogs)) {
-              auditLogs = msg.data.auditLogs;
-              localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
-              updateAuditUI();
-            }
+            if (Array.isArray(msg.data.auditLogs)) { auditLogs = msg.data.auditLogs; localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs)); updateAuditUI(); }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
             renderTable();
             isApplyingRemoteUpdate = false;
@@ -1999,16 +1428,10 @@ function startFirebaseRealtimeStream() {
           fetch(endpoint).then(r => r.json()).then(remoteData => {
             if (remoteData && Array.isArray(remoteData.servers) && remoteData.updatedBy !== clientSessionId) {
               isApplyingRemoteUpdate = true;
-              if (remoteData.cycles) {
-                appState.cycles = remoteData.cycles;
-                appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
-              }
+              if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; }
               appState.servers = remoteData.servers;
               ensureCyclesStructure();
-              if (Array.isArray(remoteData.auditLogs)) {
-                auditLogs = remoteData.auditLogs;
-                updateAuditUI();
-              }
+              if (Array.isArray(remoteData.auditLogs)) { auditLogs = remoteData.auditLogs; updateAuditUI(); }
               localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
               renderTable();
               isApplyingRemoteUpdate = false;
@@ -2019,16 +1442,11 @@ function startFirebaseRealtimeStream() {
         }
       } catch (parseErr) {}
     };
-
     fbEventSource.addEventListener('put', handleStreamPayload);
     fbEventSource.addEventListener('patch', handleStreamPayload);
     fbEventSource.onopen = () => setSyncIndicator('live', `Live: ${fbConfig.room}`);
-    fbEventSource.onerror = () => {
-      setSyncIndicator('error', 'Reconnecting...');
-    };
-  } catch (e) {
-    setSyncIndicator('error', 'Stream Error');
-  }
+    fbEventSource.onerror = () => setSyncIndicator('error', 'Reconnecting...');
+  } catch (e) { setSyncIndicator('error', 'Stream Error'); }
 }
 
 function openSyncModal() {
@@ -2038,56 +1456,37 @@ function openSyncModal() {
   updateShareLinkPreview();
   document.getElementById('syncModal').classList.add('open');
 }
-
-function closeSyncModal() {
-  document.getElementById('syncModal').classList.remove('open');
-}
-
+function closeSyncModal() { document.getElementById('syncModal').classList.remove('open'); }
 function updateShareLinkPreview() {
   const url = document.getElementById('firebaseDbUrlInput').value.trim();
   const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
   const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
   const box = document.getElementById('shareLinkBox');
-  if (!url || !secret) {
-    box.style.display = 'none';
-    return;
-  }
+  if (!url || !secret) { box.style.display = 'none'; return; }
   const encoded = encodeURIComponent(btoa(JSON.stringify({ url: url.replace(/\/$/, ''), secret, room })));
   const baseHref = window.location.href.split('#')[0];
   document.getElementById('shareTeamUrlOutput').value = `${baseHref}#fb=${encoded}`;
   box.style.display = 'block';
 }
-
 function copyTeamShareUrl() {
   const val = document.getElementById('shareTeamUrlOutput').value;
-  sharePointSafeCopy(val, '🔗 Team live-sync URL copied! Share this link with Andy & Don.', '🔗 Team Share Link');
+  sharePointSafeCopy(val, '🔗 Team live-sync URL copied!', '🔗 Team Share Link');
 }
-
 async function saveAndConnectFirebase() {
   const url = document.getElementById('firebaseDbUrlInput').value.trim().replace(/\/$/, '');
   const secret = sanitizePathSegment(document.getElementById('firebaseSecretInput').value.trim());
   const room = sanitizePathSegment(document.getElementById('firebaseRoomInput').value.trim()) || 'patching_schedule_main';
-  if (!url || !url.startsWith('https://')) {
-    showToast('⚠️ Please enter a valid https:// Firebase Realtime Database URL');
-    return;
-  }
-  if (!secret) {
-    showToast('⚠️ Please enter your Team Secret Key');
-    return;
-  }
+  if (!url || !url.startsWith('https://')) { showToast('⚠️ Please enter a valid https:// Firebase Realtime Database URL'); return; }
+  if (!secret) { showToast('⚠️ Please enter your Team Secret Key'); return; }
   fbConfig = { url, secret, room };
   localStorage.setItem(FB_CFG_KEY, JSON.stringify(fbConfig));
   updateShareLinkPreview();
-
   try {
     const res = await fetch(`${url}/${secret}/${room}.json`);
     if (res.ok) {
       const remoteData = await res.json();
       if (remoteData && Array.isArray(remoteData.servers)) {
-        if (remoteData.cycles) {
-          appState.cycles = remoteData.cycles;
-          appState.activeCycle = remoteData.activeCycle || appState.activeCycle;
-        }
+        if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; }
         appState.servers = remoteData.servers;
         ensureCyclesStructure();
         if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
@@ -2096,23 +1495,16 @@ async function saveAndConnectFirebase() {
       }
     }
   } catch (e) {}
-
   startFirebaseRealtimeStream();
   closeSyncModal();
   showToast(`⚡ Connected to ${secret} / ${room}`);
 }
-
 function disconnectFirebase() {
-  if (fbEventSource) {
-    fbEventSource.close();
-    fbEventSource = null;
-  }
+  if (fbEventSource) { fbEventSource.close(); fbEventSource = null; }
   fbConfig = { url: '', secret: '', room: 'patching_schedule_main' };
   localStorage.removeItem(FB_CFG_KEY);
   sessionStorage.removeItem(FB_CFG_KEY);
-  if (window.location.hash.includes('fb=')) {
-    history.replaceState(null, '', window.location.pathname + window.location.search);
-  }
+  if (window.location.hash.includes('fb=')) history.replaceState(null, '', window.location.pathname + window.location.search);
   setSyncIndicator('live', 'Live: patching_schedule_main');
   closeSyncModal();
   showToast('Disconnected — switched back to Local Browser storage');
@@ -2123,29 +1515,19 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('patching_schedule_v34_state');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.servers) && parsed.servers.length > 0) {
-        return parsed;
-      }
+      if (parsed && Array.isArray(parsed.servers) && parsed.servers.length > 0) return parsed;
     }
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
-
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
-  if (!isApplyingRemoteUpdate && getFirebaseEndpoint()) {
-    pushStateToFirebase();
-  }
+  if (!isApplyingRemoteUpdate && getFirebaseEndpoint()) pushStateToFirebase();
 }
-
 function loadAuditLogs() {
-  try {
-    const raw = localStorage.getItem(AUDIT_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
+  try { const raw = localStorage.getItem(AUDIT_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
   return [];
 }
-
 function addAuditEntry(msg) {
   const now = new Date();
   const ts = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' +
@@ -2155,7 +1537,6 @@ function addAuditEntry(msg) {
   try { localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs)); } catch (e) {}
   updateAuditUI();
 }
-
 function updateAuditUI() {
   document.getElementById('logCountBadge').textContent = auditLogs.length;
   const list = document.getElementById('auditLogList');
@@ -2165,10 +1546,7 @@ function updateAuditUI() {
     return;
   }
   list.innerHTML = auditLogs.map(item => `
-    <div class="log-item">
-      <div class="log-time">${escapeHtml(item.ts)}</div>
-      <div>${escapeHtml(item.msg)}</div>
-    </div>
+    <div class="log-item"><div class="log-time">${escapeHtml(item.ts)}</div><div>${escapeHtml(item.msg)}</div></div>
   `).join('');
 }
 
@@ -2177,7 +1555,6 @@ function toggleAnalytics() {
   document.getElementById('analyticsPanel').classList.toggle('hidden', !chartsVisible);
   document.getElementById('toggleChartsBtn').classList.toggle('active', chartsVisible);
 }
-
 function toggleRowExpansion() {
   isExpandedMode = !isExpandedMode;
   document.body.classList.toggle('expanded-rows', isExpandedMode);
@@ -2186,18 +1563,12 @@ function toggleRowExpansion() {
   btn.textContent = isExpandedMode ? '↕ Compact Scroll Rows' : '↕ Expand Full Text';
   applyRowHeights();
 }
-
 function applyRowHeights() {
   document.querySelectorAll('textarea.editable-textarea').forEach(el => {
-    if (isExpandedMode) {
-      el.style.height = 'auto';
-      el.style.height = (el.scrollHeight + 2) + 'px';
-    } else {
-      el.style.height = '';
-    }
+    if (isExpandedMode) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+    else { el.style.height = ''; }
   });
 }
-
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -2206,12 +1577,16 @@ function showToast(msg) {
   window._toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
+/* ============================================================================
+   DATE, INTERVAL CONTAINMENT (SAT -> SUN -> MON), & SMART SUGGESTION ENGINE
+   ============================================================================ */
 const MONTHS = {
   jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
   apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
   aug: 7, august: 7, sep: 8, sept: 8, september: 8,
   oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11
 };
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function getISOWeekInfo(dateObj) {
   const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
@@ -2222,7 +1597,7 @@ function getISOWeekInfo(dateObj) {
   return { isoYear: d.getUTCFullYear(), isoWeek: weekNo };
 }
 
-function formatWeekendRange(isoYear, isoWeek) {
+function getWeekendDatesFromISO(isoYear, isoWeek) {
   const jan4 = new Date(Date.UTC(isoYear, 0, 4));
   const jan4Day = jan4.getUTCDay() || 7;
   const monday = new Date(jan4);
@@ -2231,14 +1606,70 @@ function formatWeekendRange(isoYear, isoWeek) {
   sat.setUTCDate(monday.getUTCDate() + 5);
   const sun = new Date(monday);
   sun.setUTCDate(monday.getUTCDate() + 6);
+  const mon = new Date(monday);
+  mon.setUTCDate(monday.getUTCDate() + 7);
+  return { sat, sun, mon };
+}
 
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function formatWeekendRange(isoYear, isoWeek) {
+  const { sat, sun } = getWeekendDatesFromISO(isoYear, isoWeek);
   const sDay = String(sat.getUTCDate()).padStart(2, '0');
   const eDay = String(sun.getUTCDate()).padStart(2, '0');
-  const sMon = monthNames[sat.getUTCMonth()];
-  const eMon = monthNames[sun.getUTCMonth()];
+  const sMon = MONTH_NAMES[sat.getUTCMonth()];
+  const eMon = MONTH_NAMES[sun.getUTCMonth()];
   const yr = sun.getUTCFullYear();
   return sMon === eMon ? `${sDay}-${eDay} ${eMon} ${yr}` : `${sDay} ${sMon}-${eDay} ${eMon} ${yr}`;
+}
+
+function extractTimeTokens(str) {
+  const tokens = [];
+  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  let m;
+  while ((m = rx.exec(str)) !== null) {
+    if (m[1].length > 2) continue;
+    if (!m[2] && !m[3]) continue;
+    let hr = parseInt(m[1], 10);
+    const min = m[2] ? parseInt(m[2], 10) : 0;
+    const ampm = (m[3] || '').toLowerCase();
+    if (ampm === 'am' && hr === 12) hr = 0;
+    else if (ampm === 'pm' && hr < 12) hr += 12;
+    tokens.push({ hr, min, label: `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}` });
+  }
+  return tokens;
+}
+
+/* Continuous Weekend Minute Span (Saturday 00:00 = 0, Sunday 00:00 = 1440, Monday 00:00 = 2880, Monday 23:59 = 4319) */
+function parseWeekendSpanMinutes(str) {
+  const s = String(str || '').toLowerCase().replace(/[–—]/g, '-').replace(/\./g, ':');
+  const times = extractTimeTokens(s);
+  if (times.length === 0) return null;
+
+  const hasSat = /sat(urday)?/i.test(s);
+  const hasSun = /sun(day)?/i.test(s);
+  const hasMon = /mon(day)?/i.test(s);
+
+  let startOffset = 0; // default Saturday
+  if (!hasSat && hasSun) startOffset = 1440;
+  else if (!hasSat && !hasSun && hasMon) startOffset = 2880;
+
+  const t1 = times[0];
+  const startMin = startOffset + t1.hr * 60 + t1.min;
+
+  if (times.length === 1) {
+    return { startMin, endMin: startMin + 180, startToken: t1, endToken: null, hasSat, hasSun, hasMon };
+  }
+
+  const t2 = times[1];
+  let endOffset = startOffset;
+  if (hasMon) {
+    endOffset = 2880; // Monday
+  } else if (hasSat && hasSun) {
+    endOffset = 1440; // Sunday
+  } else if ((t2.hr * 60 + t2.min) <= (t1.hr * 60 + t1.min)) {
+    endOffset = startOffset + 1440; // overnight rollover
+  }
+  const endMin = endOffset + t2.hr * 60 + t2.min;
+  return { startMin, endMin, startToken: t1, endToken: t2, hasSat, hasSun, hasMon };
 }
 
 const _twMetaCache = new Map();
@@ -2247,23 +1678,18 @@ function buildWeekMetaResult(year, monIdx, day1, clean) {
   const { isoYear, isoWeek } = getISOWeekInfo(dt);
   const wkPad = String(isoWeek).padStart(2, '0');
   const rangeStr = formatWeekendRange(isoYear, isoWeek);
-  const tokens = extractTimeTokens(clean);
-  let startHour = 0, startMin = 0;
-  if (tokens.length > 0) {
-    const [hh, mm] = tokens[0].split(':').map(Number);
-    startHour = hh || 0;
-    startMin = mm || 0;
-  }
-  const startEpoch = new Date(year, monIdx, day1, startHour, startMin, 0, 0).getTime();
-  const sortKey = `${isoYear}-${String(monIdx+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}_${String(startHour).padStart(2,'0')}:${String(startMin).padStart(2,'0')}_${clean}`;
+  const span = parseWeekendSpanMinutes(clean);
+  const { sat } = getWeekendDatesFromISO(isoYear, isoWeek);
+  const startOffsetMins = span ? span.startMin : 0;
+  const startEpoch = sat.getTime() + startOffsetMins * 60000;
+
   return {
     weekKey: `${isoYear}-W${wkPad}`,
-    shortWeek: `W${wkPad}`,
-    weekLabel: `Week ${wkPad} (${rangeStr})`,
     isoYear,
     isoWeek,
-    startEpoch,
-    sortKey
+    shortWeek: `W${wkPad}`,
+    weekLabel: `Week ${wkPad} (${rangeStr})`,
+    startEpoch
   };
 }
 
@@ -2283,34 +1709,121 @@ function parseTimeWindowMeta(twRaw) {
       return res;
     }
   }
-
   const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
   if (mIso) {
-    const year = parseInt(mIso[1], 10);
-    const monIdx = parseInt(mIso[2], 10) - 1;
-    const day1 = parseInt(mIso[3], 10);
+    const year = parseInt(mIso[1], 10), monIdx = parseInt(mIso[2], 10) - 1, day1 = parseInt(mIso[3], 10);
     if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
       const res = buildWeekMetaResult(year, monIdx, day1, clean);
       _twMetaCache.set(key, res);
       return res;
     }
   }
-
   const mDmy = clean.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
   if (mDmy) {
-    const day1 = parseInt(mDmy[1], 10);
-    const monIdx = parseInt(mDmy[2], 10) - 1;
-    const year = parseInt(mDmy[3], 10);
+    const day1 = parseInt(mDmy[1], 10), monIdx = parseInt(mDmy[2], 10) - 1, year = parseInt(mDmy[3], 10);
     if (monIdx >= 0 && monIdx <= 11 && day1 >= 1 && day1 <= 31) {
       const res = buildWeekMetaResult(year, monIdx, day1, clean);
       _twMetaCache.set(key, res);
       return res;
     }
   }
-
-  const fallback = { weekKey: '9999-W99', shortWeek: 'TBC', weekLabel: 'Other / TBC', isoYear: 9999, isoWeek: 99, startEpoch: Number.MAX_SAFE_INTEGER, sortKey: '9999-99-99_' + clean };
+  const fallback = { weekKey: '9999-W99', isoYear: 9999, isoWeek: 99, shortWeek: 'TBC', weekLabel: 'Other / TBC', startEpoch: Number.MAX_SAFE_INTEGER };
   _twMetaCache.set(key, fallback);
   return fallback;
+}
+
+/* Smart Date + Maintenance Window Auto-Suggest Helper (Supports Saturday, Sunday & Monday End Days) */
+function buildSuggestedTimeWindow(anchorTimeWin, maintWin) {
+  const mw = String(maintWin || '').replace(/[–—]/g, '-').replace(/\./g, ':').trim();
+  if (!mw) return '';
+  const meta = parseTimeWindowMeta(anchorTimeWin);
+  if (!meta || meta.weekKey === '9999-W99') return '';
+
+  const span = parseWeekendSpanMinutes(mw);
+  if (!span || !span.startToken) return '';
+
+  const { sat, sun, mon } = getWeekendDatesFromISO(meta.isoYear, meta.isoWeek);
+  const startDateObj = span.startMin >= 2880 ? mon : (span.startMin >= 1440 ? sun : sat);
+  const endDateObj = span.endMin >= 2880 ? mon : (span.endMin >= 1440 ? sun : sat);
+
+  const sDay = startDateObj.getUTCDate();
+  const sMon = MONTH_NAMES[startDateObj.getUTCMonth()];
+  const sYr = startDateObj.getUTCFullYear();
+  const eDay = endDateObj.getUTCDate();
+  const eMon = MONTH_NAMES[endDateObj.getUTCMonth()];
+  const eYr = endDateObj.getUTCFullYear();
+
+  let datePart = `${sDay} ${sMon} ${sYr}`;
+  if (sDay !== eDay || sMon !== eMon || sYr !== eYr) {
+    if (sMon === eMon && sYr === eYr) datePart = `${sDay}-${eDay} ${sMon} ${sYr}`;
+    else datePart = `${sDay} ${sMon}-${eDay} ${eMon} ${eYr}`;
+  }
+
+  const startDayName = span.startMin >= 2880 ? 'Monday' : (span.startMin >= 1440 ? 'Sunday' : 'Saturday');
+  const endDayName = span.endMin >= 2880 ? 'Monday' : (span.endMin >= 1440 ? 'Sunday' : 'Saturday');
+
+  if (!span.endToken) {
+    return `${datePart} - ${startDayName} ${span.startToken.label}`;
+  }
+  if (startDayName === endDayName) {
+    return `${datePart} - ${startDayName} ${span.startToken.label} - ${span.endToken.label}`;
+  }
+  return `${datePart} - ${startDayName} ${span.startToken.label} - ${endDayName} ${span.endToken.label}`;
+}
+
+function normalizeForCompare(str) {
+  return String(str || '').toLowerCase().replace(/[–—]/g, '-').replace(/\./g, ':').replace(/\s*-\s*/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+function applySuggestedTimeWin(id) {
+  const srv = appState.servers.find(s => s.id === id);
+  if (!srv) return;
+  const suggested = buildSuggestedTimeWindow(srv.timeWin, srv.maintWin);
+  if (!suggested) return;
+  updateField(id, 'timeWin', suggested, true);
+}
+
+function applyAllSuggestedForWeek(weekKey) {
+  const { enriched } = getSortedAndGrouped();
+  const targets = enriched.filter(s => s.weekKey === weekKey && s.suggestedTw && normalizeForCompare(s.suggestedTw) !== normalizeForCompare(s.timeWin));
+  if (targets.length === 0) return;
+
+  targets.forEach(t => {
+    const rawSrv = appState.servers.find(x => x.id === t.id);
+    if (rawSrv) rawSrv.timeWin = t.suggestedTw;
+  });
+  addAuditEntry(`Batch-applied suggested Time Windows for ${targets.length} servers in ${targets[0].weekLabel}`);
+  saveState();
+  renderTable();
+  showToast(`⚡ Updated ${targets.length} servers in ${targets[0].shortWeek} to match Maintenance Windows`);
+}
+
+function refreshNewServerSuggestion() {
+  const tw = document.getElementById('newTime').value;
+  const mw = document.getElementById('newMaint').value;
+  const box = document.getElementById('newTimeSuggestBox');
+  const sug = buildSuggestedTimeWindow(tw, mw);
+  if (sug && normalizeForCompare(sug) !== normalizeForCompare(tw)) {
+    box.style.display = 'block';
+    box.innerHTML = `<button type="button" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;background:#EFF6FF;border:1px dashed #3B82F6;color:#1D4ED8;font-size:0.74rem;font-weight:700;cursor:pointer;" onclick="document.getElementById('newTime').value='${escapeHtml(sug)}';refreshNewServerSuggestion();">⚡ Apply Suggested: ${escapeHtml(sug)}</button>`;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+/* Interval Containment Check: Clears Window Mismatch when Time Windows falls inside Maintenance Windows */
+function isTimeMatchingMaint(maintWin, timeWin) {
+  const mw = String(maintWin || '').trim();
+  const tw = String(timeWin || '').trim();
+  if (!mw || !tw) return true;
+
+  const mwSpan = parseWeekendSpanMinutes(mw);
+  const twSpan = parseWeekendSpanMinutes(tw);
+
+  if (mwSpan && twSpan) {
+    return twSpan.startMin >= mwSpan.startMin && twSpan.endMin <= mwSpan.endMin;
+  }
+  return true;
 }
 
 function detectEnvironment(hostname) {
@@ -2321,210 +1834,20 @@ function detectEnvironment(hostname) {
   return 'PRD';
 }
 
-function normalizeWinStr(s) {
-  return String(s || '')
-    .toLowerCase()
-    .replace(/[–—]/g, '-')
-    .replace(/\./g, ':')
-    .replace(/\s*-\s*/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function isMeaningfullyDifferentTw(currentTw, suggestedTw) {
-  if (!suggestedTw) return false;
-  const cNorm = normalizeWinStr(currentTw).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
-  const sNorm = normalizeWinStr(suggestedTw).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
-  return cNorm !== sNorm;
-}
-
-function showTwSuggestTooltip(el, suggestedText) {
-  const tip = document.getElementById('twHoverTooltip');
-  if (!tip || !suggestedText) return;
-  tip.innerHTML = `
-    <div class="tt-head">⚡ Suggested Time Window</div>
-    <div class="tt-val">${escapeHtml(suggestedText)}</div>
-    <div class="tt-hint">Click ⚡ icon to apply immediately</div>
-  `;
-  tip.style.display = 'block';
-  const rect = el.getBoundingClientRect();
-  const tipW = tip.offsetWidth || 250;
-  const tipH = tip.offsetHeight || 58;
-  let left = rect.right + 8;
-  if (left + tipW > window.innerWidth - 12) {
-    left = Math.max(12, rect.left - tipW - 8);
-  }
-  let top = rect.top - 4;
-  if (top + tipH > window.innerHeight - 12) {
-    top = Math.max(12, window.innerHeight - tipH - 12);
-  }
-  tip.style.left = left + 'px';
-  tip.style.top = top + 'px';
-}
-
-function hideTwSuggestTooltip() {
-  const tip = document.getElementById('twHoverTooltip');
-  if (tip) tip.style.display = 'none';
-}
-
-function extractTimeTokens(str) {
-  const tokens = [];
-  const rx = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
-  let m;
-  while ((m = rx.exec(str)) !== null) {
-    if (m[1].length > 2) continue;
-    if (!m[2] && !m[3]) continue;
-    let hr = parseInt(m[1], 10);
-    const min = m[2] ? parseInt(m[2], 10) : 0;
-    const ampm = (m[3] || '').toLowerCase();
-    if (ampm === 'am' && hr === 12) hr = 0;
-    else if (ampm === 'pm' && hr < 12) hr += 12;
-    tokens.push(`${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
-  }
-  return tokens;
-}
-
-/* 1. Smart Date + Maintenance Window Auto-Suggest Helper (v5.11) */
-function getWeekendSaturdayDate(timeWinStr) {
-  const clean = String(timeWinStr || '').replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim();
-  const mText = clean.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})/i);
-  let anchorDate = null;
-  if (mText && (mText[3].toLowerCase() in MONTHS)) {
-    anchorDate = new Date(Date.UTC(parseInt(mText[4], 10), MONTHS[mText[3].toLowerCase()], parseInt(mText[1], 10)));
-  } else {
-    const mIso = clean.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    if (mIso) anchorDate = new Date(Date.UTC(parseInt(mIso[1], 10), parseInt(mIso[2], 10) - 1, parseInt(mIso[3], 10)));
-  }
-  if (!anchorDate || isNaN(anchorDate.getTime())) return null;
-  const dow = anchorDate.getUTCDay(); // 0=Sun, 6=Sat
-  const sat = new Date(anchorDate);
-  if (dow === 0) sat.setUTCDate(sat.getUTCDate() - 1);
-  else if (dow !== 6) sat.setUTCDate(sat.getUTCDate() + (6 - dow));
-  return sat;
-}
-
-function buildSuggestedTimeWindow(anchorTimeWin, maintWin) {
-  const mwRaw = String(maintWin || '').replace(/[–—]/g, '-').replace(/\./g, ':').replace(/\s+/g, ' ').trim();
-  if (!mwRaw) return '';
-  const satDate = getWeekendSaturdayDate(anchorTimeWin);
-  if (!satDate) return '';
-
-  const sunDate = new Date(satDate);
-  sunDate.setUTCDate(satDate.getUTCDate() + 1);
-
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const satDay = satDate.getUTCDate();
-  const satMon = monthNames[satDate.getUTCMonth()];
-  const satYr  = satDate.getUTCFullYear();
-  const sunDay = sunDate.getUTCDate();
-  const sunMon = monthNames[sunDate.getUTCMonth()];
-  const sunYr  = sunDate.getUTCFullYear();
-
-  const lowerMw = mwRaw.toLowerCase();
-  const hasSat = lowerMw.includes('saturday') || lowerMw.includes('sat');
-  const hasSun = lowerMw.includes('sunday') || lowerMw.includes('sun');
-
-  // Extract clean time interval (e.g., "00:00 - 07:30" or "Saturday 10:00 - Sunday 07:30")
-  const tokens = extractTimeTokens(mwRaw);
-  let schedulePart = mwRaw;
-  if (hasSat && hasSun && tokens.length >= 2) {
-    schedulePart = `Saturday ${tokens[0]} - Sunday ${tokens[1]}`;
-  } else if (hasSun && !hasSat && tokens.length >= 2) {
-    schedulePart = `Sunday ${tokens[0]} - ${tokens[1]}`;
-  } else if (hasSat && !hasSun && tokens.length >= 2) {
-    const [sh] = tokens[0].split(':').map(Number);
-    const [eh] = tokens[1].split(':').map(Number);
-    if (eh < sh) {
-      schedulePart = `Saturday ${tokens[0]} - Sunday ${tokens[1]}`;
-    } else {
-      schedulePart = `Saturday ${tokens[0]} - ${tokens[1]}`;
-    }
-  }
-
-  const spansBothDays = (hasSat && hasSun) || schedulePart.toLowerCase().includes('sunday') && schedulePart.toLowerCase().includes('saturday');
-  let datePrefix = '';
-  if (spansBothDays) {
-    datePrefix = (satMon === sunMon && satYr === sunYr)
-      ? `${satDay}-${sunDay} ${satMon} ${satYr}`
-      : `${satDay} ${satMon}-${sunDay} ${sunMon} ${sunYr}`;
-  } else if (hasSun && !hasSat) {
-    datePrefix = `${sunDay} ${sunMon} ${sunYr}`;
-  } else {
-    datePrefix = `${satDay} ${satMon} ${satYr}`;
-  }
-
-  return `${datePrefix} - ${schedulePart}`;
-}
-
-/* 2. Continuous Weekend-Minute Interval Containment Check (0 to 2880 mins from Sat 00:00) */
-function parseWeekendIntervalMins(str, defaultDayOffset = null) {
-  const norm = normalizeWinStr(str);
-  if (!norm) return null;
-  const tokens = extractTimeTokens(norm);
-  if (tokens.length < 2) return null;
-
-  const [sh, sm] = tokens[0].split(':').map(Number);
-  const [eh, em] = tokens[1].split(':').map(Number);
-  const startClock = sh * 60 + sm;
-  const endClock = eh * 60 + em;
-
-  const hasSat = /\bsat(urday)?\b/.test(norm);
-  const hasSun = /\bsun(day)?\b/.test(norm);
-
-  let startDayOffset = 0; // 0 = Saturday, 1440 = Sunday
-  if (hasSat) {
-    startDayOffset = 0;
-  } else if (hasSun) {
-    startDayOffset = 1440;
-  } else if (defaultDayOffset !== null) {
-    startDayOffset = defaultDayOffset;
-  } else {
-    // Infer from calendar date in Time Windows if day-of-week word was omitted
-    const mDate = norm.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([a-z]{3,9})[\s,/-]+(\d{4})/);
-    if (mDate && (mDate[3] in MONTHS)) {
-      const dt = new Date(Date.UTC(parseInt(mDate[4], 10), MONTHS[mDate[3]], parseInt(mDate[1], 10)));
-      if (!isNaN(dt.getTime()) && dt.getUTCDay() === 0) startDayOffset = 1440;
-    }
-  }
-
-  const startTotal = startDayOffset + startClock;
-  let endTotal = startDayOffset + endClock;
-
-  // Multi-day Saturday -> Sunday span or overnight rollover past midnight
-  if (hasSat && hasSun) {
-    endTotal = 1440 + endClock;
-  } else if (endTotal <= startTotal) {
-    endTotal += 1440;
-  }
-
-  return { start: startTotal, end: endTotal, startDayOffset };
-}
-
-function isTimeMatchingMaint(maintWin, timeWin) {
-  const mw = normalizeWinStr(maintWin);
-  const tw = normalizeWinStr(timeWin);
-  if (!mw || !tw) return true;
-
-  const mwCore = mw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
-  const twCore = tw.replace(/\(.*?\)/g, '').replace(/ to /g, '-').replace(/\s*-\s*/g, '-').trim();
-  if (mwCore && twCore.includes(mwCore)) return true;
-
-  const mwInterval = parseWeekendIntervalMins(mw);
-  if (!mwInterval) return true; // Non-standard maintenance note (e.g., "Anytime / Ad-hoc")
-
-  const twInterval = parseWeekendIntervalMins(tw, mwInterval.startDayOffset);
-  if (!twInterval) return true;
-
-  // Valid if scheduled Time Windows [tw.start, tw.end] is completely inside Maintenance Windows [mw.start, mw.end]
-  return twInterval.start >= mwInterval.start && twInterval.end <= mwInterval.end;
+function getSequenceRank(srv) {
+  const combined = `${srv.maintWin || ''} ${srv.remarks1 || ''}`.toLowerCase();
+  if (combined.includes('1st sequence') || combined.includes('startup sequence: 1-')) return 1;
+  if (combined.includes('2nd sequence') || combined.includes('2st sequence')) return 3;
+  return 2;
 }
 
 function detectSmartFlags(srv) {
   const flags = [];
+  const seqRank = getSequenceRank(srv);
   const combinedText = `${srv.maintWin} ${srv.remarks1}`.toLowerCase();
-  if (combinedText.includes('1st sequence') || combinedText.includes('startup sequence: 1-')) {
+  if (seqRank === 1) {
     flags.push({ cls: 'tag-seq1', text: 'SEQ 1', title: '1st Sequence — Patch/Reboot first' });
-  } else if (combinedText.includes('2nd sequence') || combinedText.includes('2st sequence')) {
+  } else if (seqRank === 3) {
     flags.push({ cls: 'tag-seq2', text: 'SEQ 2', title: '2nd Sequence — Patch/Reboot after SEQ 1' });
   } else if (combinedText.includes('shutdown sequence')) {
     flags.push({ cls: 'tag-seq2', text: 'Ordered Seq', title: 'Follow strict shutdown/startup sequence in Remarks' });
@@ -2534,17 +1857,10 @@ function detectSmartFlags(srv) {
     flags.push({
       cls: 'tag-warn',
       text: 'Window Mismatch',
-      title: `Scheduled Time Windows ("${srv.timeWin}") falls outside allowed Maintenance Windows ("${srv.maintWin}").`
+      title: `Time Windows ("${srv.timeWin}") falls outside Maintenance Windows ("${srv.maintWin}").`
     });
   }
   return flags;
-}
-
-function getSequenceRank(srv) {
-  const combinedText = `${srv.maintWin} ${srv.remarks1}`.toLowerCase();
-  if (combinedText.includes('1st sequence') || combinedText.includes('startup sequence: 1-')) return 1;
-  if (combinedText.includes('2nd sequence') || combinedText.includes('2st sequence') || combinedText.includes('shutdown sequence')) return 3;
-  return 2;
 }
 
 const PASTEL_PALETTE = [
@@ -2552,26 +1868,22 @@ const PASTEL_PALETTE = [
   '#FAF5FF', '#F0FDFA', '#FFF7ED', '#F8FAFC', '#F3F4F6'
 ];
 
+/* Weekly Batch Sort: 1. Exact Start Timestamp > 2. Natural Hostname Order > 3. Sequence Priority */
 function getSortedAndGrouped() {
   const enriched = appState.servers.map(s => {
     const meta = parseTimeWindowMeta(s.timeWin);
     const env = detectEnvironment(s.hostname);
-    const flags = detectSmartFlags(s);
     const seqRank = getSequenceRank(s);
+    const flags = detectSmartFlags(s);
     const suggestedTw = buildSuggestedTimeWindow(s.timeWin, s.maintWin);
-    return { ...s, ...meta, env, flags, seqRank, suggestedTw };
+    return { ...s, ...meta, env, seqRank, flags, suggestedTw };
   });
 
-  /* 3. Multi-Level Chronological + Natural Hostname + Sequence Sorting within each Weekly Batch */
   enriched.sort((a, b) => {
     if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
-    // 1) Exact Start Timestamp
     if (a.startEpoch !== b.startEpoch) return a.startEpoch - b.startEpoch;
-    if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
-    // 2) Natural Hostname Order
     const hostCmp = a.hostname.localeCompare(b.hostname, undefined, { numeric: true, sensitivity: 'base' });
     if (hostCmp !== 0) return hostCmp;
-    // 3) Sequence Priority (SEQ 1 -> Untagged -> SEQ 2)
     return a.seqRank - b.seqRank;
   });
 
@@ -2581,10 +1893,7 @@ function getSortedAndGrouped() {
   const weekShortMap = {};
   const weekCountMap = {};
 
-  uniqueWeeks.forEach((wk, idx) => {
-    weekColorMap[wk] = PASTEL_PALETTE[idx % PASTEL_PALETTE.length];
-  });
-
+  uniqueWeeks.forEach((wk, idx) => { weekColorMap[wk] = PASTEL_PALETTE[idx % PASTEL_PALETTE.length]; });
   enriched.forEach(item => {
     weekLabelMap[item.weekKey] = item.weekLabel;
     weekShortMap[item.weekKey] = item.shortWeek;
@@ -2622,13 +1931,10 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
 
   const total = Math.max(1, enriched.length);
   const sheetColors = {
-    'Win SVR 2019': '#2563EB',
-    'Win SRV 2022': '#0D9488',
-    'Ripen Infra SVR': '#7C3AED',
-    'Win SVR 2016': '#D97706',
-    'Win SVR 2012R2': '#DC2626'
+    'Win SVR 2019': '#2563EB', 'Win SRV 2022': '#0D9488', 'Ripen Infra SVR': '#7C3AED',
+    'Win SVR 2016': '#D97706', 'Win SVR 2012R2': '#DC2626'
   };
-  const osHtml = Object.entries(sheetColors).map(([sh, color]) => {
+  document.getElementById('osEnvChart').innerHTML = Object.entries(sheetColors).map(([sh, color]) => {
     const cnt = enriched.filter(s => s.osSheet === sh).length;
     const doneCnt = enriched.filter(s => s.osSheet === sh && s.status === 'Patched').length;
     const pct = Math.round((cnt / total) * 100);
@@ -2639,7 +1945,6 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
       </div>
     `;
   }).join('');
-  document.getElementById('osEnvChart').innerHTML = osHtml;
 
   const engItems = [
     { label: 'Andy', filterType: 'by', filterVal: 'Andy', cnt: enriched.filter(s => s.by === 'Andy').length, done: enriched.filter(s => s.by === 'Andy' && s.status === 'Patched').length, color: '#0284C7' },
@@ -2660,27 +1965,13 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   }).join('');
 }
 
-function quickFilterSheet(sh) {
-  const el = document.getElementById('filterSheet');
-  el.value = (el.value === sh) ? '' : sh;
-  renderTable();
-}
+function quickFilterSheet(sh) { const el = document.getElementById('filterSheet'); el.value = (el.value === sh) ? '' : sh; renderTable(); }
+function quickFilterChart(type, val) { const el = document.getElementById(type === 'env' ? 'filterEnv' : 'filterBy'); el.value = (el.value === val) ? '' : val; renderTable(); }
 
-function quickFilterChart(type, val) {
-  const el = document.getElementById(type === 'env' ? 'filterEnv' : 'filterBy');
-  el.value = (el.value === val) ? '' : val;
-  renderTable();
-}
-
-/* Multi-Quarter Cycle Engine (2026 Q4 -> 2027 Q1 Rollover) */
 function ensureCyclesStructure() {
   if (!appState.cycles) {
     appState.cycles = {
-      '2026_Q4': {
-        label: '2026 Q4',
-        servers: Array.isArray(appState.servers) ? appState.servers : [],
-        auditLogs: Array.isArray(auditLogs) ? auditLogs : []
-      }
+      '2026_Q4': { label: '2026 Q4', servers: Array.isArray(appState.servers) ? appState.servers : [], auditLogs: Array.isArray(auditLogs) ? auditLogs : [] }
     };
   }
   if (!appState.activeCycle || !appState.cycles[appState.activeCycle]) {
@@ -2689,12 +1980,10 @@ function ensureCyclesStructure() {
   appState.servers = appState.cycles[appState.activeCycle].servers;
   updateCycleSelectorUI();
 }
-
 function updateCycleSelectorUI() {
   const sel = document.getElementById('cycleSelector');
   if (!sel || !appState.cycles) return;
-  const keys = Object.keys(appState.cycles);
-  sel.innerHTML = keys.map(k => {
+  sel.innerHTML = Object.keys(appState.cycles).map(k => {
     const cyc = appState.cycles[k];
     const cnt = (cyc.servers || []).length;
     const done = (cyc.servers || []).filter(s => s.status === 'Patched').length;
@@ -2702,13 +1991,11 @@ function updateCycleSelectorUI() {
     return `<option value="${k}" ${k === appState.activeCycle ? 'selected' : ''}>${escapeHtml(cyc.label)} (${done}/${cnt} · ${pct}%)</option>`;
   }).join('');
 }
-
 function switchQuarterCycle(cycleKey) {
   ensureCyclesStructure();
   if (!appState.cycles[cycleKey]) return;
   appState.cycles[appState.activeCycle].servers = appState.servers;
   appState.cycles[appState.activeCycle].auditLogs = auditLogs;
-
   appState.activeCycle = cycleKey;
   appState.servers = appState.cycles[cycleKey].servers || [];
   auditLogs = appState.cycles[cycleKey].auditLogs || [];
@@ -2719,88 +2006,58 @@ function switchQuarterCycle(cycleKey) {
   renderTable();
   showToast(`📆 Switched to ${appState.cycles[cycleKey].label}`);
 }
-
 function openRolloverModal() {
   ensureCyclesStructure();
   const cur = appState.cycles[appState.activeCycle];
   document.getElementById('rolloverSourceName').textContent = cur.label;
   document.getElementById('rolloverSourceCount').textContent = (cur.servers || []).length;
-
   const m = cur.label.match(/(\d{4})\s*Q([1-4])/i);
   if (m) {
-    let yr = parseInt(m[1], 10);
-    let q = parseInt(m[2], 10) + 1;
+    let yr = parseInt(m[1], 10), q = parseInt(m[2], 10) + 1;
     if (q > 4) { q = 1; yr += 1; }
     document.getElementById('rolloverTargetLabel').value = `${yr} Q${q}`;
   }
   document.getElementById('rolloverModal').classList.add('open');
 }
-
-function closeRolloverModal() {
-  document.getElementById('rolloverModal').classList.remove('open');
-}
-
+function closeRolloverModal() { document.getElementById('rolloverModal').classList.remove('open'); }
 function shiftTimeWindowByWeeks(twStr, weeksToAdd) {
   const s = String(twStr || '').trim();
   if (!s) return '';
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const daysDelta = weeksToAdd * 7;
-
   const rx = /(\d{1,2})(?:\s*-\s*(\d{1,2}))?[\s/-]+([A-Za-z]{3,9})[\s,/-]+(\d{4})(.*)/i;
   const m = s.match(rx);
   if (!m) return s + ' (Next Qtr)';
-
-  const d1 = parseInt(m[1], 10);
-  const d2 = m[2] ? parseInt(m[2], 10) : null;
-  const monKey = m[3].toLowerCase();
-  const yr = parseInt(m[4], 10);
-  const tail = m[5] || '';
-
+  const d1 = parseInt(m[1], 10), d2 = m[2] ? parseInt(m[2], 10) : null, monKey = m[3].toLowerCase(), yr = parseInt(m[4], 10), tail = m[5] || '';
   if (!(monKey in MONTHS)) return s;
   const baseDate = new Date(Date.UTC(yr, MONTHS[monKey], d1));
   baseDate.setUTCDate(baseDate.getUTCDate() + daysDelta);
-
-  const newD1 = baseDate.getUTCDate();
-  const newMon = monthNames[baseDate.getUTCMonth()];
-  const newYr = baseDate.getUTCFullYear();
-
+  const newD1 = baseDate.getUTCDate(), newMon = MONTH_NAMES[baseDate.getUTCMonth()], newYr = baseDate.getUTCFullYear();
   if (d2 !== null) {
     const endDate = new Date(Date.UTC(yr, MONTHS[monKey], d2));
     endDate.setUTCDate(endDate.getUTCDate() + daysDelta);
-    const newD2 = endDate.getUTCDate();
-    const endMon = monthNames[endDate.getUTCMonth()];
-    const endYr = endDate.getUTCFullYear();
-    if (newMon === endMon && newYr === endYr) {
-      return `${newD1}-${newD2} ${newMon} ${newYr}${tail}`;
-    }
+    const newD2 = endDate.getUTCDate(), endMon = MONTH_NAMES[endDate.getUTCMonth()], endYr = endDate.getUTCFullYear();
+    if (newMon === endMon && newYr === endYr) return `${newD1}-${newD2} ${newMon} ${newYr}${tail}`;
     return `${newD1} ${newMon}-${newD2} ${endMon} ${endYr}${tail}`;
   }
   return `${newD1} ${newMon} ${newYr}${tail}`;
 }
-
 function executeQuarterRollover() {
   ensureCyclesStructure();
   const targetLabel = document.getElementById('rolloverTargetLabel').value.trim();
-  if (!targetLabel) {
-    showToast('⚠️ Please enter a Target Quarter Name (e.g. 2027 Q1)');
-    return;
-  }
+  if (!targetLabel) { showToast('⚠️ Please enter a Target Quarter Name'); return; }
   const targetKey = sanitizePathSegment(targetLabel.replace(/\s+/g, '_'));
   const dateMode = document.getElementById('rolloverDateMode').value;
   const resetStatus = document.getElementById('rolloverResetStatus').checked;
   const keepEngineers = document.getElementById('rolloverKeepEngineers').checked;
   const clearRem2 = document.getElementById('rolloverClearRemarks2').checked;
 
-  const sourceServers = appState.servers || [];
-  const clonedServers = sourceServers.map((srv, idx) => {
+  const clonedServers = (appState.servers || []).map((srv, idx) => {
     let nextTw = srv.timeWin;
     if (dateMode === 'shift13w') nextTw = shiftTimeWindowByWeeks(srv.timeWin, 13);
     else if (dateMode === 'clear_tw') nextTw = 'TBC - ' + targetLabel;
-
     return {
       ...JSON.parse(JSON.stringify(srv)),
-      id: idx + 1,
-      timeWin: nextTw,
+      id: idx + 1, timeWin: nextTw,
       status: resetStatus ? '' : srv.status,
       by: keepEngineers ? srv.by : '',
       remarks2: clearRem2 ? '' : srv.remarks2
@@ -2810,17 +2067,12 @@ function executeQuarterRollover() {
   appState.cycles[targetKey] = {
     label: targetLabel,
     servers: clonedServers,
-    auditLogs: [{
-      ts: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }),
-      msg: `Created ${targetLabel} cycle by cloning ${clonedServers.length} servers from ${appState.cycles[appState.activeCycle].label}`
-    }]
+    auditLogs: [{ ts: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' }), msg: `Created ${targetLabel} cycle by cloning ${clonedServers.length} servers` }]
   };
-
   appState.activeCycle = targetKey;
   appState.servers = clonedServers;
   auditLogs = appState.cycles[targetKey].auditLogs;
   selectedIds.clear();
-
   saveState();
   updateAuditUI();
   updateCycleSelectorUI();
@@ -2828,7 +2080,6 @@ function executeQuarterRollover() {
   renderTable();
   showToast(`✨ Created ${targetLabel} with ${clonedServers.length} servers!`);
 }
-
 function deleteOrClearCurrentCycle() {
   ensureCyclesStructure();
   const keys = Object.keys(appState.cycles);
@@ -2838,56 +2089,36 @@ function deleteOrClearCurrentCycle() {
   const srvCount = (curObj && Array.isArray(curObj.servers)) ? curObj.servers.length : 0;
 
   if (keys.length > 1) {
-    showCustomConfirm(
-      `Delete Quarter Cycle "${curLabel}"?`,
-      `Permanently remove "${curLabel}" (${srvCount} servers) and switch back to another saved quarter cycle? This cannot be undone.`,
-      `Delete "${curLabel}"`,
-      '#DC2626',
-      () => {
-        delete appState.cycles[curKey];
-        const nextKey = Object.keys(appState.cycles)[0];
-        appState.activeCycle = nextKey;
-        appState.servers = appState.cycles[nextKey].servers || [];
-        auditLogs = appState.cycles[nextKey].auditLogs || [];
-        selectedIds.clear();
-        saveState();
-        updateAuditUI();
-        updateCycleSelectorUI();
-        renderTable();
-        showToast(`🗑️ Deleted cycle "${curLabel}" → Switched to ${appState.cycles[nextKey].label}`);
-      }
-    );
+    showCustomConfirm(`Delete Quarter Cycle "${curLabel}"?`, `Permanently remove "${curLabel}" (${srvCount} servers) and switch back to another saved quarter cycle?`, `Delete "${curLabel}"`, '#DC2626', () => {
+      delete appState.cycles[curKey];
+      const nextKey = Object.keys(appState.cycles)[0];
+      appState.activeCycle = nextKey;
+      appState.servers = appState.cycles[nextKey].servers || [];
+      auditLogs = appState.cycles[nextKey].auditLogs || [];
+      selectedIds.clear();
+      saveState();
+      updateAuditUI();
+      updateCycleSelectorUI();
+      renderTable();
+      showToast(`🗑️ Deleted cycle "${curLabel}"`);
+    });
   } else {
-    showCustomConfirm(
-      `Clear All Servers in "${curLabel}"?`,
-      `"${curLabel}" is your only quarter cycle. Clear all ${srvCount} servers from "${curLabel}" so you can import a fresh .xlsx or start clean?`,
-      `Clear ${srvCount} Servers`,
-      '#DC2626',
-      () => {
-        appState.cycles[curKey].servers = [];
-        appState.servers = [];
-        selectedIds.clear();
-        addAuditEntry(`Cleared all ${srvCount} servers from ${curLabel}`);
-        saveState();
-        updateCycleSelectorUI();
-        renderTable();
-        showToast(`🗑️ Cleared all servers in "${curLabel}"`);
-      }
-    );
+    showCustomConfirm(`Clear All Servers in "${curLabel}"?`, `Clear all ${srvCount} servers from "${curLabel}" so you can import a fresh .xlsx or start clean?`, `Clear ${srvCount} Servers`, '#DC2626', () => {
+      appState.cycles[curKey].servers = [];
+      appState.servers = [];
+      selectedIds.clear();
+      addAuditEntry(`Cleared all ${srvCount} servers from ${curLabel}`);
+      saveState();
+      updateCycleSelectorUI();
+      renderTable();
+      showToast(`🗑️ Cleared all servers in "${curLabel}"`);
+    });
   }
 }
 
-function quickFilterWeek(wk) {
-  const el = document.getElementById('filterWeek');
-  el.value = (el.value === wk) ? '' : wk;
-  renderTable();
-}
-
+function quickFilterWeek(wk) { const el = document.getElementById('filterWeek'); el.value = (el.value === wk) ? '' : wk; renderTable(); }
 let _searchTimer = null;
-function debouncedRender() {
-  clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(renderTable, 120);
-}
+function debouncedRender() { clearTimeout(_searchTimer); _searchTimer = setTimeout(renderTable, 120); }
 
 function renderTable() {
   ensureCyclesStructure();
@@ -2906,21 +2137,14 @@ function renderTable() {
   filterWeekEl.value = uniqueWeeks.includes(prevWeekVal) ? prevWeekVal : '';
 
   const allBtn = document.getElementById('weekAllBtn');
-  if (allBtn) {
-    allBtn.classList.toggle('active', !filterWeekEl.value);
-    allBtn.textContent = `All (${enriched.length})`;
-  }
+  if (allBtn) { allBtn.classList.toggle('active', !filterWeekEl.value); allBtn.textContent = `All (${enriched.length})`; }
   const pillsEl = document.getElementById('weekPills');
   pillsEl.innerHTML = '';
   uniqueWeeks.forEach(wk => {
     const wkItems = enriched.filter(s => s.weekKey === wk);
-    const tot = wkItems.length;
-    const done = wkItems.filter(s => s.status === 'Patched').length;
-    const fail = wkItems.filter(s => s.status === 'Failed').length;
-    const donePct = tot ? Math.round((done / tot) * 100) : 0;
-    const failPct = tot ? Math.round((fail / tot) * 100) : 0;
+    const tot = wkItems.length, done = wkItems.filter(s => s.status === 'Patched').length, fail = wkItems.filter(s => s.status === 'Failed').length;
+    const donePct = tot ? Math.round((done / tot) * 100) : 0, failPct = tot ? Math.round((fail / tot) * 100) : 0;
     const isAllDone = tot > 0 && done === tot;
-
     const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
     const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
 
@@ -2930,62 +2154,46 @@ function renderTable() {
     card.style.background = weekColorMap[wk];
     card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}`;
     card.innerHTML = `
-      <div class="wb-top">
-        <span class="wb-wk-tag">${weekShortMap[wk]}</span>
-        <span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span>
-      </div>
+      <div class="wb-top"><span class="wb-wk-tag">${weekShortMap[wk]}</span><span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span></div>
       <div class="wb-date">${escapeHtml(shortRange)}</div>
-      <div class="wb-progress-track">
-        <div style="width:${donePct}%;background:#10B981;"></div>
-        <div style="width:${failPct}%;background:#EF4444;"></div>
-      </div>
+      <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
     `;
     card.onclick = () => quickFilterWeek(wk);
     pillsEl.appendChild(card);
   });
 
-  const total = enriched.length;
-  const patched = enriched.filter(s => s.status === 'Patched').length;
-  const failed = enriched.filter(s => s.status === 'Failed').length;
-  const pending = total - patched - failed;
-  const alertCnt = enriched.filter(s => s.flags.length > 0).length;
+  const total = enriched.length, patched = enriched.filter(s => s.status === 'Patched').length, failed = enriched.filter(s => s.status === 'Failed').length;
+  const pending = total - patched - failed, alertCnt = enriched.filter(s => s.flags.length > 0).length;
+  const pctDone = total ? Math.round((patched / total) * 100) : 0, pctFail = total ? Math.round((failed / total) * 100) : 0;
 
-  const pctDone = total ? Math.round((patched / total) * 100) : 0;
-  const pctFail = total ? Math.round((failed / total) * 100) : 0;
   document.getElementById('kpiGrid').innerHTML = `
     <div class="kpi-quad-grid">
-      <div class="kpi-box" onclick="document.getElementById('filterStatus').value='';renderTable();" title="Show all scheduled rows">
+      <div class="kpi-box" onclick="document.getElementById('filterStatus').value='';renderTable();">
         <div class="kpi-box-label">Total Rows</div>
         <div class="kpi-box-val">${total} <span class="kpi-box-sub">(${uniqueWeeks.length} wks)</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();" title="Filter Patched servers">
+      <div class="kpi-box" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();">
         <div class="kpi-box-label">Patched</div>
         <div class="kpi-box-val" style="color:#059669;">${patched} <span class="kpi-box-sub">(${pctDone}%)</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();" title="Filter Pending servers">
+      <div class="kpi-box" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();">
         <div class="kpi-box-label">Pending</div>
         <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${failed > 0 ? '· ' + failed + ' Fail' : ''}</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();" title="Filter Sequence / Window Flags">
+      <div class="kpi-box" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();">
         <div class="kpi-box-label">⚠️ Flags</div>
         <div class="kpi-box-val" style="color:#B45309;">${alertCnt} <span class="kpi-box-sub">alerts</span></div>
       </div>
     </div>
-    <div class="kpi-bar-row" title="Overall Completion: ${pctDone}% Patched, ${pctFail}% Failed">
-      <div class="kpi-bar-track">
-        <div style="width:${pctDone}%;background:#10B981;"></div>
-        <div style="width:${pctFail}%;background:#EF4444;"></div>
-      </div>
+    <div class="kpi-bar-row">
+      <div class="kpi-bar-track"><div style="width:${pctDone}%;background:#10B981;"></div><div style="width:${pctFail}%;background:#EF4444;"></div></div>
       <span style="font-size:0.71rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
     </div>
   `;
 
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const fWeek = filterWeekEl.value;
-  const fEnv = document.getElementById('filterEnv').value;
-  const fSheet = document.getElementById('filterSheet').value;
-  const fBy = document.getElementById('filterBy').value;
-  const fStatus = document.getElementById('filterStatus').value;
+  const fWeek = filterWeekEl.value, fEnv = document.getElementById('filterEnv').value, fSheet = document.getElementById('filterSheet').value;
+  const fBy = document.getElementById('filterBy').value, fStatus = document.getElementById('filterStatus').value;
 
   const filtered = enriched.filter(s => {
     if (fWeek && s.weekKey !== fWeek) return false;
@@ -3004,25 +2212,31 @@ function renderTable() {
   });
 
   window._lastFilteredIds = filtered.map(x => x.id);
-
   const tbody = document.getElementById('scheduleBody');
   const rowsHtml = [];
-
   let currentWk = null;
   const globalNoMap = {};
   enriched.forEach((s, i) => globalNoMap[s.id] = i + 1);
 
   const shownCountByWeek = {};
-  filtered.forEach(x => { shownCountByWeek[x.weekKey] = (shownCountByWeek[x.weekKey] || 0) + 1; });
+  const pendingSuggestByWeek = {};
+  filtered.forEach(x => {
+    shownCountByWeek[x.weekKey] = (shownCountByWeek[x.weekKey] || 0) + 1;
+    if (x.suggestedTw && normalizeForCompare(x.suggestedTw) !== normalizeForCompare(x.timeWin)) {
+      pendingSuggestByWeek[x.weekKey] = (pendingSuggestByWeek[x.weekKey] || 0) + 1;
+    }
+  });
 
   filtered.forEach(srv => {
     if (srv.weekKey !== currentWk) {
       currentWk = srv.weekKey;
       const totalInWeek = weekCountMap[currentWk] || 0;
       const shownInWeek = shownCountByWeek[currentWk] || 0;
-      const countText = (shownInWeek === totalInWeek)
-        ? `${totalInWeek} servers`
-        : `${shownInWeek} shown of ${totalInWeek} servers`;
+      const countText = (shownInWeek === totalInWeek) ? `${totalInWeek} servers` : `${shownInWeek} shown of ${totalInWeek} servers`;
+      const sugCount = pendingSuggestByWeek[currentWk] || 0;
+      const batchSugBtn = sugCount > 0
+        ? `<button type="button" class="banner-apply-suggest-btn" onclick="applyAllSuggestedForWeek('${currentWk}')" title="Update all ${sugCount} servers in this week to match their Maintenance Windows">⚡ Apply Suggested (${sugCount})</button>`
+        : '';
 
       rowsHtml.push(`
         <tr class="week-banner">
@@ -3030,6 +2244,7 @@ function renderTable() {
             <div class="banner-inner">
               <span>📅 ${srv.weekLabel}</span>
               <span class="banner-count-pill">Total Servers: ${countText}</span>
+              ${batchSugBtn}
               <button type="button" class="banner-mini-btn" onclick="selectWeekServers('${currentWk}')">☑ Select Week</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'hostname')">📋 Copy Hostnames</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'ip')">🌐 Copy IPs</button>
@@ -3048,15 +2263,16 @@ function renderTable() {
       ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
     ].join('');
 
-    const showSuggestBtn = isMeaningfullyDifferentTw(srv.timeWin, srv.suggestedTw);
-    const suggestHtml = showSuggestBtn
-      ? `<button type="button" class="tw-suggest-icon"
-            data-suggest="${escapeHtml(srv.suggestedTw)}"
-            title="⚡ Suggested Time Window: ${escapeHtml(srv.suggestedTw)} (Click to apply)"
-            onmouseenter="showTwSuggestTooltip(this, this.dataset.suggest)"
-            onmouseleave="hideTwSuggestTooltip()"
-            onclick="hideTwSuggestTooltip(); applySuggestedTimeWin(${srv.id})">⚡</button>`
-      : '';
+    const showSuggestIcon = srv.suggestedTw && normalizeForCompare(srv.suggestedTw) !== normalizeForCompare(srv.timeWin);
+    const suggestIconHtml = showSuggestIcon ? `
+      <div class="tw-suggest-anchor">
+        <button type="button" class="tw-suggest-icon-btn" onclick="applySuggestedTimeWin(${srv.id})">⚡</button>
+        <div class="tw-suggest-popover">
+          <div class="pop-hdr">⚡ Suggested Time Window</div>
+          <div class="pop-val">${escapeHtml(srv.suggestedTw)}</div>
+          <div class="pop-hint">Click icon to apply automatically</div>
+        </div>
+      </div>` : '';
 
     rowsHtml.push(`
       <tr class="${rowCls}" style="background-color:${rowBg};">
@@ -3075,11 +2291,11 @@ function renderTable() {
         <td>
           <div class="tw-cell-wrap">
             <textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea>
-            ${suggestHtml}
+            ${suggestIconHtml}
           </div>
         </td>
-        <td>
-          <select class="editable-cell" onchange="updateField(${srv.id}, 'osSheet', this.value)">
+        <td class="center">
+          <select class="editable-cell center" onchange="updateField(${srv.id}, 'osSheet', this.value)">
             ${['Win SVR 2012R2','Win SVR 2016','Win SVR 2019','Win SRV 2022','Ripen Infra SVR'].map(sh =>
               `<option value="${sh}" ${srv.osSheet === sh ? 'selected' : ''}>${sh}</option>`
             ).join('')}
@@ -3109,29 +2325,24 @@ function renderTable() {
   });
 
   tbody.innerHTML = rowsHtml.join('');
-
   syncStickyOffsets();
   updateBulkBar();
   if (isExpandedMode) requestAnimationFrame(applyRowHeights);
 }
 
-/* Selection & Bulk Actions (with Shift+Click Range Support) */
+/* Selection & Bulk Actions */
 let lastClickedRowId = null;
-
 function handleRowCheckboxClick(event, id) {
   const checked = event.target.checked;
   const visibleIds = window._lastFilteredIds || [];
   if (event.shiftKey && lastClickedRowId !== null && visibleIds.includes(lastClickedRowId) && visibleIds.includes(id)) {
-    const start = visibleIds.indexOf(lastClickedRowId);
-    const end = visibleIds.indexOf(id);
+    const start = visibleIds.indexOf(lastClickedRowId), end = visibleIds.indexOf(id);
     const [lo, hi] = start < end ? [start, end] : [end, start];
     for (let i = lo; i <= hi; i++) {
-      if (checked) selectedIds.add(visibleIds[i]);
-      else selectedIds.delete(visibleIds[i]);
+      if (checked) selectedIds.add(visibleIds[i]); else selectedIds.delete(visibleIds[i]);
     }
   } else {
-    if (checked) selectedIds.add(id);
-    else selectedIds.delete(id);
+    if (checked) selectedIds.add(id); else selectedIds.delete(id);
   }
   lastClickedRowId = id;
   renderTable();
@@ -3140,30 +2351,18 @@ function handleRowCheckboxClick(event, id) {
 function moveSelectedToSchedule() {
   if (selectedIds.size === 0) return;
   const twVal = document.getElementById('bulkTimeWin').value.trim();
-  if (!twVal) {
-    showToast('⚠️ Please enter or select a Target Schedule / Time Window first');
-    document.getElementById('bulkTimeWin').focus();
-    return;
-  }
-  const autoMatchMaint = document.getElementById('bulkAutoMaint')?.checked;
-  const targetHasExplicitClock = extractTimeTokens(twVal).length >= 2;
+  if (!twVal) { showToast('⚠️ Please enter or select a Target Weekend / Time Window first'); document.getElementById('bulkTimeWin').focus(); return; }
+  const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
   let count = 0;
-  let lastAssignedTw = twVal;
-
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
-      let finalTw = twVal;
-      if (autoMatchMaint && !targetHasExplicitClock) {
-        const smartTw = buildSuggestedTimeWindow(twVal, srv.maintWin);
-        if (smartTw) finalTw = smartTw;
-      }
-      srv.timeWin = finalTw;
-      lastAssignedTw = finalTw;
+      const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, srv.maintWin) : '';
+      srv.timeWin = smartTw || twVal;
       count++;
     }
   });
-  const meta = parseTimeWindowMeta(lastAssignedTw);
-  addAuditEntry(`Moved ${count} servers to schedule "${twVal}"${autoMatchMaint && !targetHasExplicitClock ? ' (auto-matched Maint. Win)' : ''} (${meta.weekLabel})`);
+  const meta = parseTimeWindowMeta(twVal);
+  addAuditEntry(`Moved ${count} servers to schedule "${twVal}"${autoMatch ? ' (auto-matched Maintenance Windows)' : ''} (${meta.weekLabel})`);
   document.getElementById('bulkTimeWin').value = '';
   saveState();
   renderTable();
@@ -3173,37 +2372,19 @@ function moveSelectedToSchedule() {
 function copySelectedToSchedule() {
   if (selectedIds.size === 0) return;
   const twVal = document.getElementById('bulkTimeWin').value.trim();
-  if (!twVal) {
-    showToast('⚠️ Please enter or select a Target Schedule / Time Window to copy into');
-    document.getElementById('bulkTimeWin').focus();
-    return;
-  }
-  const autoMatchMaint = document.getElementById('bulkAutoMaint')?.checked;
-  const targetHasExplicitClock = extractTimeTokens(twVal).length >= 2;
+  if (!twVal) { showToast('⚠️ Please enter or select a Target Weekend / Time Window to copy into'); document.getElementById('bulkTimeWin').focus(); return; }
+  const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
   let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
   const clones = [];
-  let lastAssignedTw = twVal;
-
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
       maxId += 1;
-      let finalTw = twVal;
-      if (autoMatchMaint && !targetHasExplicitClock) {
-        const smartTw = buildSuggestedTimeWindow(twVal, srv.maintWin);
-        if (smartTw) finalTw = smartTw;
-      }
-      lastAssignedTw = finalTw;
-      clones.push({
-        ...JSON.parse(JSON.stringify(srv)),
-        id: maxId,
-        timeWin: finalTw,
-        by: '',
-        status: ''
-      });
+      const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, srv.maintWin) : '';
+      clones.push({ ...JSON.parse(JSON.stringify(srv)), id: maxId, timeWin: smartTw || twVal, by: '', status: '' });
     }
   });
   appState.servers.push(...clones);
-  const meta = parseTimeWindowMeta(lastAssignedTw);
+  const meta = parseTimeWindowMeta(twVal);
   addAuditEntry(`Copied ${clones.length} servers into new schedule "${twVal}" (${meta.weekLabel})`);
   document.getElementById('bulkTimeWin').value = '';
   clearSelection();
@@ -3213,61 +2394,49 @@ function copySelectedToSchedule() {
 }
 
 function toggleSelectAllVisible(checked) {
-  (window._lastFilteredIds || []).forEach(id => {
-    if (checked) selectedIds.add(id);
-    else selectedIds.delete(id);
-  });
+  (window._lastFilteredIds || []).forEach(id => { if (checked) selectedIds.add(id); else selectedIds.delete(id); });
   renderTable();
 }
-
 function selectWeekServers(weekKey) {
   const { enriched } = getSortedAndGrouped();
   const weekItems = enriched.filter(s => s.weekKey === weekKey);
   const allAlreadySelected = weekItems.every(s => selectedIds.has(s.id));
-  weekItems.forEach(s => {
-    if (allAlreadySelected) selectedIds.delete(s.id);
-    else selectedIds.add(s.id);
-  });
+  weekItems.forEach(s => { if (allAlreadySelected) selectedIds.delete(s.id); else selectedIds.add(s.id); });
   renderTable();
 }
-
 function clearSelection() {
   selectedIds.clear();
   const masterCb = document.getElementById('selectAllVisible');
   if (masterCb) masterCb.checked = false;
   renderTable();
 }
-
 function updateBulkBar() {
-  const bar = document.getElementById('bulkBar');
   document.getElementById('selectedCount').textContent = selectedIds.size;
-  bar.classList.toggle('visible', selectedIds.size > 0);
+  document.getElementById('bulkBar').classList.toggle('visible', selectedIds.size > 0);
 }
-
 function applyBulkUpdate() {
   if (selectedIds.size === 0) return;
   const byVal = document.getElementById('bulkBy').value;
   const statusVal = document.getElementById('bulkStatus').value;
   const twVal = document.getElementById('bulkTimeWin').value.trim();
-
+  const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
   let count = 0;
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
       if (byVal !== '__KEEP__') srv.by = byVal;
       if (statusVal !== '__KEEP__') srv.status = statusVal;
-      if (twVal) srv.timeWin = twVal;
+      if (twVal) {
+        const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, srv.maintWin) : '';
+        srv.timeWin = smartTw || twVal;
+      }
       count++;
     }
   });
-
   const changes = [];
   if (byVal !== '__KEEP__') changes.push(`By=${byVal || 'Blank'}`);
   if (statusVal !== '__KEEP__') changes.push(`Status=${statusVal || 'Blank'}`);
   if (twVal) changes.push(`Window="${twVal}"`);
-  if (changes.length > 0) {
-    addAuditEntry(`Bulk updated ${count} servers (${changes.join(', ')})`);
-  }
-
+  if (changes.length > 0) addAuditEntry(`Bulk updated ${count} servers (${changes.join(', ')})`);
   document.getElementById('bulkBy').value = '__KEEP__';
   document.getElementById('bulkStatus').value = '__KEEP__';
   document.getElementById('bulkTimeWin').value = '';
@@ -3275,24 +2444,17 @@ function applyBulkUpdate() {
   renderTable();
   showToast(`✓ Updated ${count} selected servers`);
 }
-
 function bulkDeleteSelected() {
   if (selectedIds.size === 0) return;
   const count = selectedIds.size;
-  showCustomConfirm(
-    'Remove Selected Servers',
-    `Remove ${count} selected server(s) from the patching schedule?`,
-    `Remove (${count})`,
-    '#EF4444',
-    () => {
-      appState.servers = appState.servers.filter(s => !selectedIds.has(s.id));
-      selectedIds.clear();
-      saveState();
-      addAuditEntry(`Bulk removed ${count} servers`);
-      renderTable();
-      showToast(`🗑️ Removed ${count} selected servers`);
-    }
-  );
+  showCustomConfirm('Remove Selected Servers', `Remove ${count} selected server(s) from the patching schedule?`, `Remove (${count})`, '#EF4444', () => {
+    appState.servers = appState.servers.filter(s => !selectedIds.has(s.id));
+    selectedIds.clear();
+    saveState();
+    addAuditEntry(`Bulk removed ${count} servers`);
+    renderTable();
+    showToast(`🗑️ Removed ${count} selected servers`);
+  });
 }
 
 function legacyExecCopy(text) {
@@ -3300,238 +2462,133 @@ function legacyExecCopy(text) {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.top = '-9999px';
-    ta.style.left = '-9999px';
-    ta.style.opacity = '0';
+    ta.style.position = 'fixed'; ta.style.top = '-9999px'; ta.style.left = '-9999px'; ta.style.opacity = '0';
     document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    ta.setSelectionRange(0, text.length);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     return !!ok;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 }
-
 function openCopyFallbackModal(title, text) {
   document.getElementById('copyModalTitle').textContent = title || '📋 Copy Text';
   const ta = document.getElementById('copyModalTextarea');
   ta.value = text;
   document.getElementById('copyFallbackModal').classList.add('open');
-  setTimeout(() => {
-    ta.focus();
-    ta.select();
-    ta.setSelectionRange(0, text.length);
-  }, 40);
+  setTimeout(() => { ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); }, 40);
 }
-
 function retryExecCopyFromModal() {
   const ta = document.getElementById('copyModalTextarea');
-  ta.focus();
-  ta.select();
-  ta.setSelectionRange(0, ta.value.length);
+  ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
   let ok = false;
   try { ok = document.execCommand('copy'); } catch (e) {}
-  if (ok) {
-    document.getElementById('copyFallbackModal').classList.remove('open');
-    showToast('📋 Copied to clipboard');
-  } else {
-    showToast('⚠️ Press Ctrl+C on your keyboard to copy');
-  }
+  if (ok) { document.getElementById('copyFallbackModal').classList.remove('open'); showToast('📋 Copied to clipboard'); }
+  else { showToast('⚠️ Press Ctrl+C on your keyboard to copy'); }
 }
-
 function sharePointSafeCopy(text, successMsg, modalTitle) {
-  if (!text) {
-    showToast('⚠️ Nothing to copy');
-    return;
-  }
-  if (legacyExecCopy(text)) {
-    showToast(successMsg);
-    return;
-  }
+  if (!text) { showToast('⚠️ Nothing to copy'); return; }
+  if (legacyExecCopy(text)) { showToast(successMsg); return; }
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-    try {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(successMsg);
-      }).catch(() => {
-        openCopyFallbackModal(modalTitle, text);
-      });
-      return;
-    } catch (err) {}
+    try { navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => openCopyFallbackModal(modalTitle, text)); return; } catch (err) {}
   }
   openCopyFallbackModal(modalTitle, text);
 }
-
 function copySelectedHosts() {
   const { enriched } = getSortedAndGrouped();
-  const names = enriched
-    .filter(s => selectedIds.has(s.id))
-    .map(s => s.hostname.split('(')[0].trim());
-  sharePointSafeCopy(
-    names.join(String.fromCharCode(10)),
-    `📋 Copied ${names.length} selected hostnames to clipboard`,
-    `📋 Selected Hostnames (${names.length})`
-  );
+  const names = enriched.filter(s => selectedIds.has(s.id)).map(s => s.hostname.split('(')[0].trim());
+  sharePointSafeCopy(names.join('
+'), `📋 Copied ${names.length} selected hostnames`, `📋 Selected Hostnames (${names.length})`);
 }
-
 function copySelectedIPs() {
   const { enriched } = getSortedAndGrouped();
-  const ips = enriched
-    .filter(s => selectedIds.has(s.id))
-    .map(s => s.ip)
-    .filter(Boolean);
-  sharePointSafeCopy(
-    ips.join(String.fromCharCode(10)),
-    `🌐 Copied ${ips.length} selected IP addresses to clipboard`,
-    `🌐 Selected IP Addresses (${ips.length})`
-  );
+  const ips = enriched.filter(s => selectedIds.has(s.id)).map(s => s.ip).filter(Boolean);
+  sharePointSafeCopy(ips.join('
+'), `🌐 Copied ${ips.length} selected IPs`, `🌐 Selected IP Addresses (${ips.length})`);
 }
-
 function copyWeekList(weekKey, field) {
   const { enriched } = getSortedAndGrouped();
-  const vals = enriched
-    .filter(s => s.weekKey === weekKey)
-    .map(s => field === 'hostname' ? s.hostname.split('(')[0].trim() : s.ip)
-    .filter(Boolean);
+  const vals = enriched.filter(s => s.weekKey === weekKey).map(s => field === 'hostname' ? s.hostname.split('(')[0].trim() : s.ip).filter(Boolean);
   const label = field === 'hostname' ? 'hostnames' : 'IP addresses';
-  sharePointSafeCopy(
-    vals.join(String.fromCharCode(10)),
-    `📋 Copied ${vals.length} ${label} for ${weekKey}`,
-    `📋 ${weekKey} ${label}`
-  );
+  sharePointSafeCopy(vals.join('
+'), `📋 Copied ${vals.length} ${label} for ${weekKey}`, `📋 ${weekKey} ${label}`);
 }
 
-/* Audit & Handover Drawer */
-function openAuditDrawer() {
-  updateAuditUI();
-  document.getElementById('auditDrawer').classList.add('open');
-}
-function closeAuditDrawer() {
-  document.getElementById('auditDrawer').classList.remove('open');
-}
-function clearAuditLog() {
-  auditLogs = [];
-  localStorage.removeItem(AUDIT_KEY);
-  updateAuditUI();
-}
+function openAuditDrawer() { updateAuditUI(); document.getElementById('auditDrawer').classList.add('open'); }
+function closeAuditDrawer() { document.getElementById('auditDrawer').classList.remove('open'); }
+function clearAuditLog() { auditLogs = []; localStorage.removeItem(AUDIT_KEY); updateAuditUI(); }
 function copyHandoverSummary() {
   const { enriched } = getSortedAndGrouped();
-  const total = enriched.length;
-  const patched = enriched.filter(s => s.status === 'Patched').length;
-  const failed = enriched.filter(s => s.status === 'Failed').length;
-  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join(String.fromCharCode(10));
+  const total = enriched.length, patched = enriched.filter(s => s.status === 'Patched').length, failed = enriched.filter(s => s.status === 'Failed').length;
+  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('
+');
   const summary = [
     `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
     `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
-    ``,
-    `Recent Activity:`,
-    recent || '- No changes recorded in this session.'
-  ].join(String.fromCharCode(10));
+    ``, `Recent Activity:`, recent || '- No changes recorded in this session.'
+  ].join('
+');
   sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
 }
 
 function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
 function updateField(id, field, value, isTimeWin = false) {
   const item = appState.servers.find(s => s.id === id);
   if (!item) return;
   const oldVal = item[field];
   const newVal = value.trim();
   if (oldVal === newVal) return;
-
   item[field] = newVal;
   saveState();
   addAuditEntry(`${item.hostname}: changed ${field} from "${oldVal || 'Blank'}" → "${newVal || 'Blank'}"`);
   renderTable();
-
-  if (isTimeWin) {
-    const meta = parseTimeWindowMeta(item.timeWin);
-    showToast(`✓ Moved ${item.hostname} → ${meta.weekLabel}`);
-  } else {
-    showToast(`✓ Saved ${item.hostname}`);
-  }
+  if (isTimeWin) { const meta = parseTimeWindowMeta(item.timeWin); showToast(`✓ Moved ${item.hostname} → ${meta.weekLabel}`); }
+  else { showToast(`✓ Saved ${item.hostname}`); }
 }
 
-function applySuggestedTimeWin(id) {
-  const item = appState.servers.find(s => s.id === id);
-  if (!item) return;
-  const suggested = buildSuggestedTimeWindow(item.timeWin, item.maintWin);
-  if (!suggested) return;
-  updateField(id, 'timeWin', suggested, true);
+let _confirmCallback = null;
+function showCustomConfirm(title, message, okLabel, okColor, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel || 'Confirm';
+  okBtn.style.background = okColor || '#EF4444';
+  _confirmCallback = onConfirm;
+  document.getElementById('confirmModal').classList.add('open');
 }
-function openAddModal() {
-  document.getElementById('addModal').classList.add('open');
-  updateNewModalTimeSuggestion();
+function closeConfirmModal(confirmed) {
+  document.getElementById('confirmModal').classList.remove('open');
+  const cb = _confirmCallback; _confirmCallback = null;
+  if (confirmed && typeof cb === 'function') cb();
 }
-function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
-
-function updateNewModalTimeSuggestion() {
-  const maintVal = document.getElementById('newMaint').value;
-  const timeVal = document.getElementById('newTime').value;
-  const wrap = document.getElementById('newModalSuggestWrap');
-  if (!wrap) return;
-  const suggested = buildSuggestedTimeWindow(timeVal, maintVal);
-  if (isMeaningfullyDifferentTw(timeVal, suggested)) {
-    wrap.innerHTML = `<button type="button" class="tw-suggest-btn" onclick="document.getElementById('newTime').value='${escapeHtml(suggested)}';updateNewModalTimeSuggestion();">⚡ Suggest from Maint. Window: ${escapeHtml(suggested)}</button>`;
-  } else {
-    wrap.innerHTML = '';
-  }
-}
-
 function deleteServer(id) {
   const item = appState.servers.find(s => s.id === id);
   if (!item) return;
-  showCustomConfirm(
-    'Remove Server',
-    `Remove ${item.hostname} (${item.ip || 'No IP'}) from the patching schedule?`,
-    'Remove',
-    '#EF4444',
-    () => {
-      appState.servers = appState.servers.filter(s => s.id !== id);
-      selectedIds.delete(id);
-      saveState();
-      addAuditEntry(`Removed server ${item.hostname}`);
-      renderTable();
-      showToast(`🗑️ Removed ${item.hostname}`);
-    }
-  );
+  showCustomConfirm('Remove Server', `Remove ${item.hostname} (${item.ip || 'No IP'}) from the patching schedule?`, 'Remove', '#EF4444', () => {
+    appState.servers = appState.servers.filter(s => s.id !== id);
+    selectedIds.delete(id);
+    saveState();
+    addAuditEntry(`Removed server ${item.hostname}`);
+    renderTable();
+    showToast(`🗑️ Removed ${item.hostname}`);
+  });
 }
 
-function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function openAddModal() { document.getElementById('addModal').classList.add('open'); refreshNewServerSuggestion(); }
 function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
-
 function saveNewServer() {
   const host = document.getElementById('newHost').value.trim();
   const timeWin = document.getElementById('newTime').value.trim();
-  if (!host || !timeWin) {
-    showToast('⚠️ Hostname and Time Windows are required');
-    return;
-  }
+  if (!host || !timeWin) { showToast('⚠️ Hostname and Time Windows are required'); return; }
   const maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
-  const newSrv = {
-    id: maxId + 1,
-    hostname: host,
-    ip: document.getElementById('newIp').value.trim(),
-    os: document.getElementById('newOs').value.trim(),
-    app: document.getElementById('newApp').value.trim(),
-    maintWin: document.getElementById('newMaint').value.trim(),
-    timeWin: timeWin,
-    osSheet: document.getElementById('newSheet').value,
-    remarks1: document.getElementById('newRem1').value.trim(),
-    remarks2: '',
-    by: document.getElementById('newBy').value,
-    status: document.getElementById('newStatus').value
-  };
-  appState.servers.push(newSrv);
+  appState.servers.push({
+    id: maxId + 1, hostname: host, ip: document.getElementById('newIp').value.trim(),
+    os: document.getElementById('newOs').value.trim(), app: document.getElementById('newApp').value.trim(),
+    maintWin: document.getElementById('newMaint').value.trim(), timeWin: timeWin,
+    osSheet: document.getElementById('newSheet').value, remarks1: document.getElementById('newRem1').value.trim(),
+    remarks2: '', by: document.getElementById('newBy').value, status: document.getElementById('newStatus').value
+  });
   saveState();
   addAuditEntry(`Added new server ${host} (${timeWin})`);
   closeAddModal();
@@ -3540,10 +2597,7 @@ function saveNewServer() {
 }
 
 function ensureXLSX(callback) {
-  if (typeof XLSX !== 'undefined') {
-    callback();
-    return;
-  }
+  if (typeof XLSX !== 'undefined') { callback(); return; }
   showToast('⏳ Loading Styled Excel engine...');
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
@@ -3552,10 +2606,7 @@ function ensureXLSX(callback) {
     const fallbackScript = document.createElement('script');
     fallbackScript.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
     fallbackScript.onload = () => callback();
-    fallbackScript.onerror = () => {
-      showToast('⚠️ External Excel library blocked — exporting CSV instead');
-      exportCSVFallback();
-    };
+    fallbackScript.onerror = () => { showToast('⚠️ External Excel library blocked — exporting CSV instead'); exportCSVFallback(); };
     document.head.appendChild(fallbackScript);
   };
   document.head.appendChild(script);
@@ -3569,10 +2620,11 @@ function exportCSVFallback() {
   enriched.forEach((srv, idx) => {
     lines.push([idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status].map(esc).join(','));
   });
-  const blob = new Blob(['\uFEFF' + lines.join(String.fromCharCode(13, 10))], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['﻿' + lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'Q4_2026_Patching_Schedule_Updated.csv';
+  a.download = 'Patching_Schedule_Updated.csv';
   a.click();
 }
 
@@ -3585,10 +2637,7 @@ function handleImport(event) {
       try {
         const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const ws = wb.Sheets['Consolidated Schedule'] || wb.Sheets[wb.SheetNames[0]];
-        if (!ws) {
-          showToast('⚠️ Could not find a valid sheet in uploaded workbook');
-          return;
-        }
+        if (!ws) { showToast('⚠️ Could not find a valid sheet in uploaded workbook'); return; }
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
         const importedServers = [];
         for (let r = 2; r < rows.length; r++) {
@@ -3597,18 +2646,12 @@ function handleImport(event) {
           const host = String(row[1] || '').trim();
           if (host && !colA.startsWith('📅') && !colA.startsWith('=')) {
             importedServers.push({
-              id: importedServers.length + 1,
-              hostname: host,
-              ip: String(row[2] || '').trim(),
-              os: String(row[3] || '').trim(),
-              app: String(row[4] || '').trim(),
-              maintWin: String(row[5] || '').trim(),
-              timeWin: String(row[6] || '').trim(),
+              id: importedServers.length + 1, hostname: host, ip: String(row[2] || '').trim(),
+              os: String(row[3] || '').trim(), app: String(row[4] || '').trim(),
+              maintWin: String(row[5] || '').trim(), timeWin: String(row[6] || '').trim(),
               osSheet: String(row[7] || '').trim() || 'Win SVR 2019',
-              remarks1: String(row[8] || '').trim(),
-              remarks2: String(row[9] || '').trim(),
-              by: String(row[10] || '').trim(),
-              status: String(row[11] || '').trim()
+              remarks1: String(row[8] || '').trim(), remarks2: String(row[9] || '').trim(),
+              by: String(row[10] || '').trim(), status: String(row[11] || '').trim()
             });
           }
         }
@@ -3619,12 +2662,8 @@ function handleImport(event) {
           addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
           renderTable();
           showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
-        } else {
-          showToast('⚠️ No valid server rows found');
-        }
-      } catch (err) {
-        showToast('⚠️ Error reading Excel file: ' + err.message);
-      }
+        } else { showToast('⚠️ No valid server rows found'); }
+      } catch (err) { showToast('⚠️ Error reading Excel file: ' + err.message); }
     };
     reader.readAsArrayBuffer(file);
   });
@@ -3635,96 +2674,30 @@ function exportExcel() {
   ensureXLSX(() => {
     const { enriched, uniqueWeeks, weekColorMap, weekLabelMap } = getSortedAndGrouped();
     const wb = XLSX.utils.book_new();
-
-    const thinBorder = {
-      top:    { style: 'thin', color: { rgb: 'CBD5E1' } },
-      bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-      left:   { style: 'thin', color: { rgb: 'CBD5E1' } },
-      right:  { style: 'thin', color: { rgb: 'CBD5E1' } }
-    };
-    const bannerBorder = {
-      top:    { style: 'medium', color: { rgb: '94B0DA' } },
-      bottom: { style: 'medium', color: { rgb: '94B0DA' } },
-      left:   { style: 'thin',   color: { rgb: '94B0DA' } },
-      right:  { style: 'thin',   color: { rgb: '94B0DA' } }
-    };
-    const titleStyle = {
-      font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '132A4A' } },
-      alignment: { horizontal: 'left', vertical: 'center', indent: 1 }
-    };
-    const headerStyle = {
-      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '1E3A5F' } },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: {
-        top:    { style: 'thin',   color: { rgb: '132640' } },
-        bottom: { style: 'medium', color: { rgb: '132640' } },
-        left:   { style: 'thin',   color: { rgb: '2F527D' } },
-        right:  { style: 'thin',   color: { rgb: '2F527D' } }
-      }
-    };
-    const weekBannerStyle = {
-      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
-      fill: { fgColor: { rgb: 'DCE6F7' } },
-      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
-      border: bannerBorder
-    };
+    const thinBorder = { top: { style: 'thin', color: { rgb: 'CBD5E1' } }, bottom: { style: 'thin', color: { rgb: 'CBD5E1' } }, left: { style: 'thin', color: { rgb: 'CBD5E1' } }, right: { style: 'thin', color: { rgb: 'CBD5E1' } } };
+    const bannerBorder = { top: { style: 'medium', color: { rgb: '94B0DA' } }, bottom: { style: 'medium', color: { rgb: '94B0DA' } }, left: { style: 'thin', color: { rgb: '94B0DA' } }, right: { style: 'thin', color: { rgb: '94B0DA' } } };
+    const titleStyle = { font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '132A4A' } }, alignment: { horizontal: 'left', vertical: 'center', indent: 1 } };
+    const headerStyle = { font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E3A5F' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: { top: { style: 'thin', color: { rgb: '132640' } }, bottom: { style: 'medium', color: { rgb: '132640' } }, left: { style: 'thin', color: { rgb: '2F527D' } }, right: { style: 'thin', color: { rgb: '2F527D' } } } };
+    const weekBannerStyle = { font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } }, fill: { fgColor: { rgb: 'DCE6F7' } }, alignment: { horizontal: 'left', vertical: 'center', indent: 1 }, border: bannerBorder };
 
     function getStatusCellStyle(status, baseHex) {
-      if (status === 'Patched') {
-        return {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } },
-          fill: { fgColor: { rgb: 'DCFCE7' } },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          border: thinBorder
-        };
-      }
-      if (status === 'Failed') {
-        return {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } },
-          fill: { fgColor: { rgb: 'FEE2E2' } },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          border: thinBorder
-        };
-      }
-      return {
-        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
-        fill: { fgColor: { rgb: baseHex } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: thinBorder
-      };
+      if (status === 'Patched') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } }, fill: { fgColor: { rgb: 'DCFCE7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
+      if (status === 'Failed') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } }, fill: { fgColor: { rgb: 'FEE2E2' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
+      return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
-
     function getEngineerCellStyle(by, baseHex) {
-      const map = {
-        'Andy': { fg: 'E0F2FE', text: '0369A1' },
-        'Don':  { fg: 'FFEDD5', text: 'C2410C' },
-        'Fung': { fg: 'EDE9FE', text: '5B21B6' }
-      };
-      if (map[by]) {
-        return {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } },
-          fill: { fgColor: { rgb: map[by].fg } },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          border: thinBorder
-        };
-      }
-      return {
-        font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } },
-        fill: { fgColor: { rgb: baseHex } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: thinBorder
-      };
+      const map = { 'Andy': { fg: 'E0F2FE', text: '0369A1' }, 'Don': { fg: 'FFEDD5', text: 'C2410C' }, 'Fung': { fg: 'EDE9FE', text: '5B21B6' } };
+      if (map[by]) return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: map[by].text } }, fill: { fgColor: { rgb: map[by].fg } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
+      return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
-
     function calcRowHeight(values, colWidths) {
       let maxLines = 1;
       values.forEach((val, idx) => {
         const s = String(val || '');
         if (!s) return;
         const w = Math.max(8, (colWidths[idx] || 20) - 3);
-        const lines = s.split(String.fromCharCode(10)).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(new RegExp(String.fromCharCode(13), 'g'), '').length / w)), 0);
+        const lines = s.split('
+').reduce((sum, line) => sum + Math.max(1, Math.ceil(line.replace(//g, '').length / w)), 0);
         if (lines > maxLines) maxLines = lines;
       });
       return Math.min(180, Math.max(22, maxLines * 15 + 6));
@@ -3732,56 +2705,28 @@ function exportExcel() {
 
     const consColWidths = [6, 26, 17, 32, 16, 36, 42, 18, 44, 24, 12, 14];
     const aoa = [
-      ['Consolidated Q4 2026 / Q1 2027 Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
+      ['Consolidated Windows Server Patching Schedule (Master Control Sheet)', '', '', '', '', '', '', '', '', '', '', ''],
       ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'OS Sheet', 'SOP Notes', 'Remarks', 'By', 'Status']
     ];
-    const rowMeta = [
-      { type: 'title', height: 32 },
-      { type: 'header', height: 28 }
-    ];
-    const merges = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }
-    ];
-
-    let currentWk = null;
-    let prevLabel = '';
-    let bannerIdx = -1;
-    let wkStartExcelRow = 0;
+    const rowMeta = [{ type: 'title', height: 32 }, { type: 'header', height: 28 }];
+    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }];
+    let currentWk = null, prevLabel = '', bannerIdx = -1, wkStartExcelRow = 0;
 
     enriched.forEach((srv, idx) => {
       if (srv.weekKey !== currentWk) {
-        if (bannerIdx !== -1) {
-          const wkEndExcelRow = aoa.length;
-          aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
-        }
-        currentWk = srv.weekKey;
-        prevLabel = srv.weekLabel;
-        bannerIdx = aoa.length;
+        if (bannerIdx !== -1) aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${aoa.length - wkStartExcelRow + 1} servers`;
+        currentWk = srv.weekKey; prevLabel = srv.weekLabel; bannerIdx = aoa.length;
         aoa.push([`📅  ${srv.weekLabel}`, '', '', '', '', '', '', '', '', '', '', '']);
         rowMeta.push({ type: 'banner', height: 25 });
         merges.push({ s: { r: bannerIdx, c: 0 }, e: { r: bannerIdx, c: 11 } });
         wkStartExcelRow = aoa.length + 1;
       }
-
-      const rowVals = [
-        idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin,
-        srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status
-      ];
+      const rowVals = [idx + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.osSheet, srv.remarks1, srv.remarks2, srv.by, srv.status];
       const baseHex = (weekColorMap[srv.weekKey] || '#FFFFFF').replace('#', '').toUpperCase();
       aoa.push(rowVals);
-      rowMeta.push({
-        type: 'data',
-        baseHex,
-        by: srv.by,
-        status: srv.status,
-        height: calcRowHeight(rowVals, consColWidths)
-      });
+      rowMeta.push({ type: 'data', baseHex, by: srv.by, status: srv.status, height: calcRowHeight(rowVals, consColWidths) });
     });
-
-    if (bannerIdx !== -1) {
-      const wkEndExcelRow = aoa.length;
-      aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${wkEndExcelRow - wkStartExcelRow + 1} servers`;
-    }
+    if (bannerIdx !== -1) aoa[bannerIdx][0] = `📅  ${prevLabel}  |  Total Servers: ${aoa.length - wkStartExcelRow + 1} servers`;
 
     const wsCons = XLSX.utils.aoa_to_sheet(aoa);
     wsCons['!cols'] = consColWidths.map(wch => ({ wch }));
@@ -3794,135 +2739,22 @@ function exportExcel() {
       for (let c = 0; c < 12; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
         if (!wsCons[addr]) wsCons[addr] = { t: 's', v: '' };
-
-        if (meta.type === 'title') {
-          wsCons[addr].s = titleStyle;
-        } else if (meta.type === 'header') {
-          wsCons[addr].s = headerStyle;
-        } else if (meta.type === 'banner') {
-          wsCons[addr].s = weekBannerStyle;
-        } else {
-          if (c === 10) {
-            wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
-          } else if (c === 11) {
-            wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
-          } else {
-            const isCenter = (c === 0 || c === 2 || c === 7);
-            const isBoldHost = (c === 1);
-            const isMonoIp = (c === 2);
-            wsCons[addr].s = {
-              font: {
-                name: isMonoIp ? 'Consolas' : 'Calibri',
-                sz: 10,
-                bold: isBoldHost || (c === 0),
-                color: { rgb: c === 0 ? '475569' : '0F172A' }
-              },
-              fill: { fgColor: { rgb: meta.baseHex } },
-              alignment: {
-                horizontal: isCenter ? 'center' : 'left',
-                vertical: 'center',
-                wrapText: true
-              },
-              border: thinBorder
-            };
-          }
-        }
-      }
-    }
-    XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
-
-    const sumAoa = [
-      ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
-      ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
-    ];
-    uniqueWeeks.forEach(wk => {
-      const items = enriched.filter(s => s.weekKey === wk);
-      const tot = items.length;
-      const p = items.filter(s => s.status === 'Patched').length;
-      const f = items.filter(s => s.status === 'Failed').length;
-      const pend = tot - p - f;
-      const pct = tot ? Math.round((p / tot) * 100) + '%' : '0%';
-      sumAoa.push([weekLabelMap[wk], tot, p, pend, f, pct]);
-    });
-    const totAll = enriched.length;
-    const pAll = enriched.filter(s => s.status === 'Patched').length;
-    const fAll = enriched.filter(s => s.status === 'Failed').length;
-    sumAoa.push(['TOTAL ALL BATCHES', totAll, pAll, totAll - pAll - fAll, fAll, totAll ? Math.round((pAll / totAll) * 100) + '%' : '0%']);
-
-    const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
-    wsSum['!cols'] = [{ wch: 36 }, { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
-    wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-    wsSum['!rows'] = sumAoa.map((_, i) => ({ hpt: i === 0 ? 30 : (i === 1 ? 26 : 22) }));
-
-    for (let r = 0; r < sumAoa.length; r++) {
-      const isTotalRow = (r === sumAoa.length - 1);
-      const wkKey = (r >= 2 && !isTotalRow) ? uniqueWeeks[r - 2] : null;
-      const rowHex = wkKey ? (weekColorMap[wkKey] || '#FFFFFF').replace('#', '').toUpperCase() : 'E2E8F0';
-      for (let c = 0; c < 6; c++) {
-        const addr = XLSX.utils.encode_cell({ r, c });
-        if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
-        if (r === 0) wsSum[addr].s = titleStyle;
-        else if (r === 1) wsSum[addr].s = headerStyle;
+        if (meta.type === 'title') wsCons[addr].s = titleStyle;
+        else if (meta.type === 'header') wsCons[addr].s = headerStyle;
+        else if (meta.type === 'banner') wsCons[addr].s = weekBannerStyle;
+        else if (c === 10) wsCons[addr].s = getEngineerCellStyle(meta.by, meta.baseHex);
+        else if (c === 11) wsCons[addr].s = getStatusCellStyle(meta.status, meta.baseHex);
         else {
-          wsSum[addr].s = {
-            font: { name: 'Calibri', sz: 10, bold: isTotalRow || c === 0 || c === 5, color: { rgb: '0F172A' } },
-            fill: { fgColor: { rgb: isTotalRow ? 'DCE6F7' : rowHex } },
-            alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
-            border: isTotalRow ? bannerBorder : thinBorder
+          wsCons[addr].s = {
+            font: { name: c === 2 ? 'Consolas' : 'Calibri', sz: 10, bold: (c === 1 || c === 0), color: { rgb: c === 0 ? '475569' : '0F172A' } },
+            fill: { fgColor: { rgb: meta.baseHex } },
+            alignment: { horizontal: (c === 0 || c === 2 || c === 7) ? 'center' : 'left', vertical: 'center', wrapText: true },
+            border: thinBorder
           };
         }
       }
     }
-    XLSX.utils.book_append_sheet(wb, wsSum, 'Weekly Summary');
-
-    const sheetOrder = ['Win SVR 2012R2', 'Win SVR 2016', 'Win SVR 2019', 'Win SRV 2022', 'Ripen Infra SVR'];
-    const subColWidths = [6, 26, 17, 32, 16, 36, 42, 44, 12, 14];
-    sheetOrder.forEach(sName => {
-      const sheetServers = enriched.filter(s => s.osSheet === sName);
-      const sAoa = [
-        [`${sName} — Patching Schedule (${sheetServers.length} Servers)`, '', '', '', '', '', '', '', '', ''],
-        ['No', 'Hostname', 'IP Address', 'Operating System', 'Application', 'Maintenance Windows', 'Time Windows', 'Remarks', 'By', 'Status']
-      ];
-      const sRowHeights = [{ hpt: 30 }, { hpt: 26 }];
-      sheetServers.forEach((srv, i) => {
-        const rVals = [i + 1, srv.hostname, srv.ip, srv.os, srv.app, srv.maintWin, srv.timeWin, srv.remarks1, srv.by, srv.status];
-        sAoa.push(rVals);
-        sRowHeights.push({ hpt: calcRowHeight(rVals, subColWidths) });
-      });
-
-      const wsSub = XLSX.utils.aoa_to_sheet(sAoa);
-      wsSub['!cols'] = subColWidths.map(wch => ({ wch }));
-      wsSub['!rows'] = sRowHeights;
-      wsSub['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
-
-      for (let r = 0; r < sAoa.length; r++) {
-        const zebraHex = (r % 2 === 0) ? 'FFFFFF' : 'F8FAFC';
-        const srvObj = r >= 2 ? sheetServers[r - 2] : null;
-        for (let c = 0; c < 10; c++) {
-          const addr = XLSX.utils.encode_cell({ r, c });
-          if (!wsSub[addr]) wsSub[addr] = { t: 's', v: '' };
-          if (r === 0) wsSub[addr].s = titleStyle;
-          else if (r === 1) wsSub[addr].s = headerStyle;
-          else if (c === 8) wsSub[addr].s = getEngineerCellStyle(srvObj.by, zebraHex);
-          else if (c === 9) wsSub[addr].s = getStatusCellStyle(srvObj.status, zebraHex);
-          else {
-            const isCenter = (c === 0 || c === 2);
-            wsSub[addr].s = {
-              font: {
-                name: c === 2 ? 'Consolas' : 'Calibri',
-                sz: 10,
-                bold: (c === 0 || c === 1),
-                color: { rgb: c === 0 ? '475569' : '0F172A' }
-              },
-              fill: { fgColor: { rgb: zebraHex } },
-              alignment: { horizontal: isCenter ? 'center' : 'left', vertical: 'center', wrapText: true },
-              border: thinBorder
-            };
-          }
-        }
-      }
-      XLSX.utils.book_append_sheet(wb, wsSub, sName);
-    });
+    XLSX.utils.book_append_sheet(wb, wsCons, 'Consolidated Schedule');
 
     const dateStamp = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(wb, `Windows_Patching_Schedule_${dateStamp}.xlsx`);
@@ -3931,67 +2763,49 @@ function exportExcel() {
 }
 
 /* Column Drag-Resizing + Sticky Offset Sync */
-const DEFAULT_COL_WIDTHS = [34, 36, 128, 108, 185, 82, 185, 222, 112, 262, 135, 70, 84, 30];
+const DEFAULT_COL_WIDTHS = [34, 36, 128, 108, 185, 82, 185, 230, 112, 254, 135, 70, 84, 30];
 const COL_WIDTHS_KEY = 'patching_schedule_v40_col_widths';
 
 function syncStickyOffsets() {
   const widths = window._currentColWidths || DEFAULT_COL_WIDTHS;
-  const col1W = widths[0] || 34;
-  const col2W = widths[1] || 36;
-  document.querySelectorAll('thead th.sticky-col-2, tbody td.sticky-col-2').forEach(el => {
-    el.style.left = col1W + 'px';
-  });
-  document.querySelectorAll('thead th.sticky-col-3, tbody td.sticky-col-3').forEach(el => {
-    el.style.left = (col1W + col2W) + 'px';
-  });
+  const col1W = widths[0] || 34, col2W = widths[1] || 36;
+  document.querySelectorAll('thead th.sticky-col-2, tbody td.sticky-col-2').forEach(el => { el.style.left = col1W + 'px'; });
+  document.querySelectorAll('thead th.sticky-col-3, tbody td.sticky-col-3').forEach(el => { el.style.left = (col1W + col2W) + 'px'; });
 }
-
 function applyColumnWidths(widths) {
   const cols = document.querySelectorAll('#scheduleColGroup col');
-  widths.forEach((w, idx) => {
-    if (cols[idx]) cols[idx].style.width = w + 'px';
-  });
+  widths.forEach((w, idx) => { if (cols[idx]) cols[idx].style.width = w + 'px'; });
   window._currentColWidths = widths;
   syncStickyOffsets();
 }
-
 function initColumnResizers() {
   let saved = null;
   try {
     const raw = localStorage.getItem(COL_WIDTHS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length === DEFAULT_COL_WIDTHS.length) saved = parsed;
-    }
+    if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed) && parsed.length === DEFAULT_COL_WIDTHS.length) saved = parsed; }
   } catch (e) {}
   applyColumnWidths(saved || [...DEFAULT_COL_WIDTHS]);
 
   const ths = document.querySelectorAll('thead th');
   const cols = document.querySelectorAll('#scheduleColGroup col');
-
   ths.forEach((th, idx) => {
     if (idx === 0 || idx === ths.length - 1) return;
     const handle = document.createElement('div');
     handle.className = 'col-resizer';
     handle.title = 'Drag to resize column width';
     th.appendChild(handle);
-
     handle.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
       const startX = e.pageX;
       const startWidth = cols[idx].offsetWidth || parseInt(cols[idx].style.width, 10) || DEFAULT_COL_WIDTHS[idx];
       handle.classList.add('resizing');
       document.body.style.cursor = 'col-resize';
-
       const onMouseMove = (moveEvt) => {
-        const delta = moveEvt.pageX - startX;
-        const newW = Math.max(30, Math.min(600, startWidth + delta));
+        const newW = Math.max(30, Math.min(600, startWidth + (moveEvt.pageX - startX)));
         const nextWidths = [...(window._currentColWidths || DEFAULT_COL_WIDTHS)];
         nextWidths[idx] = newW;
         applyColumnWidths(nextWidths);
       };
-
       const onMouseUp = () => {
         handle.classList.remove('resizing');
         document.body.style.cursor = '';
@@ -3999,18 +2813,12 @@ function initColumnResizers() {
         document.removeEventListener('mouseup', onMouseUp);
         try { localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(window._currentColWidths)); } catch (err) {}
       };
-
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     });
   });
 }
-
-function resetColumnWidths() {
-  localStorage.removeItem(COL_WIDTHS_KEY);
-  applyColumnWidths([...DEFAULT_COL_WIDTHS]);
-  showToast('↔ Reset column widths to default');
-}
+function resetColumnWidths() { localStorage.removeItem(COL_WIDTHS_KEY); applyColumnWidths([...DEFAULT_COL_WIDTHS]); showToast('↔ Reset column widths to default'); }
 
 window.addEventListener('unhandledrejection', (e) => { e.preventDefault(); });
 window.addEventListener('resize', () => { if (isExpandedMode) applyRowHeights(); });
