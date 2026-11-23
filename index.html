@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.17)</title>
+<title>Windows Server Patching Schedule Manager (v5.18)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -762,6 +762,146 @@
   }
 
 
+
+  /* v5.18 Active Filter Highlights & Filter Chips Bar */
+  .kpi-box.active {
+    background: #DBEAFE !important;
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.22);
+  }
+  .w-bar-col {
+    padding: 2px 3px 3px;
+    border-radius: 5px;
+    border: 1.5px solid transparent;
+    transition: all 0.14s ease;
+  }
+  .w-bar-col.active {
+    background: #DBEAFE;
+    border-color: #2563EB;
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.22);
+  }
+  .w-bar-col.active .w-bar-label,
+  .w-bar-col.active .w-bar-count {
+    color: #1D4ED8;
+    font-weight: 800;
+  }
+  .w-bar-col.dimmed {
+    opacity: 0.42;
+  }
+  .w-bar-col.dimmed:hover {
+    opacity: 0.85;
+  }
+  .h-bar-row {
+    border: 1px solid transparent;
+  }
+  .h-bar-row.active {
+    background: #DBEAFE !important;
+    border-color: #3B82F6;
+    box-shadow: inset 3px 0 0 #2563EB;
+    padding-left: 6px;
+  }
+  .h-bar-row.active .h-bar-meta {
+    color: #1D4ED8;
+    font-weight: 800;
+  }
+  .h-bar-row.dimmed {
+    opacity: 0.48;
+  }
+  .h-bar-row.dimmed:hover {
+    opacity: 0.9;
+  }
+  .search-input-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    min-width: 190px;
+  }
+  .search-input-wrap input {
+    width: 100%;
+    padding-right: 26px !important;
+  }
+  .search-clear-icon {
+    position: absolute;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: #CBD5E1;
+    color: #0F172A;
+    font-size: 0.68rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+  }
+  .search-clear-icon:hover {
+    background: #EF4444;
+    color: #FFFFFF;
+  }
+  .filter-bar select.filter-active,
+  .filter-bar input.filter-active {
+    border-color: #2563EB !important;
+    background-color: #EFF6FF !important;
+    color: #1E3A8A !important;
+    font-weight: 700;
+    box-shadow: 0 0 0 1.5px rgba(37, 99, 235, 0.16);
+  }
+  .active-filters-strip {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding-top: 4px;
+    border-top: 1px dashed #CBD5E1;
+  }
+  .active-filters-strip.visible {
+    display: flex;
+  }
+  .af-label {
+    font-size: 0.67rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #475569;
+    letter-spacing: 0.25px;
+    margin-right: 2px;
+  }
+  .af-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #93C5FD;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .af-chip button {
+    border: none;
+    background: rgba(30, 64, 175, 0.14);
+    color: #1E40AF;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .af-chip button:hover {
+    background: #DC2626;
+    color: #FFFFFF;
+  }
+
   /* v5.17 Enhancements CSS */
   .btn-undo {
     background: rgba(255, 255, 255, 0.11);
@@ -949,7 +1089,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.17</span>
+      <span class="ver-pill">v5.18</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -1038,7 +1178,10 @@
   <!-- Unified Filter & Weekly Batch Strip -->
   <div class="controls-wrapper">
     <div class="filter-bar">
-      <input type="text" id="searchInput" name="schedule_search_query" autocomplete="off" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+      <div class="search-input-wrap">
+        <input type="text" id="searchInput" name="schedule_search_query" autocomplete="off" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+        <button type="button" id="searchClearIcon" class="search-clear-icon" onclick="document.getElementById('searchInput').value='';renderTable();" title="Clear search">✕</button>
+      </div>
       <select id="filterWeek" onchange="renderTable()">
         <option value="">All Weeks</option>
       </select>
@@ -1071,7 +1214,8 @@
         <option value="Patched">Patched</option>
         <option value="Failed">Failed</option>
         <option value="__PENDING__">Pending / Blank</option>
-        <option value="__ALERTS__">⚠️ Sequence / Window Mismatch Only</option>
+        <option value="__ALERTS__">⚠️ Any Alert / Conflict / Duplicate</option>
+        <option value="__DUPLICATES__">🔁 Duplicate in Quarter Only</option>
       </select>
       <button type="button" id="toggleExpandBtn" class="btn btn-toggle active" onclick="toggleRowExpansion()">
         ↕ Compact Scroll Rows
@@ -1083,6 +1227,7 @@
         ↔ Reset Widths
       </button>
     </div>
+    <div class="active-filters-strip" id="activeFiltersStrip"></div>
     <div class="week-strip-wrap">
       <div class="week-strip-header">
         <span class="week-pills-label">📅 Weekly Batches</span>
@@ -2393,21 +2538,26 @@ function getSortedAndGrouped() {
     return { ...s, ...meta, env, seqRank, flags, suggestedTw };
   });
 
-  // Cross-row validation per weekly batch: Duplicate Hostname/IP & SEQ 2 scheduled before SEQ 1
-  const hostCountsByWeek = {};
-  const ipCountsByWeek = {};
+  // Cross-row validation across the SAME QUARTER: Duplicate Hostname/IP & SEQ 2 scheduled earlier than SEQ 1
+  const hostEntriesByQtr = {};
+  const ipEntriesByQtr = {};
   const seq1MinEpochByWeekApp = {};
 
   enriched.forEach(item => {
-    const wk = item.weekKey;
-    const hKey = `${wk}::${String(item.hostname || '').split('(')[0].trim().toUpperCase()}`;
-    const ipKey = `${wk}::${String(item.ip || '').trim()}`;
-    if (String(item.hostname || '').trim()) hostCountsByWeek[hKey] = (hostCountsByWeek[hKey] || 0) + 1;
-    if (String(item.ip || '').trim()) ipCountsByWeek[ipKey] = (ipCountsByWeek[ipKey] || 0) + 1;
+    const hNorm = String(item.hostname || '').split('(')[0].trim().toUpperCase();
+    const ipNorm = String(item.ip || '').trim();
+    if (hNorm) {
+      if (!hostEntriesByQtr[hNorm]) hostEntriesByQtr[hNorm] = [];
+      hostEntriesByQtr[hNorm].push(item);
+    }
+    if (ipNorm) {
+      if (!ipEntriesByQtr[ipNorm]) ipEntriesByQtr[ipNorm] = [];
+      ipEntriesByQtr[ipNorm].push(item);
+    }
 
     const appNorm = String(item.app || '').trim().toLowerCase();
     if (appNorm && item.seqRank === 1 && item.startEpoch < Number.MAX_SAFE_INTEGER) {
-      const waKey = `${wk}::${appNorm}`;
+      const waKey = `${item.weekKey}::${appNorm}`;
       if (!(waKey in seq1MinEpochByWeekApp) || item.startEpoch < seq1MinEpochByWeekApp[waKey]) {
         seq1MinEpochByWeekApp[waKey] = item.startEpoch;
       }
@@ -2415,21 +2565,28 @@ function getSortedAndGrouped() {
   });
 
   enriched.forEach(item => {
-    const wk = item.weekKey;
-    const hKey = `${wk}::${String(item.hostname || '').split('(')[0].trim().toUpperCase()}`;
-    const ipKey = `${wk}::${String(item.ip || '').trim()}`;
-    const dupHost = String(item.hostname || '').trim() && hostCountsByWeek[hKey] > 1;
-    const dupIp = String(item.ip || '').trim() && ipCountsByWeek[ipKey] > 1;
-    if (dupHost || dupIp) {
+    const hNorm = String(item.hostname || '').split('(')[0].trim().toUpperCase();
+    const ipNorm = String(item.ip || '').trim();
+    const hostMatches = hNorm ? (hostEntriesByQtr[hNorm] || []) : [];
+    const ipMatches = ipNorm ? (ipEntriesByQtr[ipNorm] || []) : [];
+    const dupHost = hostMatches.length > 1;
+    const dupIp = ipMatches.length > 1;
+    item.isDuplicate = dupHost || dupIp;
+
+    if (item.isDuplicate) {
+      const allPeerWeeks = [...new Set([...hostMatches, ...ipMatches].map(x => x.shortWeek))];
+      const totalOcc = Math.max(hostMatches.length, ipMatches.length);
+      const dupKind = dupHost && dupIp ? 'Hostname & IP' : (dupHost ? 'Hostname' : 'IP');
       item.flags.push({
         cls: 'tag-dup',
-        text: 'Duplicate',
-        title: `Duplicate ${dupHost && dupIp ? 'Hostname & IP' : (dupHost ? 'Hostname' : 'IP')} detected within ${item.weekLabel}`
+        text: `Duplicate (${totalOcc}x)`,
+        title: `Duplicate ${dupKind} appears ${totalOcc} times in this quarter (${allPeerWeeks.join(', ')})`
       });
     }
+
     const appNorm = String(item.app || '').trim().toLowerCase();
     if (appNorm && item.seqRank === 3 && item.startEpoch < Number.MAX_SAFE_INTEGER) {
-      const waKey = `${wk}::${appNorm}`;
+      const waKey = `${item.weekKey}::${appNorm}`;
       if (waKey in seq1MinEpochByWeekApp && item.startEpoch < seq1MinEpochByWeekApp[waKey]) {
         item.flags.push({
           cls: 'tag-conflict',
@@ -2440,12 +2597,12 @@ function getSortedAndGrouped() {
     }
   });
 
+  // Sort: 1. Weekly Batch > 2. Exact Start Timestamp > 3. Sequence Priority (SEQ 1 -> Normal -> SEQ 2) > 4. Natural Hostname
   enriched.sort((a, b) => {
     if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
     if (a.startEpoch !== b.startEpoch) return a.startEpoch - b.startEpoch;
-    const hostCmp = a.hostname.localeCompare(b.hostname, undefined, { numeric: true, sensitivity: 'base' });
-    if (hostCmp !== 0) return hostCmp;
-    return a.seqRank - b.seqRank;
+    if (a.seqRank !== b.seqRank) return a.seqRank - b.seqRank;
+    return a.hostname.localeCompare(b.hostname, undefined, { numeric: true, sensitivity: 'base' });
   });
 
   const uniqueWeeks = [...new Set(enriched.map(x => x.weekKey))];
@@ -2465,6 +2622,11 @@ function getSortedAndGrouped() {
 }
 
 function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
+  const activeWeek = document.getElementById('filterWeek').value;
+  const activeSheet = document.getElementById('filterSheet').value;
+  const activeBy = document.getElementById('filterBy').value;
+  const activeEnv = document.getElementById('filterEnv').value;
+
   const maxWeekTotal = Math.max(1, ...uniqueWeeks.map(wk => enriched.filter(s => s.weekKey === wk).length));
   const weeklyChartEl = document.getElementById('weeklyChart');
   weeklyChartEl.innerHTML = uniqueWeeks.map(wk => {
@@ -2477,8 +2639,9 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
     const pPct = tot ? (p / tot) * 100 : 0;
     const pendPct = tot ? (pend / tot) * 100 : 0;
     const fPct = tot ? (f / tot) * 100 : 0;
+    const colStateCls = activeWeek ? (activeWeek === wk ? ' active' : ' dimmed') : '';
     return `
-      <div class="w-bar-col" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed)" onclick="quickFilterWeek('${wk}')">
+      <div class="w-bar-col${colStateCls}" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed)" onclick="quickFilterWeek('${wk}')">
         <div class="w-bar-count">${tot}</div>
         <div class="w-bar-stack" style="height:${Math.max(8, heightPct)}px;">
           <div class="seg-patched" style="height:${pPct}%;"></div>
@@ -2499,9 +2662,11 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
     const cnt = enriched.filter(s => s.osSheet === sh).length;
     const doneCnt = enriched.filter(s => s.osSheet === sh && s.status === 'Patched').length;
     const pct = Math.round((cnt / total) * 100);
+    const rowCls = activeSheet ? (activeSheet === sh ? ' active' : ' dimmed') : '';
+    const checkMark = activeSheet === sh ? '✓ ' : '';
     return `
-      <div class="h-bar-row" onclick="quickFilterSheet('${sh}')" title="Filter ${sh}: ${cnt} servers (${doneCnt} Patched)">
-        <div class="h-bar-meta"><span>${sh}</span><span>${cnt} <span style="color:#059669;font-weight:700;">(${doneCnt}✓)</span></span></div>
+      <div class="h-bar-row${rowCls}" onclick="quickFilterSheet('${sh}')" title="Filter ${sh}: ${cnt} servers (${doneCnt} Patched)">
+        <div class="h-bar-meta"><span>${checkMark}${sh}</span><span>${cnt} <span style="color:#059669;font-weight:700;">(${doneCnt}✓)</span></span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${color};"></div></div>
       </div>
     `;
@@ -2517,9 +2682,11 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   document.getElementById('engineerChart').innerHTML = engItems.map(item => {
     const pct = Math.round((item.cnt / total) * 100);
     const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
+    const rowCls = activeBy ? (activeBy === item.filterVal ? ' active' : ' dimmed') : '';
+    const checkMark = activeBy === item.filterVal ? '✓ ' : '';
     return `
-      <div class="h-bar-row" onclick="quickFilterChart('by', '${item.filterVal}')" title="Click to filter Engineer: ${item.label}">
-        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
+      <div class="h-bar-row${rowCls}" onclick="quickFilterChart('by', '${item.filterVal}')" title="Click to filter Engineer: ${item.label}">
+        <div class="h-bar-meta"><span>${checkMark}${item.label}</span><span>${item.cnt}${doneTag}</span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
       </div>
     `;
@@ -2535,9 +2702,11 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
   document.getElementById('envChart').innerHTML = envItems.map(item => {
     const pct = Math.round((item.cnt / total) * 100);
     const doneTag = item.done > 0 ? ` <span style="color:#059669;font-weight:700;">(${item.done}✓)</span>` : '';
+    const rowCls = activeEnv ? (activeEnv === item.filterVal ? ' active' : ' dimmed') : '';
+    const checkMark = activeEnv === item.filterVal ? '✓ ' : '';
     return `
-      <div class="h-bar-row" onclick="quickFilterChart('env', '${item.filterVal}')" title="Click to filter Environment: ${item.label}">
-        <div class="h-bar-meta"><span>${item.label}</span><span>${item.cnt}${doneTag}</span></div>
+      <div class="h-bar-row${rowCls}" onclick="quickFilterChart('env', '${item.filterVal}')" title="Click to filter Environment: ${item.label}">
+        <div class="h-bar-meta"><span>${checkMark}${item.label}</span><span>${item.cnt}${doneTag}</span></div>
         <div class="h-bar-track"><div class="h-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
       </div>
     `;
@@ -2705,19 +2874,69 @@ function clearAllFilters() {
   document.getElementById('filterStatus').value = '';
   renderTable();
 }
-function updateClearFiltersBtn() {
-  let count = 0;
-  if (document.getElementById('searchInput').value.trim()) count++;
-  ['filterWeek', 'filterEnv', 'filterSheet', 'filterBy', 'filterStatus'].forEach(id => {
-    if (document.getElementById(id).value) count++;
+function clearSingleFilter(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.value = '';
+  renderTable();
+}
+
+function updateClearFiltersBtn(weekLabelMap = {}) {
+  const chips = [];
+  const searchEl = document.getElementById('searchInput');
+  const searchVal = searchEl.value.trim();
+  const searchClearIcon = document.getElementById('searchClearIcon');
+  if (searchClearIcon) searchClearIcon.style.display = searchVal ? 'inline-flex' : 'none';
+  searchEl.classList.toggle('filter-active', !!searchVal);
+  if (searchVal) chips.push({ id: 'searchInput', label: `Search: "${searchVal}"` });
+
+  const filterMeta = [
+    { id: 'filterWeek', prefix: 'Week' },
+    { id: 'filterEnv', prefix: 'Env' },
+    { id: 'filterSheet', prefix: 'OS Sheet' },
+    { id: 'filterBy', prefix: 'Engineer' },
+    { id: 'filterStatus', prefix: 'Status' }
+  ];
+  const friendlyMap = {
+    '__UNASSIGNED__': 'Unassigned',
+    '__PENDING__': 'Pending',
+    '__ALERTS__': 'Any Alert / Conflict',
+    '__DUPLICATES__': 'Duplicate in Quarter'
+  };
+
+  filterMeta.forEach(fm => {
+    const el = document.getElementById(fm.id);
+    const val = el ? el.value : '';
+    if (el) el.classList.toggle('filter-active', !!val);
+    if (val) {
+      let disp = friendlyMap[val] || val;
+      if (fm.id === 'filterWeek' && weekLabelMap[val]) disp = weekLabelMap[val];
+      chips.push({ id: fm.id, label: `${fm.prefix}: ${disp}` });
+    }
   });
+
+  const count = chips.length;
   const btn = document.getElementById('clearFiltersBtn');
-  if (!btn) return;
-  if (count > 0) {
-    btn.style.display = 'inline-flex';
-    btn.textContent = `✕ Clear Filters (${count})`;
-  } else {
-    btn.style.display = 'none';
+  if (btn) {
+    if (count > 0) {
+      btn.style.display = 'inline-flex';
+      btn.textContent = `✕ Clear (${count})`;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  const strip = document.getElementById('activeFiltersStrip');
+  if (strip) {
+    if (count > 0) {
+      strip.classList.add('visible');
+      strip.innerHTML =
+        `<span class="af-label">Active Filters (${count}):</span>` +
+        chips.map(c => `<span class="af-chip">${escapeHtml(c.label)} <button type="button" onclick="clearSingleFilter('${c.id}')" title="Remove this filter">✕</button></span>`).join('') +
+        `<button type="button" class="btn btn-clear-filters" style="height:22px;padding:0 8px;font-size:0.7rem;border-radius:999px;" onclick="clearAllFilters()">✕ Clear All Filters</button>`;
+    } else {
+      strip.classList.remove('visible');
+      strip.innerHTML = '';
+    }
   }
 }
 
@@ -2728,7 +2947,6 @@ function debouncedRender() { clearTimeout(_searchTimer); _searchTimer = setTimeo
 function renderTable() {
   ensureCyclesStructure();
   const { enriched, uniqueWeeks, weekColorMap, weekLabelMap, weekShortMap, weekCountMap } = getSortedAndGrouped();
-  renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap);
 
   const filterWeekEl = document.getElementById('filterWeek');
   const prevWeekVal = filterWeekEl.value;
@@ -2741,9 +2959,11 @@ function renderTable() {
   });
   filterWeekEl.value = uniqueWeeks.includes(prevWeekVal) ? prevWeekVal : '';
 
+  renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap);
+
   const allBtn = document.getElementById('weekAllBtn');
   if (allBtn) { allBtn.classList.toggle('active', !filterWeekEl.value); allBtn.textContent = `All (${enriched.length})`; }
-  updateClearFiltersBtn();
+  updateClearFiltersBtn(weekLabelMap);
   const nowUtc = Date.now();
   let nextUpcomingWk = null;
   for (const wk of uniqueWeeks) {
@@ -2787,22 +3007,23 @@ function renderTable() {
   const pending = total - patched - failed, alertCnt = enriched.filter(s => s.flags.length > 0).length;
   const pctDone = total ? Math.round((patched / total) * 100) : 0, pctFail = total ? Math.round((failed / total) * 100) : 0;
 
+  const curStatusFilter = document.getElementById('filterStatus').value;
   document.getElementById('kpiGrid').innerHTML = `
     <div class="kpi-quad-grid">
-      <div class="kpi-box" onclick="document.getElementById('filterStatus').value='';renderTable();">
+      <div class="kpi-box${curStatusFilter === '' ? ' active' : ''}" onclick="document.getElementById('filterStatus').value='';renderTable();">
         <div class="kpi-box-label">Total Rows</div>
         <div class="kpi-box-val">${total} <span class="kpi-box-sub">(${uniqueWeeks.length} wks)</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#10B981;" onclick="document.getElementById('filterStatus').value='Patched';renderTable();">
-        <div class="kpi-box-label">Patched</div>
+      <div class="kpi-box${curStatusFilter === 'Patched' ? ' active' : ''}" style="border-left-color:#10B981;" onclick="const el=document.getElementById('filterStatus');el.value=(el.value==='Patched'?'':'Patched');renderTable();">
+        <div class="kpi-box-label">${curStatusFilter === 'Patched' ? '✓ ' : ''}Patched</div>
         <div class="kpi-box-val" style="color:#059669;">${patched} <span class="kpi-box-sub">(${pctDone}%)</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#3B82F6;" onclick="document.getElementById('filterStatus').value='__PENDING__';renderTable();">
-        <div class="kpi-box-label">Pending</div>
+      <div class="kpi-box${curStatusFilter === '__PENDING__' ? ' active' : ''}" style="border-left-color:#3B82F6;" onclick="const el=document.getElementById('filterStatus');el.value=(el.value==='__PENDING__'?'':'__PENDING__');renderTable();">
+        <div class="kpi-box-label">${curStatusFilter === '__PENDING__' ? '✓ ' : ''}Pending</div>
         <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${failed > 0 ? '· ' + failed + ' Fail' : ''}</span></div>
       </div>
-      <div class="kpi-box" style="border-left-color:#F59E0B;" onclick="document.getElementById('filterStatus').value='__ALERTS__';renderTable();">
-        <div class="kpi-box-label">⚠️ Flags</div>
+      <div class="kpi-box${curStatusFilter === '__ALERTS__' ? ' active' : ''}" style="border-left-color:#F59E0B;" onclick="const el=document.getElementById('filterStatus');el.value=(el.value==='__ALERTS__'?'':'__ALERTS__');renderTable();">
+        <div class="kpi-box-label">${curStatusFilter === '__ALERTS__' ? '✓ ' : ''}⚠️ Flags</div>
         <div class="kpi-box-val" style="color:#B45309;">${alertCnt} <span class="kpi-box-sub">alerts</span></div>
       </div>
     </div>
@@ -2825,7 +3046,8 @@ function renderTable() {
     if (fBy && fBy !== '__UNASSIGNED__' && s.by !== fBy) return false;
     if (fStatus === '__PENDING__' && s.status !== '') return false;
     if (fStatus === '__ALERTS__' && s.flags.length === 0) return false;
-    if (fStatus && !['__PENDING__','__ALERTS__'].includes(fStatus) && s.status !== fStatus) return false;
+    if (fStatus === '__DUPLICATES__' && !s.isDuplicate) return false;
+    if (fStatus && !['__PENDING__','__ALERTS__','__DUPLICATES__'].includes(fStatus) && s.status !== fStatus) return false;
     if (q) {
       const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status}`.toLowerCase();
       if (!hay.includes(q)) return false;
