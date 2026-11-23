@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.16)</title>
+<title>Windows Server Patching Schedule Manager (v5.17)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -23,11 +23,20 @@
     --failed-text: #991B1B;
   }
   * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+  }
   body {
     margin: 0;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
     background: var(--bg);
     color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (max-width: 900px) {
+    html, body { height: auto; overflow: auto; }
   }
 
   /* Sleek Single-Row Navy Gradient Top Header Bar (v5.14) */
@@ -196,7 +205,15 @@
 
   .container {
     max-width: 100%;
-    padding: 7px 12px 14px;
+    padding: 7px 12px 10px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (max-width: 900px) {
+    .container { overflow: visible; }
   }
 
   /* 5-Column Command Center Dashboard (KPI | Weekly | OS Sheet | Engineer | Env) */
@@ -346,18 +363,25 @@
   .wb-progress-track { width: 100%; height: 4px; border-radius: 999px; background: rgba(15, 23, 42, 0.12); overflow: hidden; display: flex; }
   .week-batch-card.active .wb-progress-track { background: rgba(255, 255, 255, 0.22); }
 
-  /* Table Wrapper - Maximized Viewport Height */
+  /* Table Wrapper - Flex Auto-Fill Viewport (Single Scrollbar) */
   .table-card {
     background: var(--surface);
     border-radius: 7px;
     border: 1px solid var(--border);
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     overflow: hidden;
+    flex: 1;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
   }
   .table-scroll {
-    overflow-x: auto;
-    max-height: calc(100vh - 210px);
-    min-height: 460px;
+    overflow: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  @media (max-width: 900px) {
+    .table-scroll { max-height: 70vh; }
   }
   table {
     width: 100%;
@@ -737,6 +761,74 @@
     border-radius: 0 4px 4px 0;
   }
 
+
+  /* v5.17 Enhancements CSS */
+  .btn-undo {
+    background: rgba(255, 255, 255, 0.11);
+    color: #FDE68A;
+    border-color: rgba(251, 191, 36, 0.38);
+  }
+  .btn-undo:hover:not(:disabled) { background: rgba(245, 158, 11, 0.28); color: #FFFFFF; }
+  .btn-undo:disabled { opacity: 0.4; cursor: not-allowed; color: #94A3B8; border-color: rgba(255,255,255,0.14); }
+  .btn-clear-filters {
+    background: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FCA5A5;
+    height: 28px;
+    padding: 0 9px;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+  .btn-clear-filters:hover { background: #FEE2E2; border-color: #EF4444; }
+  .wb-next-pill {
+    font-size: 0.58rem;
+    font-weight: 800;
+    background: #0284C7;
+    color: #FFFFFF;
+    padding: 0 4px;
+    border-radius: 3px;
+    letter-spacing: 0.3px;
+    margin-left: 3px;
+  }
+  .week-batch-card.active .wb-next-pill { background: #38BDF8; color: #0F172A; }
+  .banner-collapse-toggle {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+  }
+  .banner-collapse-toggle:hover { color: #0284C7; }
+  .banner-chevron {
+    display: inline-block;
+    width: 14px;
+    text-align: center;
+    font-size: 0.78rem;
+  }
+  tbody tr.data-row.row-patched td.sticky-col-1 {
+    box-shadow: inset 3.5px 0 0 #10B981;
+  }
+  tbody tr.data-row.row-failed td.sticky-col-1 {
+    box-shadow: inset 3.5px 0 0 #EF4444;
+  }
+  .tag-conflict { background: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+  .tag-dup      { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+  .hc-open-mini {
+    background: #0284C7;
+    color: #FFFFFF;
+    border: 1px solid #38BDF8;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .hc-open-mini:hover { background: #0369A1; }
+
   .del-btn { background: transparent; border: none; color: #94A3B8; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; border-radius: 4px; }
   .del-btn:hover { background: #FEE2E2; color: #DC2626; }
 
@@ -857,7 +949,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.16</span>
+      <span class="ver-pill">v5.17</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -879,6 +971,7 @@
       <button type="button" class="cycle-sub-btn cycle-del-btn" onclick="deleteOrClearCurrentCycle()" title="Delete this quarter cycle or clear all servers inside it">🗑️</button>
     </div>
 
+    <button type="button" class="btn btn-undo" id="undoBtn" onclick="performUndo()" disabled title="Undo last change (Ctrl+Z)">↩ Undo</button>
     <button type="button" class="btn btn-add" onclick="openAddModal()">+ Add Server</button>
 
     <label class="btn btn-seg" style="cursor:pointer;margin:0;" title="Import servers from an Excel .xlsx schedule">
@@ -945,7 +1038,7 @@
   <!-- Unified Filter & Weekly Batch Strip -->
   <div class="controls-wrapper">
     <div class="filter-bar">
-      <input type="text" id="searchInput" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
+      <input type="text" id="searchInput" name="schedule_search_query" autocomplete="off" placeholder="🔍 Search Hostname, IP, Application, Time Window, or Remarks..." oninput="debouncedRender()" />
       <select id="filterWeek" onchange="renderTable()">
         <option value="">All Weeks</option>
       </select>
@@ -982,6 +1075,9 @@
       </select>
       <button type="button" id="toggleExpandBtn" class="btn btn-toggle active" onclick="toggleRowExpansion()">
         ↕ Compact Scroll Rows
+      </button>
+      <button type="button" id="clearFiltersBtn" class="btn btn-clear-filters" style="display:none;" onclick="clearAllFilters()" title="Clear all active search & dropdown filters">
+        ✕ Clear Filters
       </button>
       <button type="button" class="btn btn-toggle" onclick="resetColumnWidths()" title="Reset column widths back to default 1080p layout">
         ↔ Reset Widths
@@ -1210,7 +1306,7 @@
   <div class="modal" style="width:520px;">
     <h3 style="margin-bottom:6px;">☁️ Real-Time Team Sync (Firebase Realtime Database)</h3>
     <p style="margin:0 0 12px;font-size:0.81rem;color:#475569;line-height:1.45;">
-      Connect a free <strong>Firebase Realtime Database</strong> so Andy, Don, and Fung see every status update, assignment, and schedule change live without refreshing.
+      Connect a free <strong>Firebase Realtime Database</strong> so Andy, Don, Fung, and Operator see every status update, assignment, and schedule change live without refreshing.
     </p>
     <div class="form-group full" style="margin-bottom:10px;">
       <label>Firebase Realtime Database URL *</label>
@@ -1271,7 +1367,7 @@
       </label>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="rolloverKeepEngineers" checked />
-        <span>Keep existing <strong>Engineer (By: Andy / Don / Fung)</strong> assignments</span>
+        <span>Keep existing <strong>Engineer (By: Andy / Don / Fung / Operator)</strong> assignments</span>
       </label>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="rolloverClearRemarks2" checked />
@@ -1317,6 +1413,68 @@
     <div id="hcDrawerBody" class="log-list" style="background:#F8FAFC;padding:10px;margin:10px 0;"></div>
 
     <div id="hcDrawerFooter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #E2E8F0;padding-top:10px;"></div>
+  </div>
+</div>
+
+<!-- Import Mode Confirmation Modal (Replace vs. Append) -->
+<div class="modal-backdrop" id="importConfirmModal" style="z-index:1210;">
+  <div class="modal" style="width:460px;">
+    <h3 style="margin-bottom:8px;">📂 Import Excel Schedule</h3>
+    <p id="importConfirmMessage" style="margin:0 0 16px;font-size:0.84rem;color:#334155;line-height:1.5;"></p>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" class="btn btn-secondary" onclick="closeImportConfirmModal()">Cancel</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-add" onclick="confirmImportAction('append')">➕ Append Rows</button>
+        <button type="button" class="btn" style="background:#EF4444;color:#fff;" onclick="confirmImportAction('replace')">🔄 Replace All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- In-App Health Check SOP Editor Modal -->
+<div class="modal-backdrop" id="sopEditorModal" style="z-index:1240;" onclick="if(event.target===this) closeSopEditorModal()">
+  <div class="modal" style="width:620px;max-height:90vh;overflow-y:auto;">
+    <h3 id="sopEditorModalTitle" style="margin-bottom:10px;">🩺 Add / Edit Health Check SOP</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>SOP Code * (e.g. HC-CUSTOM-01)</label>
+        <input type="text" id="sopEditCode" placeholder="HC-NEW-APP" />
+      </div>
+      <div class="form-group">
+        <label>System Name *</label>
+        <input type="text" id="sopEditSystem" placeholder="e.g. Payment Gateway / IIS" />
+      </div>
+      <div class="form-group full">
+        <label>Procedure Title *</label>
+        <input type="text" id="sopEditTitle" placeholder="e.g. Payment Gateway Post-Patch Health Check" />
+      </div>
+      <div class="form-group">
+        <label>Auto-Match Hostnames (comma-separated)</label>
+        <input type="text" id="sopEditHosts" placeholder="e.g. PRDAPP01, PRDAPP02" />
+      </div>
+      <div class="form-group">
+        <label>Auto-Match Keywords (comma-separated)</label>
+        <input type="text" id="sopEditKeywords" placeholder="e.g. payment, gateway" />
+      </div>
+      <div class="form-group full">
+        <label>Summary</label>
+        <input type="text" id="sopEditSummary" placeholder="Brief overview of what this check verifies..." />
+      </div>
+      <div class="form-group full">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="margin:0;">Verification Steps</label>
+          <button type="button" class="btn btn-toggle" style="height:24px;font-size:0.7rem;" onclick="addSopEditorStepRow()">+ Add Step</button>
+        </div>
+        <div id="sopEditStepsContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" id="sopEditDeleteBtn" class="btn btn-toggle" style="color:#DC2626;display:none;" onclick="deleteCustomSop()">🗑️ Delete / Reset</button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button type="button" class="btn btn-secondary" onclick="closeSopEditorModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSopFromEditor()">💾 Save SOP</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1414,6 +1572,76 @@ let auditLogs = loadAuditLogs();
 let selectedIds = new Set();
 let isExpandedMode = true;
 let chartsVisible = true;
+let undoStack = [];
+const COLLAPSED_WKS_KEY = 'patching_schedule_v517_collapsed_wks';
+let collapsedWeeks = loadCollapsedWeeks();
+
+function loadCollapsedWeeks() {
+  try {
+    const raw = localStorage.getItem(COLLAPSED_WKS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set();
+}
+function saveCollapsedWeeks() {
+  try { localStorage.setItem(COLLAPSED_WKS_KEY, JSON.stringify([...collapsedWeeks])); } catch (e) {}
+}
+function toggleWeekCollapse(wk) {
+  if (collapsedWeeks.has(wk)) collapsedWeeks.delete(wk);
+  else collapsedWeeks.add(wk);
+  saveCollapsedWeeks();
+  renderTable();
+}
+
+function pushUndoSnapshot(actionLabel) {
+  undoStack.push({
+    label: actionLabel || 'Last change',
+    servers: JSON.stringify(appState.servers || []),
+    hcStepChecks: JSON.stringify(appState.hcStepChecks || {})
+  });
+  if (undoStack.length > 10) undoStack.shift();
+  updateUndoBtnUI();
+}
+function updateUndoBtnUI() {
+  const btn = document.getElementById('undoBtn');
+  if (!btn) return;
+  btn.disabled = undoStack.length === 0;
+  btn.textContent = undoStack.length > 0 ? `↩ Undo (${undoStack.length})` : '↩ Undo';
+  btn.title = undoStack.length > 0 ? `Undo: ${undoStack[undoStack.length - 1].label} (Ctrl+Z)` : 'Nothing to undo';
+}
+function performUndo() {
+  if (undoStack.length === 0) return;
+  const snap = undoStack.pop();
+  try {
+    appState.servers = JSON.parse(snap.servers);
+    if (appState.cycles && appState.cycles[appState.activeCycle]) {
+      appState.cycles[appState.activeCycle].servers = appState.servers;
+    }
+    if (snap.hcStepChecks) {
+      appState.hcStepChecks = JSON.parse(snap.hcStepChecks);
+      _hcStepChecks = appState.hcStepChecks;
+    }
+    selectedIds.clear();
+    saveState();
+    addAuditEntry(`Undid: ${snap.label}`);
+    updateUndoBtnUI();
+    renderTable();
+    showToast(`↩ Undid: ${snap.label}`);
+  } catch (e) {
+    showToast('⚠️ Could not undo last change');
+  }
+}
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
+      if (undoStack.length > 0) {
+        e.preventDefault();
+        performUndo();
+      }
+    }
+  }
+});
 
 let fbConfig = loadFirebaseConfig();
 let fbEventSource = null;
@@ -1517,6 +1745,8 @@ async function submitTeamUnlock() {
       appState.servers = remoteData.servers;
       ensureCyclesStructure();
       if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+      if (remoteData.hcStepChecks) { appState.hcStepChecks = remoteData.hcStepChecks; _hcStepChecks = appState.hcStepChecks; }
+      if (remoteData.customSops) { appState.customSops = remoteData.customSops; }
       if (Array.isArray(remoteData.auditLogs)) {
         auditLogs = remoteData.auditLogs;
         localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs));
@@ -1601,11 +1831,15 @@ async function pushStateToFirebase() {
     ensureCyclesStructure();
     appState.cycles[appState.activeCycle].servers = appState.servers;
     appState.cycles[appState.activeCycle].auditLogs = auditLogs.slice(0, 80);
+    appState.cycles[appState.activeCycle].hcStepChecks = _hcStepChecks || {};
+    appState.hcStepChecks = _hcStepChecks || {};
     const payload = {
       activeCycle: appState.activeCycle,
       cycles: appState.cycles,
       servers: appState.servers,
       osSheets: appState.osSheets || DEFAULT_DATA.osSheets,
+      hcStepChecks: _hcStepChecks || {},
+      customSops: appState.customSops || {},
       auditLogs: auditLogs.slice(0, 80),
       updatedBy: clientSessionId,
       updatedAt: Date.now()
@@ -1644,6 +1878,8 @@ function startFirebaseRealtimeStream() {
             isApplyingRemoteUpdate = true;
             if (msg.data.cycles) { appState.cycles = msg.data.cycles; appState.activeCycle = msg.data.activeCycle || appState.activeCycle; }
             appState.servers = msg.data.servers;
+            if (msg.data.hcStepChecks) { appState.hcStepChecks = msg.data.hcStepChecks; _hcStepChecks = appState.hcStepChecks; }
+            if (msg.data.customSops) { appState.customSops = msg.data.customSops; }
             ensureCyclesStructure();
             if (Array.isArray(msg.data.auditLogs)) { auditLogs = msg.data.auditLogs; localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLogs)); updateAuditUI(); }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -1658,6 +1894,8 @@ function startFirebaseRealtimeStream() {
               isApplyingRemoteUpdate = true;
               if (remoteData.cycles) { appState.cycles = remoteData.cycles; appState.activeCycle = remoteData.activeCycle || appState.activeCycle; }
               appState.servers = remoteData.servers;
+              if (remoteData.hcStepChecks) { appState.hcStepChecks = remoteData.hcStepChecks; _hcStepChecks = appState.hcStepChecks; }
+              if (remoteData.customSops) { appState.customSops = remoteData.customSops; }
               ensureCyclesStructure();
               if (Array.isArray(remoteData.auditLogs)) { auditLogs = remoteData.auditLogs; updateAuditUI(); }
               localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -1718,6 +1956,8 @@ async function saveAndConnectFirebase() {
         appState.servers = remoteData.servers;
         ensureCyclesStructure();
         if (remoteData.osSheets) appState.osSheets = remoteData.osSheets;
+      if (remoteData.hcStepChecks) { appState.hcStepChecks = remoteData.hcStepChecks; _hcStepChecks = appState.hcStepChecks; }
+      if (remoteData.customSops) { appState.customSops = remoteData.customSops; }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         renderTable();
       }
@@ -2036,22 +2276,33 @@ function hideSuggestTooltip() {
   const tip = document.getElementById('twGlobalTooltip');
   if (tip) tip.style.display = 'none';
 }
+function mergeSuggestedWithExtraLines(originalTw, suggestedFirstLine) {
+  const parts = String(originalTw || '').split(/\r?\n/);
+  const extraLines = parts.slice(1).filter(l => l.trim() !== '');
+  return extraLines.length > 0 ? `${suggestedFirstLine}\n${extraLines.join('\n')}` : suggestedFirstLine;
+}
+function getFirstLine(str) {
+  return String(str || '').split(/\r?\n/)[0] || '';
+}
+
 function applySuggestedTimeWin(id) {
   const srv = appState.servers.find(s => s.id === id);
   if (!srv) return;
   const suggested = buildSuggestedTimeWindow(srv.timeWin, srv.maintWin);
   if (!suggested) return;
-  updateField(id, 'timeWin', suggested, true);
+  const merged = mergeSuggestedWithExtraLines(srv.timeWin, suggested);
+  updateField(id, 'timeWin', merged, true);
 }
 
 function applyAllSuggestedForWeek(weekKey) {
   const { enriched } = getSortedAndGrouped();
-  const targets = enriched.filter(s => s.weekKey === weekKey && s.suggestedTw && normalizeForCompare(s.suggestedTw) !== normalizeForCompare(s.timeWin));
+  const targets = enriched.filter(s => s.weekKey === weekKey && s.suggestedTw && normalizeForCompare(s.suggestedTw) !== normalizeForCompare(getFirstLine(s.timeWin)));
   if (targets.length === 0) return;
 
+  pushUndoSnapshot(`Apply Suggested (${targets.length}) in ${targets[0].shortWeek}`);
   targets.forEach(t => {
     const rawSrv = appState.servers.find(x => x.id === t.id);
-    if (rawSrv) rawSrv.timeWin = t.suggestedTw;
+    if (rawSrv) rawSrv.timeWin = mergeSuggestedWithExtraLines(rawSrv.timeWin, t.suggestedTw);
   });
   addAuditEntry(`Batch-applied suggested Time Windows for ${targets.length} servers in ${targets[0].weekLabel}`);
   saveState();
@@ -2140,6 +2391,53 @@ function getSortedAndGrouped() {
     const flags = detectSmartFlags(s);
     const suggestedTw = buildSuggestedTimeWindow(s.timeWin, s.maintWin);
     return { ...s, ...meta, env, seqRank, flags, suggestedTw };
+  });
+
+  // Cross-row validation per weekly batch: Duplicate Hostname/IP & SEQ 2 scheduled before SEQ 1
+  const hostCountsByWeek = {};
+  const ipCountsByWeek = {};
+  const seq1MinEpochByWeekApp = {};
+
+  enriched.forEach(item => {
+    const wk = item.weekKey;
+    const hKey = `${wk}::${String(item.hostname || '').split('(')[0].trim().toUpperCase()}`;
+    const ipKey = `${wk}::${String(item.ip || '').trim()}`;
+    if (String(item.hostname || '').trim()) hostCountsByWeek[hKey] = (hostCountsByWeek[hKey] || 0) + 1;
+    if (String(item.ip || '').trim()) ipCountsByWeek[ipKey] = (ipCountsByWeek[ipKey] || 0) + 1;
+
+    const appNorm = String(item.app || '').trim().toLowerCase();
+    if (appNorm && item.seqRank === 1 && item.startEpoch < Number.MAX_SAFE_INTEGER) {
+      const waKey = `${wk}::${appNorm}`;
+      if (!(waKey in seq1MinEpochByWeekApp) || item.startEpoch < seq1MinEpochByWeekApp[waKey]) {
+        seq1MinEpochByWeekApp[waKey] = item.startEpoch;
+      }
+    }
+  });
+
+  enriched.forEach(item => {
+    const wk = item.weekKey;
+    const hKey = `${wk}::${String(item.hostname || '').split('(')[0].trim().toUpperCase()}`;
+    const ipKey = `${wk}::${String(item.ip || '').trim()}`;
+    const dupHost = String(item.hostname || '').trim() && hostCountsByWeek[hKey] > 1;
+    const dupIp = String(item.ip || '').trim() && ipCountsByWeek[ipKey] > 1;
+    if (dupHost || dupIp) {
+      item.flags.push({
+        cls: 'tag-dup',
+        text: 'Duplicate',
+        title: `Duplicate ${dupHost && dupIp ? 'Hostname & IP' : (dupHost ? 'Hostname' : 'IP')} detected within ${item.weekLabel}`
+      });
+    }
+    const appNorm = String(item.app || '').trim().toLowerCase();
+    if (appNorm && item.seqRank === 3 && item.startEpoch < Number.MAX_SAFE_INTEGER) {
+      const waKey = `${wk}::${appNorm}`;
+      if (waKey in seq1MinEpochByWeekApp && item.startEpoch < seq1MinEpochByWeekApp[waKey]) {
+        item.flags.push({
+          cls: 'tag-conflict',
+          text: 'SEQ Conflict',
+          title: `SEQ 2 server (${item.hostname}) is scheduled earlier than SEQ 1 for "${item.app}" in ${item.weekLabel}!`
+        });
+      }
+    }
   });
 
   enriched.sort((a, b) => {
@@ -2397,6 +2695,32 @@ function deleteOrClearCurrentCycle() {
   }
 }
 
+
+function clearAllFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterWeek').value = '';
+  document.getElementById('filterEnv').value = '';
+  document.getElementById('filterSheet').value = '';
+  document.getElementById('filterBy').value = '';
+  document.getElementById('filterStatus').value = '';
+  renderTable();
+}
+function updateClearFiltersBtn() {
+  let count = 0;
+  if (document.getElementById('searchInput').value.trim()) count++;
+  ['filterWeek', 'filterEnv', 'filterSheet', 'filterBy', 'filterStatus'].forEach(id => {
+    if (document.getElementById(id).value) count++;
+  });
+  const btn = document.getElementById('clearFiltersBtn');
+  if (!btn) return;
+  if (count > 0) {
+    btn.style.display = 'inline-flex';
+    btn.textContent = `✕ Clear Filters (${count})`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
 function quickFilterWeek(wk) { const el = document.getElementById('filterWeek'); el.value = (el.value === wk) ? '' : wk; renderTable(); }
 let _searchTimer = null;
 function debouncedRender() { clearTimeout(_searchTimer); _searchTimer = setTimeout(renderTable, 120); }
@@ -2419,6 +2743,21 @@ function renderTable() {
 
   const allBtn = document.getElementById('weekAllBtn');
   if (allBtn) { allBtn.classList.toggle('active', !filterWeekEl.value); allBtn.textContent = `All (${enriched.length})`; }
+  updateClearFiltersBtn();
+  const nowUtc = Date.now();
+  let nextUpcomingWk = null;
+  for (const wk of uniqueWeeks) {
+    if (wk === '9999-W99') continue;
+    const sample = enriched.find(s => s.weekKey === wk);
+    if (!sample) continue;
+    const wkDoneAll = enriched.filter(s => s.weekKey === wk).every(s => s.status === 'Patched');
+    const { sun } = getWeekendDatesFromISO(sample.isoYear, sample.isoWeek);
+    if (!wkDoneAll && (sun.getTime() + 86400000) >= nowUtc) {
+      nextUpcomingWk = wk;
+      break;
+    }
+  }
+
   const pillsEl = document.getElementById('weekPills');
   pillsEl.innerHTML = '';
   uniqueWeeks.forEach(wk => {
@@ -2428,6 +2767,7 @@ function renderTable() {
     const isAllDone = tot > 0 && done === tot;
     const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
     const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
+    const nextTag = (wk === nextUpcomingWk) ? '<span class="wb-next-pill">NEXT</span>' : '';
 
     const card = document.createElement('button');
     card.type = 'button';
@@ -2435,7 +2775,7 @@ function renderTable() {
     card.style.background = weekColorMap[wk];
     card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}`;
     card.innerHTML = `
-      <div class="wb-top"><span class="wb-wk-tag">${weekShortMap[wk]}</span><span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span></div>
+      <div class="wb-top"><span class="wb-wk-tag">${weekShortMap[wk]}${nextTag}</span><span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span></div>
       <div class="wb-date">${escapeHtml(shortRange)}</div>
       <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
     `;
@@ -2504,7 +2844,7 @@ function renderTable() {
   const pendingSuggestByWeek = {};
   filtered.forEach(x => {
     shownCountByWeek[x.weekKey] = (shownCountByWeek[x.weekKey] || 0) + 1;
-    if (x.suggestedTw && normalizeForCompare(x.suggestedTw) !== normalizeForCompare(x.timeWin)) {
+    if (x.suggestedTw && normalizeForCompare(x.suggestedTw) !== normalizeForCompare(getFirstLine(x.timeWin))) {
       pendingSuggestByWeek[x.weekKey] = (pendingSuggestByWeek[x.weekKey] || 0) + 1;
     }
   });
@@ -2516,6 +2856,7 @@ function renderTable() {
       const shownInWeek = shownCountByWeek[currentWk] || 0;
       const countText = (shownInWeek === totalInWeek) ? `${totalInWeek} servers` : `${shownInWeek} shown of ${totalInWeek} servers`;
       const sugCount = pendingSuggestByWeek[currentWk] || 0;
+      const isCollapsed = collapsedWeeks.has(currentWk);
       const batchSugBtn = sugCount > 0
         ? `<button type="button" class="banner-apply-suggest-btn" onclick="applyAllSuggestedForWeek('${currentWk}')" title="Update all ${sugCount} servers in this week to match their Maintenance Windows">⚡ Apply Suggested (${sugCount})</button>`
         : '';
@@ -2524,8 +2865,11 @@ function renderTable() {
         <tr class="week-banner">
           <td colspan="14">
             <div class="banner-inner">
-              <span>📅 ${srv.weekLabel}</span>
-              <span class="banner-count-pill">Total Servers: ${countText}</span>
+              <span class="banner-collapse-toggle" onclick="toggleWeekCollapse('${currentWk}')" title="${isCollapsed ? 'Click to expand this week' : 'Click to collapse this week'}">
+                <span class="banner-chevron">${isCollapsed ? '▸' : '▾'}</span>
+                <span>📅 ${srv.weekLabel}</span>
+              </span>
+              <span class="banner-count-pill">Total Servers: ${countText}${isCollapsed ? ' (Collapsed)' : ''}</span>
               <button type="button" class="banner-mini-btn" onclick="selectWeekServers('${currentWk}')">☑ Select Week</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'hostname')">📋 Copy Hostnames</button>
               <button type="button" class="banner-mini-btn" onclick="copyWeekList('${currentWk}', 'ip')">🌐 Copy IPs</button>
@@ -2535,8 +2879,11 @@ function renderTable() {
         </tr>`);
     }
 
+    if (collapsedWeeks.has(srv.weekKey)) return;
+
     const rowBg = weekColorMap[srv.weekKey];
-    const rowCls = 'data-row' + (selectedIds.has(srv.id) ? ' selected-row' : '');
+    const rowStatusCls = srv.status === 'Patched' ? ' row-patched' : (srv.status === 'Failed' ? ' row-failed' : '');
+    const rowCls = 'data-row' + rowStatusCls + (selectedIds.has(srv.id) ? ' selected-row' : '');
     const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : '');
     const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : (srv.by === 'Operator' ? 'by-operator' : '')));
     const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : (srv.env === 'DEV' ? 'tag-seq1' : (srv.env === 'DR' ? 'tag-env-dr' : '')));
@@ -2546,12 +2893,16 @@ function renderTable() {
       ...srv.flags.map(fl => `<span class="smart-tag ${fl.cls}" title="${escapeHtml(fl.title || '')}">${fl.text}</span>`)
     ].join('');
     const matchedHcList = matchHealthCheckProcedures(srv);
+    const rem2Str = String(srv.remarks2 || '');
     const hcPillsHtml = matchedHcList.length > 0 ? `
       <div class="hc-badge-strip">
-        ${matchedHcList.map(hc => `<button type="button" class="hc-pill-btn" onclick="openHealthCheckDrawer(${srv.id}, '${escapeHtml(hc.code)}')" title="Open Post-Patch Health Check Guide: ${escapeHtml(hc.title)}">🩺 ${escapeHtml(hc.code)}</button>`).join('')}
+        ${matchedHcList.map(hc => {
+          const isPassed = rem2Str.includes('HC Passed: ' + hc.code);
+          return `<button type="button" class="hc-pill-btn ${isPassed ? 'hc-done' : ''}" onclick="openHealthCheckDrawer(${srv.id}, '${escapeHtml(hc.code)}')" title="${isPassed ? 'Health Check Passed — Click to review: ' : 'Open Post-Patch Health Check Guide: '}${escapeHtml(hc.title)}">${isPassed ? '✓' : '🩺'} ${escapeHtml(hc.code)}</button>`;
+        }).join('')}
       </div>` : '';
 
-    const showSuggestIcon = srv.suggestedTw && normalizeForCompare(srv.suggestedTw) !== normalizeForCompare(srv.timeWin);
+    const showSuggestIcon = srv.suggestedTw && normalizeForCompare(srv.suggestedTw) !== normalizeForCompare(getFirstLine(srv.timeWin));
     const suggestIconHtml = showSuggestIcon ? `
       <div class="tw-suggest-anchor">
         <button type="button" class="tw-suggest-icon-btn" data-suggest="${escapeHtml(srv.suggestedTw)}" onmouseenter="showSuggestTooltip(this)" onmouseleave="hideSuggestTooltip()" onfocus="showSuggestTooltip(this)" onblur="hideSuggestTooltip()" onclick="hideSuggestTooltip();applySuggestedTimeWin(${srv.id})">⚡</button>
@@ -2645,11 +2996,12 @@ function moveSelectedToSchedule() {
   const twVal = document.getElementById('bulkTimeWin').value.trim();
   if (!twVal) { showToast('⚠️ Please enter or select a Target Weekend / Time Window first'); document.getElementById('bulkTimeWin').focus(); return; }
   const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
+  pushUndoSnapshot(`Move ${selectedIds.size} servers to ${twVal}`);
   let count = 0;
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
       const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, srv.maintWin) : '';
-      srv.timeWin = smartTw || twVal;
+      srv.timeWin = smartTw ? mergeSuggestedWithExtraLines(srv.timeWin, smartTw) : twVal;
       count++;
     }
   });
@@ -2666,6 +3018,7 @@ function copySelectedToSchedule() {
   const twVal = document.getElementById('bulkTimeWin').value.trim();
   if (!twVal) { showToast('⚠️ Please enter or select a Target Weekend / Time Window to copy into'); document.getElementById('bulkTimeWin').focus(); return; }
   const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
+  pushUndoSnapshot(`Copy ${selectedIds.size} servers to ${twVal}`);
   let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
   const clones = [];
   appState.servers.forEach(srv => {
@@ -2712,6 +3065,7 @@ function applyBulkUpdate() {
   const statusVal = document.getElementById('bulkStatus').value;
   const twVal = document.getElementById('bulkTimeWin').value.trim();
   const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
+  pushUndoSnapshot(`Bulk update ${selectedIds.size} servers`);
   let count = 0;
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
@@ -2740,6 +3094,7 @@ function bulkDeleteSelected() {
   if (selectedIds.size === 0) return;
   const count = selectedIds.size;
   showCustomConfirm('Remove Selected Servers', `Remove ${count} selected server(s) from the patching schedule?`, `Remove (${count})`, '#EF4444', () => {
+    pushUndoSnapshot(`Remove ${count} servers`);
     appState.servers = appState.servers.filter(s => !selectedIds.has(s.id));
     selectedIds.clear();
     saveState();
@@ -2806,15 +3161,52 @@ function openAuditDrawer() { updateAuditUI(); document.getElementById('auditDraw
 function closeAuditDrawer() { document.getElementById('auditDrawer').classList.remove('open'); }
 function clearAuditLog() { auditLogs = []; localStorage.removeItem(AUDIT_KEY); updateAuditUI(); }
 function copyHandoverSummary() {
-  const { enriched } = getSortedAndGrouped();
-  const total = enriched.length, patched = enriched.filter(s => s.status === 'Patched').length, failed = enriched.filter(s => s.status === 'Failed').length;
-  const recent = auditLogs.slice(0, 15).map(l => `- [${l.ts}] ${l.msg}`).join('\n');
-  const summary = [
-    `Windows Server Patching Handover Summary (${new Date().toLocaleDateString('en-GB')})`,
-    `Overall Progress: ${patched}/${total} Patched (${Math.round((patched/Math.max(1,total))*100)}%) | ${failed} Failed | ${total - patched - failed} Pending`,
-    ``, `Recent Activity:`, recent || '- No changes recorded in this session.'
-  ].join('\n');
-  sharePointSafeCopy(summary, '📋 Shift handover summary copied to clipboard', '📋 Shift Handover Summary');
+  const { enriched, weekLabelMap } = getSortedAndGrouped();
+  const fWeek = document.getElementById('filterWeek').value;
+  const scopeList = fWeek ? enriched.filter(s => s.weekKey === fWeek) : enriched;
+  const scopeTitle = fWeek ? (weekLabelMap[fWeek] || fWeek) : `${(appState.cycles && appState.cycles[appState.activeCycle]) ? appState.cycles[appState.activeCycle].label : 'Active Cycle'} (All Batches)`;
+
+  const total = scopeList.length;
+  const patchedList = scopeList.filter(s => s.status === 'Patched');
+  const failedList = scopeList.filter(s => s.status === 'Failed');
+  const pendingList = scopeList.filter(s => s.status !== 'Patched' && s.status !== 'Failed');
+  const pct = total ? Math.round((patchedList.length / total) * 100) : 0;
+
+  const lines = [
+    `=== Windows Server Patching Shift Handover (${new Date().toLocaleDateString('en-GB')}) ===`,
+    `Scope: ${scopeTitle}`,
+    `Progress: ${patchedList.length}/${total} Patched (${pct}%) | ${failedList.length} Failed | ${pendingList.length} Pending`,
+    ``
+  ];
+
+  if (failedList.length > 0) {
+    lines.push(`[FAILED SERVERS - ${failedList.length}]`);
+    failedList.forEach(s => {
+      const rem = [s.remarks2, s.remarks1].filter(Boolean).join(' | ').replace(/\r?\n/g, ' ');
+      lines.push(`- ${s.hostname} (${s.ip || 'N/A'}) | By: ${s.by || 'Unassigned'}${rem ? ' | Note: ' + rem.slice(0, 120) : ''}`);
+    });
+    lines.push('');
+  }
+
+  if (pendingList.length > 0) {
+    lines.push(`[PENDING SERVERS - ${pendingList.length}]`);
+    const byEng = {};
+    pendingList.forEach(s => {
+      const eng = s.by || 'Unassigned';
+      if (!byEng[eng]) byEng[eng] = [];
+      byEng[eng].push(s.hostname);
+    });
+    Object.entries(byEng).forEach(([eng, hosts]) => {
+      lines.push(`- ${eng} (${hosts.length}): ${hosts.slice(0, 12).join(', ')}${hosts.length > 12 ? ' ... +' + (hosts.length - 12) + ' more' : ''}`);
+    });
+    lines.push('');
+  }
+
+  const recent = auditLogs.slice(0, 10).map(l => `- [${l.ts}] ${l.msg}`);
+  lines.push(`[RECENT ACTIVITY]`);
+  lines.push(...(recent.length ? recent : ['- No changes recorded in this session.']));
+
+  sharePointSafeCopy(lines.join('\n'), '📋 Structured shift handover report copied!', '📋 Shift Handover Summary');
 }
 
 function escapeHtml(str) {
@@ -2826,6 +3218,7 @@ function updateField(id, field, value, isTimeWin = false) {
   const oldVal = item[field];
   const newVal = value.trim();
   if (oldVal === newVal) return;
+  pushUndoSnapshot(`Edit ${item.hostname} (${field})`);
   item[field] = newVal;
   saveState();
   addAuditEntry(`${item.hostname}: changed ${field} from "${oldVal || 'Blank'}" → "${newVal || 'Blank'}"`);
@@ -2853,6 +3246,7 @@ function deleteServer(id) {
   const item = appState.servers.find(s => s.id === id);
   if (!item) return;
   showCustomConfirm('Remove Server', `Remove ${item.hostname} (${item.ip || 'No IP'}) from the patching schedule?`, 'Remove', '#EF4444', () => {
+    pushUndoSnapshot(`Remove ${item.hostname}`);
     appState.servers = appState.servers.filter(s => s.id !== id);
     selectedIds.delete(id);
     saveState();
@@ -2872,6 +3266,7 @@ function saveNewServer() {
   const host = document.getElementById('newHost').value.trim();
   const timeWin = document.getElementById('newTime').value.trim();
   if (!host || !timeWin) { showToast('⚠️ Hostname and Time Windows are required'); return; }
+  pushUndoSnapshot(`Add ${host}`);
   const maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
   appState.servers.push({
     id: maxId + 1, hostname: host, ip: document.getElementById('newIp').value.trim(),
@@ -2946,18 +3341,43 @@ function handleImport(event) {
           }
         }
         if (importedServers.length > 0) {
-          appState.servers = importedServers;
-          selectedIds.clear();
-          saveState();
-          addAuditEntry(`Imported ${importedServers.length} servers from ${file.name}`);
-          renderTable();
-          showToast(`✓ Imported ${importedServers.length} servers from ${file.name}`);
+          window._pendingImport = { servers: importedServers, fileName: file.name };
+          document.getElementById('importConfirmMessage').innerHTML =
+            `Found <strong>${importedServers.length} servers</strong> in <strong>${escapeHtml(file.name)}</strong>.<br/><br/>` +
+            `Your current cycle has <strong>${appState.servers.length} servers</strong>. Would you like to <strong>Replace All</strong> or <strong>Append</strong> these rows?`;
+          document.getElementById('importConfirmModal').classList.add('open');
         } else { showToast('⚠️ No valid server rows found'); }
       } catch (err) { showToast('⚠️ Error reading Excel file: ' + err.message); }
     };
     reader.readAsArrayBuffer(file);
   });
   event.target.value = '';
+}
+
+
+function closeImportConfirmModal() {
+  document.getElementById('importConfirmModal').classList.remove('open');
+  window._pendingImport = null;
+}
+function confirmImportAction(mode) {
+  const pending = window._pendingImport;
+  closeImportConfirmModal();
+  if (!pending || !pending.servers || !pending.servers.length) return;
+  pushUndoSnapshot(`Import (${mode}) ${pending.servers.length} servers from ${pending.fileName}`);
+  if (mode === 'append') {
+    let maxId = appState.servers.reduce((m, s) => Math.max(m, s.id), 0);
+    const appended = pending.servers.map(s => ({ ...s, id: ++maxId }));
+    appState.servers.push(...appended);
+    addAuditEntry(`Appended ${appended.length} servers from ${pending.fileName}`);
+    showToast(`➕ Appended ${appended.length} servers from ${pending.fileName}`);
+  } else {
+    appState.servers = pending.servers;
+    selectedIds.clear();
+    addAuditEntry(`Replaced schedule with ${pending.servers.length} servers from ${pending.fileName}`);
+    showToast(`✓ Imported ${pending.servers.length} servers from ${pending.fileName}`);
+  }
+  saveState();
+  renderTable();
 }
 
 function exportExcel() {
@@ -3067,6 +3487,14 @@ function exportExcel() {
       sumMeta.push({ type: 'data', baseHex, height: 23 });
     });
 
+    const grandTot = enriched.length;
+    const grandPatched = enriched.filter(s => s.status === 'Patched').length;
+    const grandFailed = enriched.filter(s => s.status === 'Failed').length;
+    const grandPending = grandTot - grandPatched - grandFailed;
+    const grandPct = grandTot ? Math.round((grandPatched / grandTot) * 100) + '%' : '0%';
+    sumAoa.push(['TOTAL (ALL BATCHES)', grandTot, grandPatched, grandPending, grandFailed, grandPct]);
+    sumMeta.push({ type: 'total', baseHex: 'DCE6F7', height: 25 });
+
     const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
     wsSum['!cols'] = sumColWidths.map(wch => ({ wch }));
     wsSum['!rows'] = sumMeta.map(m => ({ hpt: m.height }));
@@ -3080,7 +3508,14 @@ function exportExcel() {
         if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
         if (meta.type === 'title') wsSum[addr].s = titleStyle;
         else if (meta.type === 'header') wsSum[addr].s = headerStyle;
-        else {
+        else if (meta.type === 'total') {
+          wsSum[addr].s = {
+            font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '16325C' } },
+            fill: { fgColor: { rgb: 'DCE6F7' } },
+            alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+            border: bannerBorder
+          };
+        } else {
           wsSum[addr].s = {
             font: { name: 'Calibri', sz: 10, bold: (c === 0 || c === 5), color: { rgb: '0F172A' } },
             fill: { fgColor: { rgb: meta.baseHex } },
@@ -3491,13 +3926,34 @@ const HEALTH_CHECK_SOP_CATALOG = [
   }
 ];
 
+function getAllSopProcedures() {
+  const customMap = (appState && appState.customSops) ? appState.customSops : {};
+  const merged = [];
+  const seen = new Set();
+  HEALTH_CHECK_SOP_CATALOG.forEach(base => {
+    if (customMap[base.code] === '__DELETED__') return;
+    if (customMap[base.code]) {
+      merged.push({ ...customMap[base.code], _isCustom: true, _overridesBuiltIn: true });
+    } else {
+      merged.push(base);
+    }
+    seen.add(base.code);
+  });
+  Object.entries(customMap).forEach(([code, obj]) => {
+    if (!seen.has(code) && obj && obj !== '__DELETED__') {
+      merged.push({ ...obj, _isCustom: true });
+    }
+  });
+  return merged;
+}
+
 function matchHealthCheckProcedures(srv) {
   const sopText = String(srv.remarks1 || '').toLowerCase();
   const hostUpper = String(srv.hostname || '').split('(')[0].trim().toUpperCase();
   const matches = [];
   const seenCodes = new Set();
 
-  HEALTH_CHECK_SOP_CATALOG.forEach(proc => {
+  getAllSopProcedures().forEach(proc => {
     const codeHit = sopText.includes(proc.code.toLowerCase());
     const kwHit = proc.keywords.some(kw => kw.length >= 4 && sopText.includes(kw));
     const hostHit = hostUpper && proc.hosts.includes(hostUpper);
@@ -3536,7 +3992,7 @@ function closeHcQuickMenu() {
 function renderHcQuickMenuList() {
   const q = (document.getElementById('hcQmSearchInput').value || '').trim().toLowerCase();
   const listEl = document.getElementById('hcQmList');
-  const items = HEALTH_CHECK_SOP_CATALOG.filter(p =>
+  const items = getAllSopProcedures().filter(p =>
     !q || p.code.toLowerCase().includes(q) || p.title.toLowerCase().includes(q) || p.system.toLowerCase().includes(q) || p.hosts.join(' ').toLowerCase().includes(q)
   );
   listEl.innerHTML = items.map(p => `
@@ -3565,7 +4021,7 @@ function populateNewModalSopSelect() {
   const sel = document.getElementById('newSopQuickSelect');
   if (!sel) return;
   sel.innerHTML = '<option value="">+ Insert Health Check Procedure...</option>' +
-    HEALTH_CHECK_SOP_CATALOG.map(p => `<option value="${escapeHtml(p.code)}">[${escapeHtml(p.code)}] ${escapeHtml(p.title)}</option>`).join('');
+    getAllSopProcedures().map(p => `<option value="${escapeHtml(p.code)}">[${escapeHtml(p.code)}] ${escapeHtml(p.title)}</option>`).join('');
 }
 function insertSopIntoNewModal(code) {
   if (!code) return;
@@ -3587,13 +4043,14 @@ document.addEventListener('click', (e) => {
 /* Interactive Post-Patch Health Check Runbook Drawer & SOP Library */
 let _activeHcServerId = null;
 let _activeHcCode = null;
-let _hcStepChecks = {};
+let _hcStepChecks = (appState && appState.hcStepChecks) ? appState.hcStepChecks : {};
 
 function openHealthCheckDrawer(serverId, code) {
   _activeHcServerId = serverId;
   const srv = appState.servers.find(s => s.id === serverId);
-  const matched = srv ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG;
-  const tabsList = matched.length > 0 ? matched : HEALTH_CHECK_SOP_CATALOG;
+  const allSops = getAllSopProcedures();
+  const matched = srv ? matchHealthCheckProcedures(srv) : allSops;
+  const tabsList = matched.length > 0 ? matched : allSops;
   _activeHcCode = code || tabsList[0].code;
   renderHcDrawerContent(srv, tabsList);
   document.getElementById('hcDrawer').classList.add('open');
@@ -3601,8 +4058,9 @@ function openHealthCheckDrawer(serverId, code) {
 
 function openHealthCheckLibrary() {
   _activeHcServerId = null;
-  _activeHcCode = HEALTH_CHECK_SOP_CATALOG[0].code;
-  renderHcDrawerContent(null, HEALTH_CHECK_SOP_CATALOG);
+  const allSops = getAllSopProcedures();
+  _activeHcCode = allSops[0] ? allSops[0].code : '';
+  renderHcDrawerContent(null, allSops);
   document.getElementById('hcDrawer').classList.add('open');
 }
 
@@ -3612,20 +4070,26 @@ function closeHcDrawer() {
 
 function switchActiveHcTab(code) {
   _activeHcCode = code;
+  const allSops = getAllSopProcedures();
   const srv = _activeHcServerId ? appState.servers.find(s => s.id === _activeHcServerId) : null;
-  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG) : HEALTH_CHECK_SOP_CATALOG;
+  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : allSops) : allSops;
   renderHcDrawerContent(srv, tabsList);
 }
 
 function toggleHcStepCheck(key, checked) {
-  _hcStepChecks[key] = checked;
+  if (checked) _hcStepChecks[key] = true;
+  else delete _hcStepChecks[key];
+  appState.hcStepChecks = _hcStepChecks;
+  saveState();
+  const allSops = getAllSopProcedures();
   const srv = _activeHcServerId ? appState.servers.find(s => s.id === _activeHcServerId) : null;
-  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : HEALTH_CHECK_SOP_CATALOG) : HEALTH_CHECK_SOP_CATALOG;
+  const tabsList = srv ? (matchHealthCheckProcedures(srv).length ? matchHealthCheckProcedures(srv) : allSops) : allSops;
   renderHcDrawerContent(srv, tabsList);
 }
 
 function renderHcDrawerContent(srv, tabsList) {
-  const proc = HEALTH_CHECK_SOP_CATALOG.find(p => p.code === _activeHcCode) || tabsList[0];
+  const allSops = getAllSopProcedures();
+  const proc = allSops.find(p => p.code === _activeHcCode) || tabsList[0];
   document.getElementById('hcDrawerSub').textContent = srv
     ? `Post-Patch Health Check · ${srv.hostname} (${srv.ip || 'No IP'})`
     : 'Master Post-Patch Health Check SOP Library';
@@ -3645,10 +4109,15 @@ function renderHcDrawerContent(srv, tabsList) {
     ${proc.steps.map((st, idx) => {
       const chkKey = `${_activeHcServerId || 'lib'}_${proc.code}_${idx}`;
       const isChecked = !!_hcStepChecks[chkKey];
+      const urlMatch = st.cmd ? String(st.cmd).match(/^https?:\/\/[^\s|]+$/i) : null;
+      const openLinkHtml = urlMatch ? `<a class="hc-open-mini" href="${escapeHtml(urlMatch[0])}" target="_blank" rel="noopener noreferrer">↗ Open</a>` : '';
       const cmdHtml = st.cmd ? `
         <div class="hc-cmd-box">
           <span>${escapeHtml(st.cmd)}</span>
-          <button type="button" class="hc-copy-mini" data-copy-cmd="${escapeHtml(st.cmd)}" onclick="sharePointSafeCopy(this.getAttribute('data-copy-cmd'), '📋 Command / URL copied!', 'Copy Command')">Copy</button>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            ${openLinkHtml}
+            <button type="button" class="hc-copy-mini" data-copy-cmd="${escapeHtml(st.cmd)}" onclick="sharePointSafeCopy(this.getAttribute('data-copy-cmd'), '📋 Command / URL copied!', 'Copy Command')">Copy</button>
+          </div>
         </div>` : '';
       return `
         <div class="hc-step-card ${isChecked ? 'checked' : ''}">
@@ -3672,14 +4141,19 @@ function renderHcDrawerContent(srv, tabsList) {
     footerEl.innerHTML = `
       <span style="font-size:0.73rem;color:#475569;">Status: <strong>${escapeHtml(srv.status || 'Pending')}</strong></span>
       <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-primary" onclick="markHealthCheckPassed(${srv.id}, '${escapeHtml(proc.code)}')">✅ Mark HC Passed &amp; Log in Remarks</button>
+        <button type="button" class="btn btn-toggle" onclick="openSopEditorModal('${escapeHtml(proc.code)}')" title="Edit this SOP procedure">✏️ Edit</button>
+        <button type="button" class="btn btn-primary" onclick="markHealthCheckPassed(${srv.id}, '${escapeHtml(proc.code)}')">✅ Mark HC Passed &amp; Log</button>
         <button type="button" class="btn btn-secondary" onclick="closeHcDrawer()">Close</button>
       </div>
     `;
   } else {
     footerEl.innerHTML = `
-      <span style="font-size:0.73rem;color:#475569;">${HEALTH_CHECK_SOP_CATALOG.length} SOP Procedures Loaded</span>
-      <button type="button" class="btn btn-secondary" onclick="closeHcDrawer()">Close</button>
+      <span style="font-size:0.73rem;color:#475569;">${allSops.length} SOP Procedures</span>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-add" onclick="openSopEditorModal('')">+ New SOP</button>
+        <button type="button" class="btn btn-toggle" onclick="openSopEditorModal('${escapeHtml(proc.code)}')">✏️ Edit Current</button>
+        <button type="button" class="btn btn-secondary" onclick="closeHcDrawer()">Close</button>
+      </div>
     `;
   }
 }
@@ -3687,6 +4161,7 @@ function renderHcDrawerContent(srv, tabsList) {
 function markHealthCheckPassed(serverId, code) {
   const srv = appState.servers.find(s => s.id === serverId);
   if (!srv) return;
+  pushUndoSnapshot(`Mark HC Passed (${code}) on ${srv.hostname}`);
   const stamp = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
   const note = `[HC Passed: ${code} (${stamp})]`;
   const curRem2 = String(srv.remarks2 || '').trim();
@@ -3699,6 +4174,125 @@ function markHealthCheckPassed(serverId, code) {
   renderTable();
   closeHcDrawer();
   showToast(`✅ Recorded ${note} on ${srv.hostname}`);
+}
+
+
+/* In-App SOP Editor (Synced to Firebase & LocalStorage) */
+let _editingSopOrigCode = null;
+
+function openSopEditorModal(code) {
+  _editingSopOrigCode = code || null;
+  const allSops = getAllSopProcedures();
+  const proc = code ? allSops.find(p => p.code === code) : null;
+  const isBuiltIn = code ? HEALTH_CHECK_SOP_CATALOG.some(p => p.code === code) : false;
+
+  document.getElementById('sopEditorModalTitle').textContent = proc ? `✏️ Edit SOP: ${proc.code}` : '➕ Create New Health Check SOP';
+  document.getElementById('sopEditCode').value = proc ? proc.code : '';
+  document.getElementById('sopEditCode').disabled = !!isBuiltIn;
+  document.getElementById('sopEditSystem').value = proc ? proc.system : '';
+  document.getElementById('sopEditTitle').value = proc ? proc.title : '';
+  document.getElementById('sopEditHosts').value = proc ? (proc.hosts || []).join(', ') : '';
+  document.getElementById('sopEditKeywords').value = proc ? (proc.keywords || []).join(', ') : '';
+  document.getElementById('sopEditSummary').value = proc ? proc.summary : '';
+
+  const delBtn = document.getElementById('sopEditDeleteBtn');
+  if (proc && proc._isCustom) {
+    delBtn.style.display = 'inline-flex';
+    delBtn.textContent = proc._overridesBuiltIn ? '↩ Reset to Built-In' : '🗑️ Delete SOP';
+  } else {
+    delBtn.style.display = 'none';
+  }
+
+  const container = document.getElementById('sopEditStepsContainer');
+  container.innerHTML = '';
+  const steps = (proc && proc.steps && proc.steps.length) ? proc.steps : [{ label: '', detail: '', cmd: '', expected: '' }];
+  steps.forEach(st => addSopEditorStepRow(st));
+
+  document.getElementById('sopEditorModal').classList.add('open');
+}
+
+function closeSopEditorModal() {
+  document.getElementById('sopEditorModal').classList.remove('open');
+  _editingSopOrigCode = null;
+}
+
+function addSopEditorStepRow(st = {}) {
+  const container = document.getElementById('sopEditStepsContainer');
+  const div = document.createElement('div');
+  div.className = 'sop-edit-step-box';
+  div.style.cssText = 'border:1px solid #CBD5E1;border-radius:6px;padding:8px;background:#F8FAFC;display:flex;flex-direction:column;gap:5px;';
+  div.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input type="text" class="se-label" placeholder="Step Title *" value="${escapeHtml(st.label || '')}" style="flex:1;padding:5px 7px;font-size:0.78rem;border:1px solid #CBD5E1;border-radius:4px;" />
+      <button type="button" class="del-btn" onclick="this.closest('.sop-edit-step-box').remove()" title="Remove step">✕</button>
+    </div>
+    <textarea class="se-detail" rows="2" placeholder="Step instructions / details..." style="padding:5px 7px;font-size:0.76rem;border:1px solid #CBD5E1;border-radius:4px;font-family:inherit;">${escapeHtml(st.detail || '')}</textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <input type="text" class="se-cmd" placeholder="Command or https:// URL (optional)" value="${escapeHtml(st.cmd || '')}" style="padding:5px 7px;font-size:0.76rem;border:1px solid #CBD5E1;border-radius:4px;font-family:Consolas,monospace;" />
+      <input type="text" class="se-exp" placeholder="Expected result..." value="${escapeHtml(st.expected || '')}" style="padding:5px 7px;font-size:0.76rem;border:1px solid #CBD5E1;border-radius:4px;" />
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function saveSopFromEditor() {
+  const code = document.getElementById('sopEditCode').value.trim().toUpperCase().replace(/\s+/g, '-');
+  const title = document.getElementById('sopEditTitle').value.trim();
+  const system = document.getElementById('sopEditSystem').value.trim();
+  if (!code || !title) {
+    showToast('⚠️ SOP Code and Procedure Title are required');
+    return;
+  }
+  const hosts = document.getElementById('sopEditHosts').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  const kwRaw = document.getElementById('sopEditKeywords').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const keywords = [...new Set([code.toLowerCase(), ...kwRaw])];
+  const summary = document.getElementById('sopEditSummary').value.trim();
+
+  const steps = [];
+  document.querySelectorAll('#sopEditStepsContainer .sop-edit-step-box').forEach(box => {
+    const label = box.querySelector('.se-label').value.trim();
+    const detail = box.querySelector('.se-detail').value.trim();
+    const cmd = box.querySelector('.se-cmd').value.trim();
+    const expected = box.querySelector('.se-exp').value.trim();
+    if (label || detail || cmd) {
+      steps.push({ label: label || 'Verification Step', detail, cmd, expected: expected || 'Verified OK' });
+    }
+  });
+  if (steps.length === 0) {
+    showToast('⚠️ Please add at least one verification step');
+    return;
+  }
+
+  if (!appState.customSops) appState.customSops = {};
+  if (_editingSopOrigCode && _editingSopOrigCode !== code && !HEALTH_CHECK_SOP_CATALOG.some(p => p.code === _editingSopOrigCode)) {
+    delete appState.customSops[_editingSopOrigCode];
+  }
+  appState.customSops[code] = { code, title, system: system || 'Custom System', hosts, keywords, summary, steps };
+  saveState();
+  addAuditEntry(`Saved Health Check SOP [${code}] ${title}`);
+  closeSopEditorModal();
+  _activeHcCode = code;
+  renderTable();
+  if (document.getElementById('hcDrawer').classList.contains('open')) {
+    switchActiveHcTab(code);
+  }
+  showToast(`💾 Saved SOP [${code}]`);
+}
+
+function deleteCustomSop() {
+  if (!_editingSopOrigCode || !appState.customSops) return;
+  const code = _editingSopOrigCode;
+  delete appState.customSops[code];
+  saveState();
+  addAuditEntry(`Reset / removed custom SOP [${code}]`);
+  closeSopEditorModal();
+  renderTable();
+  if (document.getElementById('hcDrawer').classList.contains('open')) {
+    const allSops = getAllSopProcedures();
+    _activeHcCode = allSops[0] ? allSops[0].code : '';
+    renderHcDrawerContent(null, allSops);
+  }
+  showToast(`🗑️ Removed custom override for [${code}]`);
 }
 
 /* Column Drag-Resizing + Sticky Offset Sync */
