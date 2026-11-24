@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.18)</title>
+<title>Windows Server Patching Schedule Manager (v5.19)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -1089,7 +1089,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.18</span>
+      <span class="ver-pill">v5.19</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -2527,7 +2527,7 @@ const PASTEL_PALETTE = [
   '#FAF5FF', '#F0FDFA', '#FFF7ED', '#F8FAFC', '#F3F4F6'
 ];
 
-/* Weekly Batch Sort: 1. Exact Start Timestamp > 2. Natural Hostname Order > 3. Sequence Priority */
+/* Weekly Batch Sort: 1. Start Timestamp > 2. Application > 3. Sequence (SEQ 1 -> Normal -> SEQ 2) > 4. Natural Hostname */
 function getSortedAndGrouped() {
   const enriched = appState.servers.map(s => {
     const meta = parseTimeWindowMeta(s.timeWin);
@@ -2597,10 +2597,18 @@ function getSortedAndGrouped() {
     }
   });
 
-  // Sort: 1. Weekly Batch > 2. Exact Start Timestamp > 3. Sequence Priority (SEQ 1 -> Normal -> SEQ 2) > 4. Natural Hostname
+  // Sort: 1. Weekly Batch > 2. Exact Start Timestamp > 3. Application > 4. Sequence (SEQ 1 -> Normal -> SEQ 2) > 5. Natural Hostname
   enriched.sort((a, b) => {
     if (a.weekKey !== b.weekKey) return a.weekKey.localeCompare(b.weekKey);
     if (a.startEpoch !== b.startEpoch) return a.startEpoch - b.startEpoch;
+    const appA = String(a.app || '').trim();
+    const appB = String(b.app || '').trim();
+    if (appA !== appB) {
+      if (!appA) return 1;
+      if (!appB) return -1;
+      const appCmp = appA.localeCompare(appB, undefined, { numeric: true, sensitivity: 'base' });
+      if (appCmp !== 0) return appCmp;
+    }
     if (a.seqRank !== b.seqRank) return a.seqRank - b.seqRank;
     return a.hostname.localeCompare(b.hostname, undefined, { numeric: true, sensitivity: 'base' });
   });
