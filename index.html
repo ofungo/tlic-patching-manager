@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.19)</title>
+<title>Windows Server Patching Schedule Manager (v5.19.1)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -1089,7 +1089,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.19</span>
+      <span class="ver-pill">v5.19.1</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -3991,22 +3991,34 @@ const HEALTH_CHECK_SOP_CATALOG = [
   {
     code: "HC-SUNGL",
     title: "SUN GL System Health Check",
-    system: "SunSystems / MSSQL Database Server",
-    hosts: ["PRDVGLSDBS01"],
-    keywords: ["hc-sungl", "sun gl", "sungl", "prdvglsdbs01", "10.19.32.71", "sunsystems"],
-    summary: "Verify all 10 MSSQL & SunSystems Windows services are Running and test ports 3389, 1433, 50000, 55000.",
+    system: "SunSystems / MSSQL Database & QAS Web Server",
+    hosts: ["PRDVSGLDBS02", "PRDVSGLQAS02"],
+    keywords: ["hc-sungl", "sun gl", "sungl", "prdvsgldbs02", "prdvsglqas02", "10.19.32.72", "10.19.32.73", "sunsystems"],
+    summary: "Verify 12 SQL/SunSystems services & 7 ports on PRDVSGLDBS02 (10.19.32.72), plus WAS/W3SVC services & 2 ports on PRDVSGLQAS02 (10.19.32.73).",
     steps: [
       {
-        label: "PRDVGLSDBS01 (10.19.32.71) — Verify 10 Core Services Running",
-        detail: "Open Task Manager → Services and verify all 10 services are Running:\n• MSSQLSERVER, SQLSERVERAGENT, ReportServer, SQLWriter\n• SunSystems Configuration Service, SunSystems Connect Server, SunSystems Report Manager Service, SunSystems Security Service, SunSystems Session Manager, SunSystemsWeb",
-        cmd: "net start | findstr /I \"SQL SunSystems ReportServer\"",
-        expected: "All 10 SQL & SunSystems services in Running state"
+        label: "PRDVSGLDBS02 (10.19.32.72) — Verify 12 Core Services Automatically Started",
+        detail: "Open Task Manager → Services and verify all 12 services are Running:\n• SQL Server: MSSQLSERVER, SQLSERVERAGENT, SQLTELEMETRY, SQLServerReportingServices, SQLWriter\n• SunSystems: SunSystems Api Service, SunSystems Application Server, SunSystems Configuration Service, SunSystems Connect Server, SunSystems Report Manager Service, SunSystems Security Service, SunSystemsWeb",
+        cmd: "net start | findstr /I \"SQL SunSystems\"",
+        expected: "All 12 SQL & SunSystems services in Running state"
       },
       {
-        label: "External Port Connectivity Checks (3389, 1433, 50000, 55000)",
-        detail: "Check from OUTSIDE to ensure all 4 ports on 10.19.32.71 are listening.",
-        cmd: "telnet 10.19.32.71 3389 && telnet 10.19.32.71 1433 && telnet 10.19.32.71 50000 && telnet 10.19.32.71 55000",
-        expected: "All 4 ports (3389, 1433, 50000, 55000) respond"
+        label: "PRDVSGLDBS02 (10.19.32.72) — External Port Connectivity Checks (7 Ports)",
+        detail: "Check from OUTSIDE to ensure all 7 ports on 10.19.32.72 are listening: 3389, 1433, 40000, 40001, 40003, 40004, 443.",
+        cmd: "telnet 10.19.32.72 3389 && telnet 10.19.32.72 1433 && telnet 10.19.32.72 40000 && telnet 10.19.32.72 40001 && telnet 10.19.32.72 40003 && telnet 10.19.32.72 40004 && telnet 10.19.32.72 443",
+        expected: "All 7 ports (3389, 1433, 40000, 40001, 40003, 40004, 443) connect cleanly"
+      },
+      {
+        label: "PRDVSGLQAS02 (10.19.32.73) — Verify IIS Services Automatically Started",
+        detail: "Open Task Manager → Services and verify both IIS services are Running:\n• WAS (Windows Process Activation Service)\n• W3SVC (World Wide Web Publishing Service)",
+        cmd: "sc query WAS && sc query W3SVC",
+        expected: "WAS and W3SVC both in RUNNING state"
+      },
+      {
+        label: "PRDVSGLQAS02 (10.19.32.73) — External Port Connectivity Checks (2 Ports)",
+        detail: "Check from OUTSIDE to ensure ports 3389 and 443 on 10.19.32.73 are listening.",
+        cmd: "telnet 10.19.32.73 3389 && telnet 10.19.32.73 443",
+        expected: "Both ports (3389, 443) connect cleanly"
       }
     ]
   },
