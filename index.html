@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.21)</title>
+<title>Windows Server Patching Schedule Manager (v5.22)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -473,7 +473,8 @@
   .tag-shut2   { background: #FCE7F3; color: #9D174D; border: 1px solid #F9A8D4; }
   .tag-boot1   { background: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
   .tag-boot2   { background: #EDE9FE; color: #6D28D9; border: 1px solid #C4B5FD; }
-  .tw-col-wrap { display: flex; flex-direction: column; gap: 3px; }
+  .tw-col-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .tw-col-wrap .tag-row { margin-top: 1px; }
   .tag-seq2    { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
   .tag-warn    { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
 
@@ -503,6 +504,7 @@
   }
   body.expanded-rows textarea.editable-textarea {
     height: auto;
+    min-height: 20px;
     max-height: none;
     overflow-y: hidden;
     resize: none;
@@ -774,24 +776,55 @@
 
 
 
-  /* v5.20 Live Patching Window Highlight & UEM Agent Badge */
+  /* v5.22 High-Contrast Live Patching Window Highlight & Eye-Catching PATCH NOW Badge */
   @keyframes pulsePatchNow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.45); }
-    50% { box-shadow: 0 0 0 4px rgba(217, 119, 6, 0); }
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.78), 0 2px 5px rgba(220, 38, 38, 0.35);
+    }
+    55% {
+      transform: scale(1.045);
+      box-shadow: 0 0 0 7px rgba(220, 38, 38, 0), 0 3px 10px rgba(220, 38, 38, 0.55);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0), 0 2px 5px rgba(220, 38, 38, 0.35);
+    }
+  }
+  @keyframes patchNowDotBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.25; transform: scale(0.75); }
   }
   tbody tr.data-row.row-live-window,
   tbody tr.data-row.row-live-window td {
     background-color: #FEF9C3 !important;
   }
   tbody tr.data-row.row-live-window td.sticky-col-1 {
-    box-shadow: inset 4px 0 0 #D97706 !important;
+    box-shadow: inset 4px 0 0 #DC2626 !important;
   }
   .tag-live-now {
-    background: #D97706;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(90deg, #DC2626 0%, #EF4444 100%);
     color: #FFFFFF;
-    border: 1px solid #B45309;
+    border: 1px solid #991B1B;
+    border-radius: 999px;
+    padding: 2px 8px 2px 6px;
+    font-size: 0.65rem;
     font-weight: 800;
-    animation: pulsePatchNow 2s infinite;
+    letter-spacing: 0.45px;
+    animation: pulsePatchNow 1.35s ease-in-out infinite;
+  }
+  .live-now-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #FEF08A;
+    box-shadow: 0 0 6px #FEF08A;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: patchNowDotBlink 0.9s ease-in-out infinite;
   }
   .uem-pill-btn {
     font-size: 0.62rem;
@@ -1152,7 +1185,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.21</span>
+      <span class="ver-pill">v5.22</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -2244,8 +2277,12 @@ function toggleRowExpansion() {
 }
 function applyRowHeights() {
   document.querySelectorAll('textarea.editable-textarea').forEach(el => {
-    if (isExpandedMode) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
-    else { el.style.height = ''; }
+    if (isExpandedMode) {
+      el.style.height = '20px';
+      el.style.height = Math.max(20, el.scrollHeight) + 'px';
+    } else {
+      el.style.height = '';
+    }
   });
 }
 function showToast(msg) {
@@ -3279,7 +3316,7 @@ function renderTable() {
     const envLabel = srv.env || 'UNASSIGNED';
     const isUemEnabled = srv.uemEnabled !== false;
     const uemPillHtml = `<button type="button" class="uem-pill-btn${isUemEnabled ? '' : ' uem-disabled'}" onclick="toggleServerUem(${srv.id})" title="${isUemEnabled ? 'UEM (Endpoint Central) Enabled — Click to disable' : 'UEM (Endpoint Central) Disabled — Click to enable'}">UEM</button>`;
-    const liveBadgeHtml = srv.isLiveWindow ? `<div class="tag-row"><span class="smart-tag tag-live-now" title="Current time is inside this server's patching Time Window!">🕒 PATCH NOW</span></div>` : '';
+    const liveBadgeHtml = srv.isLiveWindow ? `<div class="tag-row"><span class="smart-tag tag-live-now" title="Current time is inside this server's patching Time Window!"><span class="live-now-dot"></span>PATCH NOW</span></div>` : '';
     const tagsHtml = [
       `<span class="smart-tag ${envBadgeCls}" style="${!srv.env ? 'background:#E2E8F0;color:#475569;' : ''}">${envLabel}</span>`,
       uemPillHtml,
@@ -3311,13 +3348,13 @@ function renderTable() {
           <div class="tag-row">${tagsHtml}</div>
         </td>
         <td><input class="editable-cell center mono" value="${escapeHtml(srv.ip)}" onchange="updateField(${srv.id}, 'ip', this.value)" /></td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'os', this.value)">${escapeHtml(srv.os)}</textarea></td>
+        <td><textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'os', this.value)">${escapeHtml(srv.os)}</textarea></td>
         <td><input class="editable-cell" value="${escapeHtml(srv.app)}" onchange="updateField(${srv.id}, 'app', this.value)" /></td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
+        <td><textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'maintWin', this.value)">${escapeHtml(srv.maintWin)}</textarea></td>
         <td>
           <div class="tw-col-wrap">
             <div class="tw-cell-wrap">
-              <textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea>
+              <textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'timeWin', this.value, true)">${escapeHtml(srv.timeWin)}</textarea>
               ${suggestIconHtml}
             </div>
             ${liveBadgeHtml}
@@ -3333,13 +3370,13 @@ function renderTable() {
         <td>
           <div class="sop-cell-wrap">
             <div class="sop-top-row">
-              <textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea>
+              <textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks1', this.value)">${escapeHtml(srv.remarks1)}</textarea>
               <button type="button" class="sop-insert-btn" onclick="openHcQuickMenu(this, ${srv.id})" title="Insert Health Check Procedure name into SOP Notes">🩺</button>
             </div>
             ${hcPillsHtml}
           </div>
         </td>
-        <td><textarea class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
+        <td><textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
         <td class="center">
           <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
             <option value="" ${srv.by === '' ? 'selected' : ''}></option>
