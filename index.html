@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.22)</title>
+<title>Windows Server Patching Schedule Manager (v5.23)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -826,6 +826,19 @@
     flex-shrink: 0;
     animation: patchNowDotBlink 0.9s ease-in-out infinite;
   }
+  .tag-overdue {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1.5px solid #DC2626;
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.35px;
+  }
   .uem-pill-btn {
     font-size: 0.62rem;
     font-weight: 800;
@@ -1185,7 +1198,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.22</span>
+      <span class="ver-pill">v5.23</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -1311,6 +1324,7 @@
         <option value="Failed">Failed</option>
         <option value="__PENDING__">Pending / Blank</option>
         <option value="__LIVE_NOW__">🟠 In Patch Window Now</option>
+        <option value="__OVERDUE__">🔴 Overdue (Pending Past Window)</option>
         <option value="__ALERTS__">⚠️ Any Alert / Conflict / Duplicate</option>
         <option value="__DUPLICATES__">🔁 Duplicate in Quarter Only</option>
         <option value="__UEM_ON__">🟠 UEM Enabled Only</option>
@@ -2723,7 +2737,8 @@ function getSortedAndGrouped() {
     const flags = detectSmartFlags(s);
     const suggestedTw = buildSuggestedTimeWindow(s.timeWin, s.maintWin);
     const isLiveWindow = !!(meta.localStartMs && meta.localEndMs && nowLocalMs >= meta.localStartMs && nowLocalMs <= meta.localEndMs && s.status !== 'Patched');
-    return { ...s, ...meta, env, seqRank, flags, suggestedTw, isLiveWindow };
+    const isOverdue = !!(meta.localEndMs && nowLocalMs > meta.localEndMs && s.status !== 'Patched' && s.status !== 'Failed');
+    return { ...s, ...meta, env, seqRank, flags, suggestedTw, isLiveWindow, isOverdue };
   });
 
   // Cross-row validation across the SAME QUARTER: Duplicate Hostname/IP & SEQ 2 scheduled earlier than SEQ 1
@@ -3097,6 +3112,7 @@ function updateClearFiltersBtn(weekLabelMap = {}) {
     '__UNASSIGNED__': 'Unassigned',
     '__PENDING__': 'Pending',
     '__LIVE_NOW__': 'In Patch Window Now',
+    '__OVERDUE__': 'Overdue (Pending Past Window)',
     '__ALERTS__': 'Any Alert / Conflict',
     '__DUPLICATES__': 'Duplicate in Quarter',
     '__UEM_ON__': 'UEM Enabled',
@@ -3246,11 +3262,12 @@ function renderTable() {
     if (fBy && fBy !== '__UNASSIGNED__' && s.by !== fBy) return false;
     if (fStatus === '__PENDING__' && s.status !== '') return false;
     if (fStatus === '__LIVE_NOW__' && !s.isLiveWindow) return false;
+    if (fStatus === '__OVERDUE__' && !s.isOverdue) return false;
     if (fStatus === '__ALERTS__' && s.flags.length === 0) return false;
     if (fStatus === '__DUPLICATES__' && !s.isDuplicate) return false;
     if (fStatus === '__UEM_ON__' && s.uemEnabled === false) return false;
     if (fStatus === '__UEM_OFF__' && s.uemEnabled !== false) return false;
-    if (fStatus && !['__PENDING__','__LIVE_NOW__','__ALERTS__','__DUPLICATES__','__UEM_ON__','__UEM_OFF__'].includes(fStatus) && s.status !== fStatus) return false;
+    if (fStatus && !['__PENDING__','__LIVE_NOW__','__OVERDUE__','__ALERTS__','__DUPLICATES__','__UEM_ON__','__UEM_OFF__'].includes(fStatus) && s.status !== fStatus) return false;
     if (q) {
       const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -3316,7 +3333,9 @@ function renderTable() {
     const envLabel = srv.env || 'UNASSIGNED';
     const isUemEnabled = srv.uemEnabled !== false;
     const uemPillHtml = `<button type="button" class="uem-pill-btn${isUemEnabled ? '' : ' uem-disabled'}" onclick="toggleServerUem(${srv.id})" title="${isUemEnabled ? 'UEM (Endpoint Central) Enabled — Click to disable' : 'UEM (Endpoint Central) Disabled — Click to enable'}">UEM</button>`;
-    const liveBadgeHtml = srv.isLiveWindow ? `<div class="tag-row"><span class="smart-tag tag-live-now" title="Current time is inside this server's patching Time Window!"><span class="live-now-dot"></span>PATCH NOW</span></div>` : '';
+    const liveBadgeHtml = srv.isLiveWindow
+      ? `<div class="tag-row"><span class="smart-tag tag-live-now" title="Current time is inside this server's patching Time Window!"><span class="live-now-dot"></span>PATCH NOW</span></div>`
+      : (srv.isOverdue ? `<div class="tag-row"><span class="smart-tag tag-overdue" title="Patching Time Window has passed and Status is still blank/pending">⚠️ OVERDUE</span></div>` : '');
     const tagsHtml = [
       `<span class="smart-tag ${envBadgeCls}" style="${!srv.env ? 'background:#E2E8F0;color:#475569;' : ''}">${envLabel}</span>`,
       uemPillHtml,
