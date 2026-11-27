@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.24)</title>
+<title>Windows Server Patching Schedule Manager (v5.25)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -21,8 +21,8 @@
     --patched-text: #166534;
     --failed-bg: #FEE2E2;
     --failed-text: #991B1B;
-    --skipped-bg: #E2E8F0;
-    --skipped-text: #334155;
+    --skipped-bg: #FEF08A;
+    --skipped-text: #854D0E;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -299,7 +299,7 @@
   .seg-patched { background: #10B981; }
   .seg-pending { background: #3B82F6; }
   .seg-failed  { background: #EF4444; }
-  .seg-skipped { background: #94A3B8; }
+  .seg-skipped { background: #EAB308; }
   .w-bar-label { font-size: 0.62rem; font-weight: 700; color: var(--text-muted); margin-top: 3px; }
 
   .h-bar-list { display: flex; flex-direction: column; gap: 4px; }
@@ -621,14 +621,14 @@
     border-color: #B91C1C;
   }
   .status-reason-pill.reason-skipped {
-    background: #F1F5F9;
-    color: #334155;
-    border: 1px solid #94A3B8;
+    background: #FEF9C3;
+    color: #854D0E;
+    border: 1px solid #EAB308;
   }
   .status-reason-pill.reason-skipped:hover {
-    background: #475569;
+    background: #CA8A04;
     color: #FFFFFF;
-    border-color: #334155;
+    border-color: #A16207;
   }
   .status-reason-pill.reason-empty {
     background: transparent;
@@ -641,8 +641,20 @@
     color: #1D4ED8;
     border-color: #3B82F6;
   }
+  .remarks-col-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .remarks-reason-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 0 2px;
+  }
   tbody tr.data-row.row-skipped td.sticky-col-1 {
-    box-shadow: inset 3.5px 0 0 #64748B;
+    box-shadow: inset 3.5px 0 0 #EAB308;
   }
   .reason-preset-strip {
     display: flex;
@@ -923,7 +935,7 @@
   }
   .uem-pill-btn {
     font-size: 0.62rem;
-    font-weight: 800;
+    font-weight: 400;
     padding: 0px 5px;
     border-radius: 3px;
     line-height: 1.35;
@@ -946,7 +958,7 @@
     color: #94A3B8;
     border: 1px solid #CBD5E1;
     text-decoration: line-through;
-    font-weight: 600;
+    font-weight: 400;
   }
   .uem-pill-btn.uem-disabled:hover {
     background: #CBD5E1;
@@ -1280,7 +1292,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.24</span>
+      <span class="ver-pill">v5.25</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -3334,7 +3346,7 @@ function renderTable() {
     card.innerHTML = `
       <div class="wb-top"><span class="wb-wk-tag">${weekShortMap[wk]}${nextTag}</span><span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span></div>
       <div class="wb-date">${escapeHtml(shortRange)}</div>
-      <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${skipPct}%;background:#94A3B8;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
+      <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${skipPct}%;background:#EAB308;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
     `;
     card.onclick = () => quickFilterWeek(wk);
     pillsEl.appendChild(card);
@@ -3369,7 +3381,7 @@ function renderTable() {
       </div>
     </div>
     <div class="kpi-bar-row">
-      <div class="kpi-bar-track"><div style="width:${pctDone}%;background:#10B981;"></div><div style="width:${pctSkip}%;background:#94A3B8;"></div><div style="width:${pctFail}%;background:#EF4444;"></div></div>
+      <div class="kpi-bar-track"><div style="width:${pctDone}%;background:#10B981;"></div><div style="width:${pctSkip}%;background:#EAB308;"></div><div style="width:${pctFail}%;background:#EF4444;"></div></div>
       <span style="font-size:0.71rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
     </div>
   `;
@@ -3457,10 +3469,11 @@ function renderTable() {
     if (srv.status === 'Failed' || srv.status === 'Skipped') {
       const rText = String(srv.statusReason || '').trim();
       const toneCls = srv.status === 'Failed' ? 'reason-failed' : 'reason-skipped';
+      const labelText = `${srv.status} Reason`;
       if (rText) {
-        statusReasonBadgeHtml = `<button type="button" class="status-reason-pill ${toneCls}" data-status="${escapeHtml(srv.status)}" data-reason="${escapeHtml(rText)}" onmouseenter="showStatusReasonTooltip(this)" onmouseleave="hideStatusReasonTooltip()" onfocus="showStatusReasonTooltip(this)" onblur="hideStatusReasonTooltip()" onclick="hideStatusReasonTooltip();openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)">📝 Reason</button>`;
+        statusReasonBadgeHtml = `<div class="remarks-reason-top"><button type="button" class="status-reason-pill ${toneCls}" data-status="${escapeHtml(srv.status)}" data-reason="${escapeHtml(rText)}" onmouseenter="showStatusReasonTooltip(this)" onmouseleave="hideStatusReasonTooltip()" onfocus="showStatusReasonTooltip(this)" onblur="hideStatusReasonTooltip()" onclick="hideStatusReasonTooltip();openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)">📝 ${escapeHtml(labelText)}</button></div>`;
       } else {
-        statusReasonBadgeHtml = `<button type="button" class="status-reason-pill reason-empty" onclick="openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)" title="Add ${escapeHtml(srv.status)} reason">+ Reason</button>`;
+        statusReasonBadgeHtml = `<div class="remarks-reason-top"><button type="button" class="status-reason-pill reason-empty" onclick="openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)" title="Add ${escapeHtml(labelText)}">+ ${escapeHtml(labelText)}</button></div>`;
       }
     }
     const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : (srv.by === 'Operator' ? 'by-operator' : '')));
@@ -3530,7 +3543,12 @@ function renderTable() {
             ${hcPillsHtml}
           </div>
         </td>
-        <td><textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea></td>
+        <td>
+          <div class="remarks-col-wrap">
+            ${statusReasonBadgeHtml}
+            <textarea rows="1" class="editable-cell editable-textarea" onchange="updateField(${srv.id}, 'remarks2', this.value)">${escapeHtml(srv.remarks2)}</textarea>
+          </div>
+        </td>
         <td class="center">
           <select class="editable-cell center ${byClass}" onchange="updateField(${srv.id}, 'by', this.value)">
             <option value="" ${srv.by === '' ? 'selected' : ''}></option>
@@ -3541,15 +3559,12 @@ function renderTable() {
           </select>
         </td>
         <td class="center">
-          <div class="status-col-wrap">
-            <select class="editable-cell center ${statusClass}" onchange="handleStatusChange(${srv.id}, this.value)">
-              <option value="" ${srv.status === '' ? 'selected' : ''}></option>
-              <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
-              <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
-              <option value="Skipped" ${srv.status === 'Skipped' ? 'selected' : ''}>Skipped</option>
-            </select>
-            ${statusReasonBadgeHtml}
-          </div>
+          <select class="editable-cell center ${statusClass}" onchange="handleStatusChange(${srv.id}, this.value)">
+            <option value="" ${srv.status === '' ? 'selected' : ''}></option>
+            <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
+            <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
+            <option value="Skipped" ${srv.status === 'Skipped' ? 'selected' : ''}>Skipped</option>
+          </select>
         </td>
         <td class="center">
           <button type="button" class="del-btn" title="Remove server" onclick="deleteServer(${srv.id})">✕</button>
@@ -3992,8 +4007,8 @@ function showStatusReasonTooltip(btn) {
   const st = btn.getAttribute('data-status') || 'Status';
   const reason = btn.getAttribute('data-reason') || '';
   hdrEl.textContent = st === 'Failed' ? '❌ Failed Reason' : '⏭️ Skipped Reason';
-  hdrEl.style.color = st === 'Failed' ? '#FCA5A5' : '#CBD5E1';
-  tip.style.borderColor = st === 'Failed' ? '#EF4444' : '#94A3B8';
+  hdrEl.style.color = st === 'Failed' ? '#FCA5A5' : '#FDE047';
+  tip.style.borderColor = st === 'Failed' ? '#EF4444' : '#EAB308';
   valEl.textContent = reason;
   tip.style.display = 'block';
 
@@ -4182,7 +4197,7 @@ function exportExcel() {
     function getStatusCellStyle(status, baseHex) {
       if (status === 'Patched') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } }, fill: { fgColor: { rgb: 'DCFCE7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
       if (status === 'Failed') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } }, fill: { fgColor: { rgb: 'FEE2E2' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
-      if (status === 'Skipped') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '334155' } }, fill: { fgColor: { rgb: 'E2E8F0' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
+      if (status === 'Skipped') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } }, fill: { fgColor: { rgb: 'FEF08A' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
       return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
     function getEngineerCellStyle(by, baseHex) {
