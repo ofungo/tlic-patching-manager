@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.23)</title>
+<title>Windows Server Patching Schedule Manager (v5.24)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -21,6 +21,8 @@
     --patched-text: #166534;
     --failed-bg: #FEE2E2;
     --failed-text: #991B1B;
+    --skipped-bg: #E2E8F0;
+    --skipped-text: #334155;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -297,6 +299,7 @@
   .seg-patched { background: #10B981; }
   .seg-pending { background: #3B82F6; }
   .seg-failed  { background: #EF4444; }
+  .seg-skipped { background: #94A3B8; }
   .w-bar-label { font-size: 0.62rem; font-weight: 700; color: var(--text-muted); margin-top: 3px; }
 
   .h-bar-list { display: flex; flex-direction: column; gap: 4px; }
@@ -584,6 +587,85 @@
 
   .status-patched { background-color: var(--patched-bg) !important; color: var(--patched-text) !important; font-weight: 700; }
   .status-failed  { background-color: var(--failed-bg) !important; color: var(--failed-text) !important; font-weight: 700; }
+  .status-skipped { background-color: var(--skipped-bg) !important; color: var(--skipped-text) !important; font-weight: 700; }
+
+  /* v5.24 Status Reason Badge, Row Accent & Global Tooltip */
+  .status-col-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .status-reason-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+  .status-reason-pill.reason-failed {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+  }
+  .status-reason-pill.reason-failed:hover {
+    background: #DC2626;
+    color: #FFFFFF;
+    border-color: #B91C1C;
+  }
+  .status-reason-pill.reason-skipped {
+    background: #F1F5F9;
+    color: #334155;
+    border: 1px solid #94A3B8;
+  }
+  .status-reason-pill.reason-skipped:hover {
+    background: #475569;
+    color: #FFFFFF;
+    border-color: #334155;
+  }
+  .status-reason-pill.reason-empty {
+    background: transparent;
+    color: #64748B;
+    border: 1px dashed #94A3B8;
+    font-weight: 600;
+  }
+  .status-reason-pill.reason-empty:hover {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border-color: #3B82F6;
+  }
+  tbody tr.data-row.row-skipped td.sticky-col-1 {
+    box-shadow: inset 3.5px 0 0 #64748B;
+  }
+  .reason-preset-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .reason-preset-chip {
+    background: #F1F5F9;
+    color: #334155;
+    border: 1px solid #CBD5E1;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .reason-preset-chip:hover {
+    background: #DBEAFE;
+    color: #1E40AF;
+    border-color: #93C5FD;
+  }
   .by-andy     { background-color: #E0F2FE !important; color: #0369A1 !important; font-weight: 700; }
   .by-don      { background-color: #FFEDD5 !important; color: #C2410C !important; font-weight: 700; }
   .by-fung     { background-color: #EDE9FE !important; color: #5B21B6 !important; font-weight: 700; }
@@ -1198,7 +1280,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.23</span>
+      <span class="ver-pill">v5.24</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -1254,6 +1336,7 @@
           <span><i class="legend-dot seg-patched"></i>Done</span>
           <span><i class="legend-dot seg-pending"></i>Pend</span>
           <span><i class="legend-dot seg-failed"></i>Fail</span>
+          <span><i class="legend-dot seg-skipped"></i>Skip</span>
         </div>
       </div>
       <div class="weekly-bars" id="weeklyChart"></div>
@@ -1322,6 +1405,7 @@
         <option value="">All Statuses</option>
         <option value="Patched">Patched</option>
         <option value="Failed">Failed</option>
+        <option value="Skipped">Skipped</option>
         <option value="__PENDING__">Pending / Blank</option>
         <option value="__LIVE_NOW__">🟠 In Patch Window Now</option>
         <option value="__OVERDUE__">🔴 Overdue (Pending Past Window)</option>
@@ -1352,7 +1436,7 @@
 
   <!-- Schedule Table -->
   <div class="table-card">
-    <div class="table-scroll" onscroll="hideSuggestTooltip()">
+    <div class="table-scroll" onscroll="hideSuggestTooltip();hideStatusReasonTooltip()">
       <table>
         <colgroup id="scheduleColGroup">
           <col style="width: 34px;" />   <!-- Select -->
@@ -1409,6 +1493,7 @@
     <option value="__KEEP__">Set Status...</option>
     <option value="Patched">Status: Patched</option>
     <option value="Failed">Status: Failed</option>
+    <option value="Skipped">Status: Skipped</option>
     <option value="">Clear Status</option>
   </select>
   <button class="bulk-btn bulk-btn-green" onclick="applyBulkUpdate()">✓ Apply By/Status</button>
@@ -1497,6 +1582,7 @@
           <option value="">-- Blank --</option>
           <option value="Patched">Patched</option>
           <option value="Failed">Failed</option>
+          <option value="Skipped">Skipped</option>
         </select>
       </div>
       <div class="form-group full">
@@ -1734,6 +1820,37 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Status Reason Prompt Modal (for Failed / Skipped) -->
+<div class="modal-backdrop" id="statusReasonModal" style="z-index:1260;" onclick="if(event.target===this) cancelStatusReasonModal()">
+  <div class="modal" style="width:480px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <h3 id="statusReasonModalTitle" style="margin:0;">📝 Enter Reason</h3>
+      <span id="statusReasonBadgePreview" class="smart-tag" style="font-size:0.72rem;padding:2px 8px;"></span>
+    </div>
+    <p id="statusReasonModalSub" style="margin:0 0 10px;font-size:0.8rem;color:#475569;line-height:1.4;"></p>
+    <div style="font-size:0.7rem;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:5px;">Quick Presets (Click to Insert):</div>
+    <div class="reason-preset-strip" id="statusReasonPresets"></div>
+    <div class="form-group full">
+      <label>Reason / Notes</label>
+      <textarea id="statusReasonInput" rows="4" placeholder="Enter reason why this server was failed or skipped (e.g. error code, app owner request, pending change window)..." style="resize:vertical;"></textarea>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button type="button" id="statusReasonClearBtn" class="btn btn-toggle" style="color:#64748B;display:none;" onclick="document.getElementById('statusReasonInput').value='';document.getElementById('statusReasonInput').focus();">Clear Note</button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button type="button" class="btn btn-secondary" onclick="cancelStatusReasonModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="statusReasonSaveBtn" onclick="saveStatusReasonModal()">💾 Save Status &amp; Reason</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Global Non-Overlapping Hover Tooltip for Status Reason -->
+<div class="tw-global-tooltip" id="statusReasonTooltip" style="border-color:#94A3B8;">
+  <div class="pop-hdr" id="statusReasonTooltipHdr">📝 Status Reason</div>
+  <div class="pop-val" id="statusReasonTooltipVal" style="white-space:pre-wrap;font-weight:500;"></div>
+  <div class="pop-hint">Click badge to edit reason</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2736,8 +2853,8 @@ function getSortedAndGrouped() {
     const seqRank = getSequenceRank(s);
     const flags = detectSmartFlags(s);
     const suggestedTw = buildSuggestedTimeWindow(s.timeWin, s.maintWin);
-    const isLiveWindow = !!(meta.localStartMs && meta.localEndMs && nowLocalMs >= meta.localStartMs && nowLocalMs <= meta.localEndMs && s.status !== 'Patched');
-    const isOverdue = !!(meta.localEndMs && nowLocalMs > meta.localEndMs && s.status !== 'Patched' && s.status !== 'Failed');
+    const isLiveWindow = !!(meta.localStartMs && meta.localEndMs && nowLocalMs >= meta.localStartMs && nowLocalMs <= meta.localEndMs && s.status !== 'Patched' && s.status !== 'Skipped');
+    const isOverdue = !!(meta.localEndMs && nowLocalMs > meta.localEndMs && s.status !== 'Patched' && s.status !== 'Failed' && s.status !== 'Skipped');
     return { ...s, ...meta, env, seqRank, flags, suggestedTw, isLiveWindow, isOverdue };
   });
 
@@ -2845,18 +2962,21 @@ function renderCharts(enriched, uniqueWeeks, weekLabelMap, weekShortMap) {
     const tot = items.length;
     const p = items.filter(s => s.status === 'Patched').length;
     const f = items.filter(s => s.status === 'Failed').length;
-    const pend = tot - p - f;
+    const sk = items.filter(s => s.status === 'Skipped').length;
+    const pend = tot - p - f - sk;
     const heightPct = Math.round((tot / maxWeekTotal) * 66);
     const pPct = tot ? (p / tot) * 100 : 0;
     const pendPct = tot ? (pend / tot) * 100 : 0;
     const fPct = tot ? (f / tot) * 100 : 0;
+    const skPct = tot ? (sk / tot) * 100 : 0;
     const colStateCls = activeWeek ? (activeWeek === wk ? ' active' : ' dimmed') : '';
     return `
-      <div class="w-bar-col${colStateCls}" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed)" onclick="quickFilterWeek('${wk}')">
+      <div class="w-bar-col${colStateCls}" title="${weekLabelMap[wk]}: ${tot} total (${p} Patched, ${pend} Pending, ${f} Failed, ${sk} Skipped)" onclick="quickFilterWeek('${wk}')">
         <div class="w-bar-count">${tot}</div>
         <div class="w-bar-stack" style="height:${Math.max(8, heightPct)}px;">
           <div class="seg-patched" style="height:${pPct}%;"></div>
           <div class="seg-pending" style="height:${pendPct}%;"></div>
+          <div class="seg-skipped" style="height:${skPct}%;"></div>
           <div class="seg-failed" style="height:${fPct}%;"></div>
         </div>
         <div class="w-bar-label">${weekShortMap[wk]}</div>
@@ -3018,6 +3138,7 @@ function executeQuarterRollover() {
       ...JSON.parse(JSON.stringify(srv)),
       id: idx + 1, timeWin: nextTw,
       status: resetStatus ? '' : srv.status,
+      statusReason: resetStatus ? '' : (srv.statusReason || ''),
       hcPassed: resetStatus ? [] : (Array.isArray(srv.hcPassed) ? srv.hcPassed : []),
       by: keepEngineers ? srv.by : '',
       remarks2: clearRem2 ? '' : srv.remarks2
@@ -3198,9 +3319,9 @@ function renderTable() {
   pillsEl.innerHTML = '';
   uniqueWeeks.forEach(wk => {
     const wkItems = enriched.filter(s => s.weekKey === wk);
-    const tot = wkItems.length, done = wkItems.filter(s => s.status === 'Patched').length, fail = wkItems.filter(s => s.status === 'Failed').length;
-    const donePct = tot ? Math.round((done / tot) * 100) : 0, failPct = tot ? Math.round((fail / tot) * 100) : 0;
-    const isAllDone = tot > 0 && done === tot;
+    const tot = wkItems.length, done = wkItems.filter(s => s.status === 'Patched').length, fail = wkItems.filter(s => s.status === 'Failed').length, skip = wkItems.filter(s => s.status === 'Skipped').length;
+    const donePct = tot ? Math.round((done / tot) * 100) : 0, failPct = tot ? Math.round((fail / tot) * 100) : 0, skipPct = tot ? Math.round((skip / tot) * 100) : 0;
+    const isAllDone = tot > 0 && (done + skip) === tot && done > 0;
     const mRange = (weekLabelMap[wk] || '').match(/\(([^)]+)\)/);
     const shortRange = mRange ? mRange[1] : weekLabelMap[wk];
     const nextTag = (wk === nextUpcomingWk) ? '<span class="wb-next-pill">NEXT</span>' : '';
@@ -3209,19 +3330,23 @@ function renderTable() {
     card.type = 'button';
     card.className = 'week-batch-card' + (filterWeekEl.value === wk ? ' active' : '');
     card.style.background = weekColorMap[wk];
-    card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}`;
+    card.title = `${weekLabelMap[wk]} — ${done}/${tot} Patched${fail ? ', ' + fail + ' Failed' : ''}${skip ? ', ' + skip + ' Skipped' : ''}`;
     card.innerHTML = `
       <div class="wb-top"><span class="wb-wk-tag">${weekShortMap[wk]}${nextTag}</span><span class="wb-count-pill ${isAllDone ? 'done-all' : ''}">${done}/${tot}${isAllDone ? ' ✓' : ''}</span></div>
       <div class="wb-date">${escapeHtml(shortRange)}</div>
-      <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
+      <div class="wb-progress-track"><div style="width:${donePct}%;background:#10B981;"></div><div style="width:${skipPct}%;background:#94A3B8;"></div><div style="width:${failPct}%;background:#EF4444;"></div></div>
     `;
     card.onclick = () => quickFilterWeek(wk);
     pillsEl.appendChild(card);
   });
 
-  const total = enriched.length, patched = enriched.filter(s => s.status === 'Patched').length, failed = enriched.filter(s => s.status === 'Failed').length;
-  const pending = total - patched - failed, alertCnt = enriched.filter(s => s.flags.length > 0).length;
-  const pctDone = total ? Math.round((patched / total) * 100) : 0, pctFail = total ? Math.round((failed / total) * 100) : 0;
+  const total = enriched.length, patched = enriched.filter(s => s.status === 'Patched').length, failed = enriched.filter(s => s.status === 'Failed').length, skipped = enriched.filter(s => s.status === 'Skipped').length;
+  const pending = total - patched - failed - skipped, alertCnt = enriched.filter(s => s.flags.length > 0).length;
+  const pctDone = total ? Math.round((patched / total) * 100) : 0, pctFail = total ? Math.round((failed / total) * 100) : 0, pctSkip = total ? Math.round((skipped / total) * 100) : 0;
+  const pendSubParts = [];
+  if (failed > 0) pendSubParts.push(failed + ' Fail');
+  if (skipped > 0) pendSubParts.push(skipped + ' Skip');
+  const pendSubText = pendSubParts.length ? '· ' + pendSubParts.join(' · ') : '';
 
   const curStatusFilter = document.getElementById('filterStatus').value;
   document.getElementById('kpiGrid').innerHTML = `
@@ -3236,7 +3361,7 @@ function renderTable() {
       </div>
       <div class="kpi-box${curStatusFilter === '__PENDING__' ? ' active' : ''}" style="border-left-color:#3B82F6;" onclick="const el=document.getElementById('filterStatus');el.value=(el.value==='__PENDING__'?'':'__PENDING__');renderTable();">
         <div class="kpi-box-label">${curStatusFilter === '__PENDING__' ? '✓ ' : ''}Pending</div>
-        <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${failed > 0 ? '· ' + failed + ' Fail' : ''}</span></div>
+        <div class="kpi-box-val" style="color:#2563EB;">${pending} <span class="kpi-box-sub">${pendSubText}</span></div>
       </div>
       <div class="kpi-box${curStatusFilter === '__ALERTS__' ? ' active' : ''}" style="border-left-color:#F59E0B;" onclick="const el=document.getElementById('filterStatus');el.value=(el.value==='__ALERTS__'?'':'__ALERTS__');renderTable();">
         <div class="kpi-box-label">${curStatusFilter === '__ALERTS__' ? '✓ ' : ''}⚠️ Flags</div>
@@ -3244,7 +3369,7 @@ function renderTable() {
       </div>
     </div>
     <div class="kpi-bar-row">
-      <div class="kpi-bar-track"><div style="width:${pctDone}%;background:#10B981;"></div><div style="width:${pctFail}%;background:#EF4444;"></div></div>
+      <div class="kpi-bar-track"><div style="width:${pctDone}%;background:#10B981;"></div><div style="width:${pctSkip}%;background:#94A3B8;"></div><div style="width:${pctFail}%;background:#EF4444;"></div></div>
       <span style="font-size:0.71rem;font-weight:800;color:#0F172A;white-space:nowrap;">${pctDone}% Done</span>
     </div>
   `;
@@ -3269,7 +3394,7 @@ function renderTable() {
     if (fStatus === '__UEM_OFF__' && s.uemEnabled !== false) return false;
     if (fStatus && !['__PENDING__','__LIVE_NOW__','__OVERDUE__','__ALERTS__','__DUPLICATES__','__UEM_ON__','__UEM_OFF__'].includes(fStatus) && s.status !== fStatus) return false;
     if (q) {
-      const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status}`.toLowerCase();
+      const hay = `${s.hostname} ${s.ip} ${s.os} ${s.app} ${s.maintWin} ${s.timeWin} ${s.osSheet} ${s.remarks1} ${s.remarks2} ${s.by} ${s.status} ${s.statusReason || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -3324,10 +3449,20 @@ function renderTable() {
     if (collapsedWeeks.has(srv.weekKey)) return;
 
     const rowBg = weekColorMap[srv.weekKey];
-    const rowStatusCls = srv.status === 'Patched' ? ' row-patched' : (srv.status === 'Failed' ? ' row-failed' : '');
+    const rowStatusCls = srv.status === 'Patched' ? ' row-patched' : (srv.status === 'Failed' ? ' row-failed' : (srv.status === 'Skipped' ? ' row-skipped' : ''));
     const liveCls = srv.isLiveWindow ? ' row-live-window' : '';
     const rowCls = 'data-row' + rowStatusCls + liveCls + (selectedIds.has(srv.id) ? ' selected-row' : '');
-    const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : '');
+    const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : (srv.status === 'Skipped' ? 'status-skipped' : ''));
+    let statusReasonBadgeHtml = '';
+    if (srv.status === 'Failed' || srv.status === 'Skipped') {
+      const rText = String(srv.statusReason || '').trim();
+      const toneCls = srv.status === 'Failed' ? 'reason-failed' : 'reason-skipped';
+      if (rText) {
+        statusReasonBadgeHtml = `<button type="button" class="status-reason-pill ${toneCls}" data-status="${escapeHtml(srv.status)}" data-reason="${escapeHtml(rText)}" onmouseenter="showStatusReasonTooltip(this)" onmouseleave="hideStatusReasonTooltip()" onfocus="showStatusReasonTooltip(this)" onblur="hideStatusReasonTooltip()" onclick="hideStatusReasonTooltip();openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)">📝 Reason</button>`;
+      } else {
+        statusReasonBadgeHtml = `<button type="button" class="status-reason-pill reason-empty" onclick="openStatusReasonModal(${srv.id}, '${escapeHtml(srv.status)}', true)" title="Add ${escapeHtml(srv.status)} reason">+ Reason</button>`;
+      }
+    }
     const byClass = srv.by === 'Andy' ? 'by-andy' : (srv.by === 'Don' ? 'by-don' : (srv.by === 'Fung' ? 'by-fung' : (srv.by === 'Operator' ? 'by-operator' : '')));
     const envBadgeCls = srv.env === 'PRD' ? 'tag-env-prd' : (srv.env === 'UAT' ? 'tag-env-uat' : (srv.env === 'DEV' ? 'tag-seq1' : (srv.env === 'DR' ? 'tag-env-dr' : '')));
     const envLabel = srv.env || 'UNASSIGNED';
@@ -3406,11 +3541,15 @@ function renderTable() {
           </select>
         </td>
         <td class="center">
-          <select class="editable-cell center ${statusClass}" onchange="updateField(${srv.id}, 'status', this.value)">
-            <option value="" ${srv.status === '' ? 'selected' : ''}></option>
-            <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
-            <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
-          </select>
+          <div class="status-col-wrap">
+            <select class="editable-cell center ${statusClass}" onchange="handleStatusChange(${srv.id}, this.value)">
+              <option value="" ${srv.status === '' ? 'selected' : ''}></option>
+              <option value="Patched" ${srv.status === 'Patched' ? 'selected' : ''}>Patched</option>
+              <option value="Failed" ${srv.status === 'Failed' ? 'selected' : ''}>Failed</option>
+              <option value="Skipped" ${srv.status === 'Skipped' ? 'selected' : ''}>Skipped</option>
+            </select>
+            ${statusReasonBadgeHtml}
+          </div>
         </td>
         <td class="center">
           <button type="button" class="del-btn" title="Remove server" onclick="deleteServer(${srv.id})">✕</button>
@@ -3516,12 +3655,19 @@ function applyBulkUpdate() {
   const statusVal = document.getElementById('bulkStatus').value;
   const twVal = document.getElementById('bulkTimeWin').value.trim();
   const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
+  if (statusVal === 'Failed' || statusVal === 'Skipped') {
+    openStatusReasonModal(null, statusVal, false, true);
+    return;
+  }
   pushUndoSnapshot(`Bulk update ${selectedIds.size} servers`);
   let count = 0;
   appState.servers.forEach(srv => {
     if (selectedIds.has(srv.id)) {
       if (byVal !== '__KEEP__') srv.by = byVal;
-      if (statusVal !== '__KEEP__') srv.status = statusVal;
+      if (statusVal !== '__KEEP__') {
+        srv.status = statusVal;
+        if (srv.statusReason) srv.statusReason = '';
+      }
       if (twVal) {
         const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, srv.maintWin) : '';
         srv.timeWin = smartTw || twVal;
@@ -3620,21 +3766,31 @@ function copyHandoverSummary() {
   const total = scopeList.length;
   const patchedList = scopeList.filter(s => s.status === 'Patched');
   const failedList = scopeList.filter(s => s.status === 'Failed');
-  const pendingList = scopeList.filter(s => s.status !== 'Patched' && s.status !== 'Failed');
+  const skippedList = scopeList.filter(s => s.status === 'Skipped');
+  const pendingList = scopeList.filter(s => s.status !== 'Patched' && s.status !== 'Failed' && s.status !== 'Skipped');
   const pct = total ? Math.round((patchedList.length / total) * 100) : 0;
 
   const lines = [
     `=== Windows Server Patching Shift Handover (${new Date().toLocaleDateString('en-GB')}) ===`,
     `Scope: ${scopeTitle}`,
-    `Progress: ${patchedList.length}/${total} Patched (${pct}%) | ${failedList.length} Failed | ${pendingList.length} Pending`,
+    `Progress: ${patchedList.length}/${total} Patched (${pct}%) | ${failedList.length} Failed | ${skippedList.length} Skipped | ${pendingList.length} Pending`,
     ``
   ];
 
   if (failedList.length > 0) {
     lines.push(`[FAILED SERVERS - ${failedList.length}]`);
     failedList.forEach(s => {
-      const rem = [s.remarks2, s.remarks1].filter(Boolean).join(' | ').replace(/\r?\n/g, ' ');
-      lines.push(`- ${s.hostname} (${s.ip || 'N/A'}) | By: ${s.by || 'Unassigned'}${rem ? ' | Note: ' + rem.slice(0, 120) : ''}`);
+      const rem = [s.statusReason, s.remarks2, s.remarks1].filter(Boolean).join(' | ').replace(/\r?\n/g, ' ');
+      lines.push(`- ${s.hostname} (${s.ip || 'N/A'}) | By: ${s.by || 'Unassigned'}${rem ? ' | Reason: ' + rem.slice(0, 140) : ''}`);
+    });
+    lines.push('');
+  }
+
+  if (skippedList.length > 0) {
+    lines.push(`[SKIPPED SERVERS - ${skippedList.length}]`);
+    skippedList.forEach(s => {
+      const rem = [s.statusReason, s.remarks2].filter(Boolean).join(' | ').replace(/\r?\n/g, ' ');
+      lines.push(`- ${s.hostname} (${s.ip || 'N/A'}) | By: ${s.by || 'Unassigned'}${rem ? ' | Reason: ' + rem.slice(0, 140) : ''}`);
     });
     lines.push('');
   }
@@ -3676,6 +3832,188 @@ function updateField(id, field, value, isTimeWin = false) {
   renderTable();
   if (isTimeWin) { const meta = parseTimeWindowMeta(item.timeWin); showToast(`✓ Moved ${item.hostname} → ${meta.weekLabel}`); }
   else { showToast(`✓ Saved ${item.hostname}`); }
+}
+
+
+/* ============================================================================
+   STATUS REASON PROMPT MODAL (FAILED / SKIPPED) & GLOBAL HOVER TOOLTIP (v5.24)
+   ============================================================================ */
+let _pendingStatusReasonCtx = null;
+
+const STATUS_REASON_PRESETS = {
+  Skipped: [
+    'Business hold / Change freeze',
+    'Pending app owner approval',
+    'Decommissioned / Powered off',
+    'Upgrading OS separately',
+    'Deferred to next cycle'
+  ],
+  Failed: [
+    'UEM / WSUS download error',
+    'Insufficient disk space',
+    'Patch install failed / Rolled back',
+    'Service failed post-patch',
+    'Server unreachable / Reboot timeout'
+  ]
+};
+
+function handleStatusChange(id, newStatus) {
+  const srv = appState.servers.find(s => s.id === id);
+  if (!srv) return;
+  if (newStatus === 'Failed' || newStatus === 'Skipped') {
+    openStatusReasonModal(id, newStatus, false);
+  } else {
+    const oldVal = srv.status || '';
+    if (oldVal === newStatus) return;
+    pushUndoSnapshot(`Change ${srv.hostname} status to ${newStatus || 'Blank'}`);
+    srv.status = newStatus;
+    if (srv.statusReason) srv.statusReason = '';
+    saveState();
+    addAuditEntry(`${srv.hostname}: changed status from "${oldVal || 'Blank'}" → "${newStatus || 'Blank'}"`);
+    renderTable();
+    showToast(`✓ Saved ${srv.hostname}`);
+  }
+}
+
+function openStatusReasonModal(serverId, targetStatus, isEditOnly = false, isBulk = false) {
+  const srv = !isBulk ? appState.servers.find(s => s.id === serverId) : null;
+  if (!isBulk && !srv) return;
+
+  _pendingStatusReasonCtx = { serverId, targetStatus, isEditOnly, isBulk };
+
+  const titleEl = document.getElementById('statusReasonModalTitle');
+  const subEl = document.getElementById('statusReasonModalSub');
+  const badgeEl = document.getElementById('statusReasonBadgePreview');
+  const presetsEl = document.getElementById('statusReasonPresets');
+  const inputEl = document.getElementById('statusReasonInput');
+  const clearBtn = document.getElementById('statusReasonClearBtn');
+  const saveBtn = document.getElementById('statusReasonSaveBtn');
+
+  titleEl.textContent = isEditOnly
+    ? `📝 Edit ${targetStatus} Reason`
+    : (isBulk ? `📝 Bulk Set Status: ${targetStatus}` : `📝 ${targetStatus} Reason`);
+
+  subEl.innerHTML = isBulk
+    ? `Enter a shared reason for <strong>${selectedIds.size} selected servers</strong> being marked as <strong>${escapeHtml(targetStatus)}</strong>:`
+    : `Server: <strong>${escapeHtml(srv.hostname)}</strong> (${escapeHtml(srv.ip || 'No IP')}) — enter notes or reason for marking as <strong>${escapeHtml(targetStatus)}</strong>:`;
+
+  badgeEl.textContent = targetStatus;
+  badgeEl.className = 'smart-tag ' + (targetStatus === 'Failed' ? 'status-failed' : 'status-skipped');
+
+  const presets = STATUS_REASON_PRESETS[targetStatus] || [];
+  presetsEl.innerHTML = presets.map(p =>
+    `<button type="button" class="reason-preset-chip" onclick="applyReasonPreset('${escapeHtml(p)}')">+ ${escapeHtml(p)}</button>`
+  ).join('');
+
+  inputEl.value = isBulk ? '' : String(srv.statusReason || '');
+  clearBtn.style.display = (!isBulk && srv.statusReason) ? 'inline-flex' : 'none';
+  saveBtn.textContent = isEditOnly ? '💾 Save Reason' : `💾 Save as ${targetStatus}`;
+
+  document.getElementById('statusReasonModal').classList.add('open');
+  setTimeout(() => { inputEl.focus(); inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length); }, 40);
+}
+
+function applyReasonPreset(text) {
+  const inp = document.getElementById('statusReasonInput');
+  const cur = inp.value.trim();
+  if (!cur) inp.value = text;
+  else if (!cur.includes(text)) inp.value = cur + '\n' + text;
+  inp.focus();
+}
+
+function cancelStatusReasonModal() {
+  document.getElementById('statusReasonModal').classList.remove('open');
+  const ctx = _pendingStatusReasonCtx;
+  _pendingStatusReasonCtx = null;
+  // Re-render to revert the select element visually back to the saved status if user cancelled
+  if (ctx && !ctx.isEditOnly && !ctx.isBulk) {
+    renderTable();
+  }
+}
+
+function saveStatusReasonModal() {
+  const ctx = _pendingStatusReasonCtx;
+  if (!ctx) return;
+  const reasonText = document.getElementById('statusReasonInput').value.trim();
+  document.getElementById('statusReasonModal').classList.remove('open');
+  _pendingStatusReasonCtx = null;
+
+  if (ctx.isBulk) {
+    const byVal = document.getElementById('bulkBy').value;
+    const twVal = document.getElementById('bulkTimeWin').value.trim();
+    const autoMatch = document.getElementById('bulkAutoMatchMaint').checked;
+    pushUndoSnapshot(`Bulk set ${selectedIds.size} servers to ${ctx.targetStatus}`);
+    let count = 0;
+    appState.servers.forEach(s => {
+      if (selectedIds.has(s.id)) {
+        if (byVal !== '__KEEP__') s.by = byVal;
+        s.status = ctx.targetStatus;
+        s.statusReason = reasonText;
+        if (twVal) {
+          const smartTw = autoMatch ? buildSuggestedTimeWindow(twVal, s.maintWin) : '';
+          s.timeWin = smartTw || twVal;
+        }
+        count++;
+      }
+    });
+    addAuditEntry(`Bulk updated ${count} servers (Status=${ctx.targetStatus}${reasonText ? ', Reason="' + reasonText.replace(/\r?\n/g, ' ') + '"' : ''})`);
+    document.getElementById('bulkBy').value = '__KEEP__';
+    document.getElementById('bulkStatus').value = '__KEEP__';
+    document.getElementById('bulkTimeWin').value = '';
+    saveState();
+    renderTable();
+    showToast(`✓ Marked ${count} servers as ${ctx.targetStatus}`);
+    return;
+  }
+
+  const srv = appState.servers.find(s => s.id === ctx.serverId);
+  if (!srv) return;
+  const oldStatus = srv.status || '';
+  pushUndoSnapshot(`${ctx.isEditOnly ? 'Edit' : 'Set'} ${ctx.targetStatus} reason on ${srv.hostname}`);
+  srv.status = ctx.targetStatus;
+  srv.statusReason = reasonText;
+  saveState();
+  const reasonSummary = reasonText ? ` — Reason: "${reasonText.replace(/\r?\n/g, ' ')}"` : '';
+  if (ctx.isEditOnly) {
+    addAuditEntry(`${srv.hostname}: updated ${ctx.targetStatus} reason${reasonSummary}`);
+    showToast(`✓ Updated reason for ${srv.hostname}`);
+  } else {
+    addAuditEntry(`${srv.hostname}: changed status "${oldStatus || 'Blank'}" → "${ctx.targetStatus}"${reasonSummary}`);
+    showToast(`✓ Marked ${srv.hostname} as ${ctx.targetStatus}`);
+  }
+  renderTable();
+}
+
+function showStatusReasonTooltip(btn) {
+  const tip = document.getElementById('statusReasonTooltip');
+  const hdrEl = document.getElementById('statusReasonTooltipHdr');
+  const valEl = document.getElementById('statusReasonTooltipVal');
+  if (!tip || !valEl || !hdrEl) return;
+  const st = btn.getAttribute('data-status') || 'Status';
+  const reason = btn.getAttribute('data-reason') || '';
+  hdrEl.textContent = st === 'Failed' ? '❌ Failed Reason' : '⏭️ Skipped Reason';
+  hdrEl.style.color = st === 'Failed' ? '#FCA5A5' : '#CBD5E1';
+  tip.style.borderColor = st === 'Failed' ? '#EF4444' : '#94A3B8';
+  valEl.textContent = reason;
+  tip.style.display = 'block';
+
+  const rect = btn.getBoundingClientRect();
+  const tipRect = tip.getBoundingClientRect();
+  const margin = 8;
+  let top = rect.top - tipRect.height - 6;
+  if (top < 54) top = rect.bottom + 6;
+  let left = rect.right - tipRect.width;
+  if (left < margin) left = margin;
+  if (left + tipRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - tipRect.width - margin;
+  }
+  tip.style.top = Math.round(top) + 'px';
+  tip.style.left = Math.round(left) + 'px';
+}
+
+function hideStatusReasonTooltip() {
+  const tip = document.getElementById('statusReasonTooltip');
+  if (tip) tip.style.display = 'none';
 }
 
 let _confirmCallback = null;
@@ -3844,6 +4182,7 @@ function exportExcel() {
     function getStatusCellStyle(status, baseHex) {
       if (status === 'Patched') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '166534' } }, fill: { fgColor: { rgb: 'DCFCE7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
       if (status === 'Failed') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '991B1B' } }, fill: { fgColor: { rgb: 'FEE2E2' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
+      if (status === 'Skipped') return { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '334155' } }, fill: { fgColor: { rgb: 'E2E8F0' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
       return { font: { name: 'Calibri', sz: 10, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: baseHex } }, alignment: { horizontal: 'center', vertical: 'center' }, border: thinBorder };
     }
     function getEngineerCellStyle(by, baseHex) {
@@ -3919,10 +4258,10 @@ function exportExcel() {
     // =========================================================================
     // 2. WEEKLY SUMMARY SHEET
     // =========================================================================
-    const sumColWidths = [34, 16, 14, 14, 14, 16];
+    const sumColWidths = [34, 15, 13, 13, 13, 13, 16];
     const sumAoa = [
-      ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', ''],
-      ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Completion %']
+      ['Windows Server Patching — Weekly Batch Summary', '', '', '', '', '', ''],
+      ['Weekly Batch', 'Total Servers', 'Patched', 'Pending', 'Failed', 'Skipped', 'Completion %']
     ];
     const sumMeta = [{ type: 'title', height: 30 }, { type: 'header', height: 26 }];
 
@@ -3931,30 +4270,32 @@ function exportExcel() {
       const tot = grp.length;
       const patchedCnt = grp.filter(s => s.status === 'Patched').length;
       const failedCnt = grp.filter(s => s.status === 'Failed').length;
-      const pendingCnt = tot - patchedCnt - failedCnt;
+      const skippedCnt = grp.filter(s => s.status === 'Skipped').length;
+      const pendingCnt = tot - patchedCnt - failedCnt - skippedCnt;
       const pctStr = tot ? Math.round((patchedCnt / tot) * 100) + '%' : '0%';
       const baseHex = (weekColorMap[wk] || '#FFFFFF').replace('#', '').toUpperCase();
-      sumAoa.push([weekLabelMap[wk] || wk, tot, patchedCnt, pendingCnt, failedCnt, pctStr]);
+      sumAoa.push([weekLabelMap[wk] || wk, tot, patchedCnt, pendingCnt, failedCnt, skippedCnt, pctStr]);
       sumMeta.push({ type: 'data', baseHex, height: 23 });
     });
 
     const grandTot = enriched.length;
     const grandPatched = enriched.filter(s => s.status === 'Patched').length;
     const grandFailed = enriched.filter(s => s.status === 'Failed').length;
-    const grandPending = grandTot - grandPatched - grandFailed;
+    const grandSkipped = enriched.filter(s => s.status === 'Skipped').length;
+    const grandPending = grandTot - grandPatched - grandFailed - grandSkipped;
     const grandPct = grandTot ? Math.round((grandPatched / grandTot) * 100) + '%' : '0%';
-    sumAoa.push(['TOTAL (ALL BATCHES)', grandTot, grandPatched, grandPending, grandFailed, grandPct]);
+    sumAoa.push(['TOTAL (ALL BATCHES)', grandTot, grandPatched, grandPending, grandFailed, grandSkipped, grandPct]);
     sumMeta.push({ type: 'total', baseHex: 'DCE6F7', height: 25 });
 
     const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
     wsSum['!cols'] = sumColWidths.map(wch => ({ wch }));
     wsSum['!rows'] = sumMeta.map(m => ({ hpt: m.height }));
-    wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+    wsSum['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
     wsSum['!freeze'] = { xSplit: 1, ySplit: 2, topLeftCell: 'B3', activePane: 'bottomRight', state: 'frozen' };
 
     for (let r = 0; r < sumAoa.length; r++) {
       const meta = sumMeta[r];
-      for (let c = 0; c < 6; c++) {
+      for (let c = 0; c < 7; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
         if (!wsSum[addr]) wsSum[addr] = { t: 's', v: '' };
         if (meta.type === 'title') wsSum[addr].s = titleStyle;
@@ -3968,7 +4309,7 @@ function exportExcel() {
           };
         } else {
           wsSum[addr].s = {
-            font: { name: 'Calibri', sz: 10, bold: (c === 0 || c === 5), color: { rgb: '0F172A' } },
+            font: { name: 'Calibri', sz: 10, bold: (c === 0 || c === 6), color: { rgb: '0F172A' } },
             fill: { fgColor: { rgb: meta.baseHex } },
             alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center', wrapText: true },
             border: thinBorder
