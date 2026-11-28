@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Windows Server Patching Schedule Manager (v5.25)</title>
+<title>Windows Server Patching Schedule Manager (v5.26)</title>
 <style>
   :root {
     --bg: #F1F5F9;
@@ -870,19 +870,19 @@
 
 
 
-  /* v5.22 High-Contrast Live Patching Window Highlight & Eye-Catching PATCH NOW Badge */
+  /* v5.26 Engineer-Coded Live Patching Window Highlight & Eye-Catching PATCH NOW Badge */
   @keyframes pulsePatchNow {
     0% {
       transform: scale(1);
-      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.78), 0 2px 5px rgba(220, 38, 38, 0.35);
+      box-shadow: 0 0 0 0 rgba(var(--pulse-rgb, 220, 38, 38), 0.78), 0 2px 5px rgba(var(--pulse-rgb, 220, 38, 38), 0.35);
     }
     55% {
       transform: scale(1.045);
-      box-shadow: 0 0 0 7px rgba(220, 38, 38, 0), 0 3px 10px rgba(220, 38, 38, 0.55);
+      box-shadow: 0 0 0 7px rgba(var(--pulse-rgb, 220, 38, 38), 0), 0 3px 10px rgba(var(--pulse-rgb, 220, 38, 38), 0.55);
     }
     100% {
       transform: scale(1);
-      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0), 0 2px 5px rgba(220, 38, 38, 0.35);
+      box-shadow: 0 0 0 0 rgba(var(--pulse-rgb, 220, 38, 38), 0), 0 2px 5px rgba(var(--pulse-rgb, 220, 38, 38), 0.35);
     }
   }
   @keyframes patchNowDotBlink {
@@ -896,7 +896,12 @@
   tbody tr.data-row.row-live-window td.sticky-col-1 {
     box-shadow: inset 4px 0 0 #DC2626 !important;
   }
+  tbody tr.data-row.row-live-window.live-by-andy td.sticky-col-1 { box-shadow: inset 4px 0 0 #0284C7 !important; }
+  tbody tr.data-row.row-live-window.live-by-don td.sticky-col-1 { box-shadow: inset 4px 0 0 #EA580C !important; }
+  tbody tr.data-row.row-live-window.live-by-fung td.sticky-col-1 { box-shadow: inset 4px 0 0 #7C3AED !important; }
+  tbody tr.data-row.row-live-window.live-by-operator td.sticky-col-1 { box-shadow: inset 4px 0 0 #0D9488 !important; }
   .tag-live-now {
+    --pulse-rgb: 220, 38, 38;
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -909,6 +914,26 @@
     font-weight: 800;
     letter-spacing: 0.45px;
     animation: pulsePatchNow 1.35s ease-in-out infinite;
+  }
+  .tag-live-now.live-by-andy {
+    --pulse-rgb: 2, 132, 199;
+    background: linear-gradient(90deg, #0369A1 0%, #0284C7 100%);
+    border-color: #075985;
+  }
+  .tag-live-now.live-by-don {
+    --pulse-rgb: 234, 88, 12;
+    background: linear-gradient(90deg, #C2410C 0%, #EA580C 100%);
+    border-color: #9A3412;
+  }
+  .tag-live-now.live-by-fung {
+    --pulse-rgb: 124, 58, 237;
+    background: linear-gradient(90deg, #5B21B6 0%, #7C3AED 100%);
+    border-color: #4C1D95;
+  }
+  .tag-live-now.live-by-operator {
+    --pulse-rgb: 13, 148, 136;
+    background: linear-gradient(90deg, #0F766E 0%, #0D9488 100%);
+    border-color: #115E59;
   }
   .live-now-dot {
     width: 7px;
@@ -1292,7 +1317,7 @@
   <div class="header-left-group">
     <div class="title-glass-card">
       <h1>🛡️ Windows Server Patching Schedule Manager</h1>
-      <span class="ver-pill">v5.25</span>
+      <span class="ver-pill">v5.26</span>
       <span class="subtitle-pill">TLIC Patch Ops</span>
     </div>
     <button type="button" class="btn btn-live-pill" id="syncStatusBtn" onclick="openSyncModal()" title="Configure or inspect Firebase Real-Time Sync">
@@ -3462,7 +3487,8 @@ function renderTable() {
 
     const rowBg = weekColorMap[srv.weekKey];
     const rowStatusCls = srv.status === 'Patched' ? ' row-patched' : (srv.status === 'Failed' ? ' row-failed' : (srv.status === 'Skipped' ? ' row-skipped' : ''));
-    const liveCls = srv.isLiveWindow ? ' row-live-window' : '';
+    const liveEngCls = srv.by === 'Andy' ? ' live-by-andy' : (srv.by === 'Don' ? ' live-by-don' : (srv.by === 'Fung' ? ' live-by-fung' : (srv.by === 'Operator' ? ' live-by-operator' : '')));
+    const liveCls = srv.isLiveWindow ? (' row-live-window' + liveEngCls) : '';
     const rowCls = 'data-row' + rowStatusCls + liveCls + (selectedIds.has(srv.id) ? ' selected-row' : '');
     const statusClass = srv.status === 'Patched' ? 'status-patched' : (srv.status === 'Failed' ? 'status-failed' : (srv.status === 'Skipped' ? 'status-skipped' : ''));
     let statusReasonBadgeHtml = '';
@@ -3482,7 +3508,7 @@ function renderTable() {
     const isUemEnabled = srv.uemEnabled !== false;
     const uemPillHtml = `<button type="button" class="uem-pill-btn${isUemEnabled ? '' : ' uem-disabled'}" onclick="toggleServerUem(${srv.id})" title="${isUemEnabled ? 'UEM (Endpoint Central) Enabled — Click to disable' : 'UEM (Endpoint Central) Disabled — Click to enable'}">UEM</button>`;
     const liveBadgeHtml = srv.isLiveWindow
-      ? `<div class="tag-row"><span class="smart-tag tag-live-now" title="Current time is inside this server's patching Time Window!"><span class="live-now-dot"></span>PATCH NOW</span></div>`
+      ? `<div class="tag-row"><span class="smart-tag tag-live-now${liveEngCls}" title="Current time is inside this server's patching Time Window!${srv.by ? ' (Assigned: ' + escapeHtml(srv.by) + ')' : ''}"><span class="live-now-dot"></span>PATCH NOW</span></div>`
       : (srv.isOverdue ? `<div class="tag-row"><span class="smart-tag tag-overdue" title="Patching Time Window has passed and Status is still blank/pending">⚠️ OVERDUE</span></div>` : '');
     const tagsHtml = [
       `<span class="smart-tag ${envBadgeCls}" style="${!srv.env ? 'background:#E2E8F0;color:#475569;' : ''}">${envLabel}</span>`,
